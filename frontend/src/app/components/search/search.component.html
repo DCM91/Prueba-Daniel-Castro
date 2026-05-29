@@ -1,0 +1,178 @@
+<div class="search-container">
+  <header class="search-header">
+    <h1>Wikipedia Search</h1>
+    <p class="subtitle">Search the world's knowledge</p>
+  </header>
+
+  <div class="search-box">
+    <div class="input-wrapper">
+      <input
+        type="text"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+        (keydown)="onKeydown($event)"
+        placeholder="Enter search term..."
+        class="search-input"
+        aria-label="Search input"
+      />
+      @if (searchTerm()) {
+        <button class="clear-btn" (click)="clearSearch()" aria-label="Clear search">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      }
+    </div>
+    <button 
+      class="search-btn" 
+      (click)="onSearch()"
+      [disabled]="isSearching()"
+      aria-label="Search button"
+    >
+      @if (isSearching()) {
+        <span class="spinner"></span>
+        <span>Searching...</span>
+      } @else {
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+        <span>Search</span>
+      }
+    </button>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-message" role="alert">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <span>{{ errorMessage() }}</span>
+      @if (rateLimitCountdown() > 0) {
+        <span class="countdown">(Try again in {{ rateLimitCountdown() }}s)</span>
+      }
+    </div>
+  }
+
+  <main class="content-area">
+    <section class="results-section" aria-label="Search results">
+      @if (hasResults()) {
+        <div class="results-header">
+          <h2>Results for "{{ searchTerm() }}"</h2>
+          <span class="results-count">{{ totalHits() }} results found</span>
+        </div>
+
+        @if (showPagination()) {
+          <div class="pagination-info">
+            Showing {{ pageStart() }}–{{ pageEnd() }} of {{ results().length }} loaded
+          </div>
+        }
+        
+        <div class="results-list">
+          @for (result of paginatedResults(); track result.pageid) {
+            <article class="result-card">
+              <h3 class="result-title">
+                <a [href]="'https://en.wikipedia.org/?curid=' + result.pageid" target="_blank" rel="noopener noreferrer">
+                  {{ result.title }}
+                </a>
+              </h3>
+              <p class="result-snippet" [innerHTML]="result.snippet"></p>
+              <div class="result-meta">
+                <span class="word-count">{{ result.wordcount }} words</span>
+                <a [href]="'https://en.wikipedia.org/?curid=' + result.pageid" target="_blank" rel="noopener noreferrer" class="read-more">
+                  Read more
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                  </svg>
+                </a>
+              </div>
+            </article>
+          }
+        </div>
+
+        @if (showPagination()) {
+          <nav class="pagination" aria-label="Search results pagination">
+            <button
+              class="page-btn"
+              [disabled]="currentPage() === 1"
+              (click)="prevPage()"
+              aria-label="Previous page"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+              </svg>
+              Previous
+            </button>
+
+            <div class="page-numbers">
+              @for (page of [].constructor(totalPages()); track $index) {
+                @let pageNum = $index + 1;
+                @if (pageNum === 1 || pageNum === totalPages() || (pageNum >= currentPage() - 2 && pageNum <= currentPage() + 2)) {
+                  <button
+                    class="page-num"
+                    [class.active]="pageNum === currentPage()"
+                    (click)="goToPage(pageNum)"
+                    [attr.aria-label]="'Page ' + pageNum"
+                    [attr.aria-current]="pageNum === currentPage() ? 'page' : undefined"
+                  >
+                    {{ pageNum }}
+                  </button>
+                } @else if (pageNum === currentPage() - 3 || pageNum === currentPage() + 3) {
+                  <span class="page-ellipsis">...</span>
+                }
+              }
+            </div>
+
+            <button
+              class="page-btn"
+              [disabled]="currentPage() === totalPages()"
+              (click)="nextPage()"
+              aria-label="Next page"
+            >
+              Next
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+              </svg>
+            </button>
+          </nav>
+        }
+      }
+    </section>
+
+    <aside class="history-section" [class.collapsed]="!showHistory()">
+      <div class="history-header" (click)="showHistory.update(v => !v)" (keydown.enter)="showHistory.update(v => !v)" tabindex="0" role="button">
+        <h2>Search History</h2>
+        <button class="toggle-btn" [attr.aria-expanded]="showHistory()" aria-label="Toggle history">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" [class.rotated]="showHistory()">
+            <path d="M7 10l5 5 5-5z"/>
+          </svg>
+        </button>
+      </div>
+
+      @if (showHistory() && hasHistory()) {
+        <ul class="history-list">
+          @for (item of history(); track item.id) {
+            <li class="history-item">
+              <button class="history-btn" (click)="searchFromHistory(item.term)">
+                <span class="history-term">{{ item.term }}</span>
+                <span class="history-meta">
+                  {{ item.results_count }} results · {{ formatDate(item.created_at) }}
+                </span>
+              </button>
+              <button 
+                class="delete-btn" 
+                (click)="deleteHistoryItem(item.id, $event)"
+                aria-label="Delete history item"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+              </button>
+            </li>
+          }
+        </ul>
+      } @else if (showHistory() && !hasHistory()) {
+        <p class="empty-history">No search history yet</p>
+      }
+    </aside>
+  </main>
+</div>
