@@ -286,6 +286,8 @@
     "loading": "Loading…",
     "section_personal": "Personal details",
     "section_personal_hint": "Your name and email appear on your public profile and in the emails we send you.",
+    "section_avatar": "Profile picture",
+    "section_avatar_hint": "Upload a photo so others can recognize you.",
     "section_professional": "Professional profile",
     "section_professional_hint": "Your public showcase (bio, rates, portfolio) is edited separately.",
     "open_professional_editor": "Edit professional profile",

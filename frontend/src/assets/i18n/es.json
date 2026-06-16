@@ -286,6 +286,8 @@
     "loading": "Cargando…",
     "section_personal": "Datos personales",
     "section_personal_hint": "Tu nombre y email aparecen en tu perfil público y en los emails que te enviamos.",
+    "section_avatar": "Foto de perfil",
+    "section_avatar_hint": "Sube una foto para que otros usuarios te reconozcan.",
     "section_professional": "Perfil profesional",
     "section_professional_hint": "Tu escaparate de profesional (bio, tarifas, portfolio) se edita aparte.",
     "open_professional_editor": "Editar perfil profesional",

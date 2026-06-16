@@ -19,7 +19,7 @@
       @case ('ready') {
         @if (freelancer(); as f) {
           <article class="detail">
-            @if (f.cover_urls?.lg ?? f.cover_url; as coverUrl) {
+            @if (f.cover_url ?? f.cover_urls?.lg; as coverUrl) {
               <div class="cover" role="img" [attr.aria-label]="'cover.preview_alt' | t : { name: f.display_name ?? '' }">
                 <img class="cover-img" [src]="coverUrl" alt="" loading="lazy" />
               </div>

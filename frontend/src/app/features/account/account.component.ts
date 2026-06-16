@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
 import { CoreTopbarComponent } from '../../core/components/topbar/topbar.component';
+import { AvatarUploaderComponent } from '../../core/components/avatar-uploader/avatar-uploader.component';
 import { UserService } from '../../core/services/user.service';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { Role } from '../../core/types/auth.types';
@@ -18,7 +19,7 @@ type AccountForm = FormGroup<{
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [ReactiveFormsModule, CoreTopbarComponent, RouterLink, TranslatePipe],
+  imports: [ReactiveFormsModule, CoreTopbarComponent, AvatarUploaderComponent, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './account.component.html',
   styleUrl: './account.component.css',
