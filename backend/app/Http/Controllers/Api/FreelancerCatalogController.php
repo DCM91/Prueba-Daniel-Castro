@@ -98,11 +98,7 @@ final class FreelancerCatalogController extends Controller
         $driver = $query->getModel()->getConnection()->getDriverName();
 
         if ($sort === 'featured') {
-            $expr = $this->completionExpression($driver);
-            $query->orderByRaw($expr . ' DESC');
-            $query->orderBy('freelancer_profiles.created_at', 'asc');
-            $query->orderBy('display_name', 'asc');
-            return $query;
+            return $query->orderBy('freelancer_profiles.updated_at', 'desc');
         }
 
         if ($sort === 'price_asc') {
