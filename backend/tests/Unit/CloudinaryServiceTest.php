@@ -186,6 +186,52 @@ final class CloudinaryServiceTest extends TestCase
         $this->assertSame('framematch/portfolios', $service->folderFor('portfolio'));
     }
 
+    public function test_verify_resource_retries_with_folder_prefix_when_basename_not_found(): void
+    {
+        Http::fake([
+            'api.cloudinary.com/*' => Http::sequence()
+                ->push(['error' => ['message' => 'not found']], 404)
+                ->push([
+                    'public_id'     => 'framematch/avatars/abc',
+                    'folder'        => 'framematch/avatars',
+                    'url'           => 'http://res.cloudinary.com/demo-cloud/image/upload/v123/abc.jpg',
+                    'secure_url'    => 'https://res.cloudinary.com/demo-cloud/image/upload/v123/abc.jpg',
+                    'width'         => 800,
+                    'height'        => 800,
+                    'format'        => 'jpg',
+                    'bytes'         => 12345,
+                    'resource_type' => 'image',
+                ], 200),
+        ]);
+
+        $resource = $this->makeService()->verifyResource('abc', 'framematch/avatars');
+
+        $this->assertSame('framematch/avatars/abc', $resource['public_id']);
+        $this->assertSame('framematch/avatars', $resource['folder']);
+    }
+
+    public function test_verify_resource_accepts_asset_folder_as_fallback(): void
+    {
+        Http::fake([
+            'api.cloudinary.com/*' => Http::response([
+                'public_id'     => 'wvokkrfqzuu7tqmmvdtk',
+                'asset_folder'  => 'framematch/avatars',
+                'url'           => 'http://res.cloudinary.com/demo-cloud/image/upload/v123/test.jpg',
+                'secure_url'    => 'https://res.cloudinary.com/demo-cloud/image/upload/v123/test.jpg',
+                'width'         => 800,
+                'height'        => 800,
+                'format'        => 'jpg',
+                'bytes'         => 12345,
+                'resource_type' => 'image',
+            ], 200),
+        ]);
+
+        $resource = $this->makeService()->verifyResource('wvokkrfqzuu7tqmmvdtk', 'framematch/avatars');
+
+        $this->assertSame('framematch/avatars/wvokkrfqzuu7tqmmvdtk', $resource['public_id']);
+        $this->assertSame('framematch/avatars', $resource['folder']);
+    }
+
     public function test_delete_resource_sends_delete_request_and_swallows_errors(): void
     {
         Http::fake([

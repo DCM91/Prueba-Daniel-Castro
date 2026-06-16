@@ -39,32 +39,24 @@ final class CloudinaryService implements CloudinaryServiceInterface
 
     public function verifyResource(string $publicId, string $expectedFolder): array
     {
-        $url = sprintf(
-            'https://api.cloudinary.com/v1_1/%s/resources/image/upload/%s',
-            $this->cloudName,
-            rawurlencode($publicId),
-        );
+        $resource = $this->fetchResource($publicId);
 
-        $response = $this->http
-            ->withBasicAuth($this->apiKey, $this->apiSecret)
-            ->acceptJson()
-            ->get($url);
+        if ($resource === null && ! str_starts_with($publicId, $expectedFolder . '/')) {
+            $resource = $this->fetchResource($expectedFolder . '/' . $publicId);
+            if ($resource !== null) {
+                $publicId = $expectedFolder . '/' . $publicId;
+            }
+        }
 
-        if ($response->status() === 404) {
+        if ($resource === null) {
             throw new CloudinaryVerificationException('El recurso no existe en Cloudinary.');
         }
-
-        if (! $response->successful()) {
-            throw new CloudinaryVerificationException('No se pudo verificar el recurso en Cloudinary.');
-        }
-
-        $resource = $response->json();
 
         if (($resource['resource_type'] ?? null) !== 'image') {
             throw new CloudinaryVerificationException('El recurso no es una imagen.');
         }
 
-        $folder = (string) ($resource['folder'] ?? '');
+        $folder = (string) ($resource['folder'] ?? $resource['asset_folder'] ?? '');
         $publicIdFull = (string) ($resource['public_id'] ?? $publicId);
 
         $matchesFolder = $folder === $expectedFolder
@@ -74,6 +66,10 @@ final class CloudinaryService implements CloudinaryServiceInterface
 
         if (! $matchesFolder && ! $matchesPublicId) {
             throw new CloudinaryVerificationException('El recurso no pertenece a la carpeta esperada.');
+        }
+
+        if (! str_starts_with($publicIdFull, $expectedFolder . '/') && $publicIdFull !== $expectedFolder) {
+            $publicIdFull = $expectedFolder . '/' . ltrim($publicIdFull, '/');
         }
 
         return [
@@ -87,6 +83,30 @@ final class CloudinaryService implements CloudinaryServiceInterface
             'bytes'         => isset($resource['bytes']) ? (int) $resource['bytes'] : null,
             'resource_type' => (string) ($resource['resource_type'] ?? 'image'),
         ];
+    }
+
+    private function fetchResource(string $publicId): ?array
+    {
+        $url = sprintf(
+            'https://api.cloudinary.com/v1_1/%s/resources/image/upload/%s',
+            $this->cloudName,
+            rawurlencode($publicId),
+        );
+
+        $response = $this->http
+            ->withBasicAuth($this->apiKey, $this->apiSecret)
+            ->acceptJson()
+            ->get($url);
+
+        if ($response->status() === 404) {
+            return null;
+        }
+
+        if (! $response->successful()) {
+            throw new CloudinaryVerificationException('No se pudo verificar el recurso en Cloudinary.');
+        }
+
+        return $response->json();
     }
 
     public function deleteResource(string $publicId): void

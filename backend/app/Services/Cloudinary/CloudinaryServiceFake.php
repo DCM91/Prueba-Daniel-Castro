@@ -48,12 +48,24 @@ final class CloudinaryServiceFake implements CloudinaryServiceInterface
             throw new CloudinaryVerificationException('El recurso no existe en Cloudinary.');
         }
 
-        if (! isset($this->resources[$publicId])) {
+        $resource = $this->resources[$publicId] ?? null;
+
+        if ($resource === null && ! str_starts_with($publicId, $expectedFolder . '/')) {
+            $prefixedId = $expectedFolder . '/' . $publicId;
+            if (in_array($prefixedId, $this->nonExistent, true)) {
+                throw new CloudinaryVerificationException('El recurso no existe en Cloudinary.');
+            }
+            $resource = $this->resources[$prefixedId] ?? null;
+            if ($resource !== null) {
+                $publicId = $prefixedId;
+            }
+        }
+
+        if ($resource === null) {
             throw new CloudinaryVerificationException('El recurso no existe en Cloudinary.');
         }
 
-        $resource = $this->resources[$publicId];
-        $folder = (string) ($resource['folder'] ?? '');
+        $folder = (string) ($resource['folder'] ?? $resource['asset_folder'] ?? '');
         $publicIdFull = (string) ($resource['public_id'] ?? $publicId);
 
         $matchesFolder = $folder === $expectedFolder
@@ -63,6 +75,10 @@ final class CloudinaryServiceFake implements CloudinaryServiceInterface
 
         if (! $matchesFolder && ! $matchesPublicId) {
             throw new CloudinaryVerificationException('El recurso no pertenece a la carpeta esperada.');
+        }
+
+        if (! str_starts_with($publicIdFull, $expectedFolder . '/') && $publicIdFull !== $expectedFolder) {
+            $publicIdFull = $expectedFolder . '/' . ltrim($publicIdFull, '/');
         }
 
         return [
