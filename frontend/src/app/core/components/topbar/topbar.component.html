@@ -1,0 +1,54 @@
+<header
+  class="topbar"
+  [class.topbar--sticky]="isSticky()"
+  [attr.data-variant]="variant()"
+>
+  <a
+    [routerLink]="brandHref()"
+    class="brand-link"
+    [attr.aria-label]="('app.brand' | t) + ', ' + ('topbar.go_home' | t)"
+  >
+    <app-brand-logo brandSize="md" />
+  </a>
+
+  @if (navLinks().length > 0) {
+    <nav class="topbar-nav">
+      @for (link of navLinks(); track link.labelKey) {
+        <a class="nav-link" [routerLink]="link.route">{{ link.labelKey | t }}</a>
+      }
+    </nav>
+  }
+
+  <div class="topbar-right">
+    @if (backLink(); as back) {
+      <button type="button" class="back" (click)="onBack()">
+        {{ back.labelKey | t }}
+      </button>
+    }
+
+    @if (langSelector()) {
+      <app-language-selector />
+    }
+
+    @if (showUser() && user(); as u) {
+      <span class="user-name">{{ u.name }}</span>
+      @if (variant() === 'client') {
+        <span class="role-pill">{{ rolePillKey() | t }}</span>
+      }
+      @if (variant() === 'freelancer') {
+        @if (u.avatar_urls?.sm ?? u.avatar_url; as avatarUrl) {
+          <img
+            class="avatar avatar--image"
+            [src]="avatarUrl"
+            [alt]="('avatar.preview_alt' | t : { name: u.name })"
+          />
+        } @else {
+          <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+        }
+      }
+      <button type="button" class="logout" (click)="onLogout()">
+        {{ 'topbar.logout' | t }}
+      </button>
+    }
+  </div>
+</header>

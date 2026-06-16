@@ -1,0 +1,140 @@
+<div class="page">
+  <app-core-topbar variant="freelancer" (logoutClick)="logout()" />
+
+  @if (currentUser(); as user) {
+    <main class="content">
+      <section class="welcome">
+        <h1>{{ 'home.freelancer.greeting' | t : { name: user.name } }}</h1>
+        <p class="lead">{{ 'home.freelancer.lead' | t }}</p>
+      </section>
+
+      <section class="completion-card">
+        <div class="completion-head">
+          <div>
+            <h2>{{ 'home.freelancer.completion_title' | t }}</h2>
+            <p class="muted">
+              @if (profileCompletion() === 100) {
+                {{ 'home.freelancer.completion_done' | t }}
+              } @else if (missingFields().length > 0) {
+                {{ 'home.freelancer.completion_missing' | t : { fields: missingFields().join(', ') } }}
+              } @else {
+                {{ 'home.freelancer.completion_progress' | t : { pct: profileCompletion() } }}
+              }
+            </p>
+          </div>
+          <div class="completion-circle">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="44" stroke="rgba(255,255,255,0.08)" stroke-width="8" fill="none"/>
+              <circle
+                cx="50" cy="50" r="44"
+                stroke="url(#progressGrad)" stroke-width="8" fill="none"
+                stroke-linecap="round"
+                [attr.stroke-dasharray]="2 * 3.1416 * 44"
+                [attr.stroke-dashoffset]="2 * 3.1416 * 44 * (1 - profileCompletion() / 100)"
+                transform="rotate(-90 50 50)"
+              />
+              <defs>
+                <linearGradient id="progressGrad" x1="0" x2="1" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#7c3aed"/>
+                  <stop offset="100%" stop-color="#67e8f9"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span class="completion-pct">{{ profileCompletion() }}%</span>
+          </div>
+        </div>
+        <button class="primary-btn" type="button" (click)="goToEdit()">{{ 'home.freelancer.edit_button' | t }}</button>
+      </section>
+
+      <section class="preview-card">
+        <div class="section-head section-head--left">
+          <h2>{{ 'home.freelancer.preview_title' | t }}</h2>
+          <p class="muted">{{ 'home.freelancer.preview_subtitle' | t }}</p>
+        </div>
+        @if (profile(); as p) {
+          <div class="preview-body">
+            <div class="preview-avatar">{{ initials() }}</div>
+            <div class="preview-info">
+              <h3>{{ p.display_name || user.name }}</h3>
+              @if (p.city) {
+                <p class="preview-city">📍 {{ p.city }}</p>
+              } @else {
+                <p class="preview-city preview-city--empty">📍 {{ 'home.freelancer.preview_city_empty' | t }}</p>
+              }
+              @if (p.bio) {
+                <p class="preview-bio">{{ p.bio }}</p>
+              } @else {
+                <p class="preview-bio preview-bio--empty">{{ 'home.freelancer.preview_bio_empty' | t }}</p>
+              }
+              <div class="preview-meta">
+                @if (p.hourly_rate !== null && p.hourly_rate !== undefined) {
+                  <span class="meta-chip">{{ 'home.freelancer.hourly_rate_label' | t : { rate: p.hourly_rate } }}</span>
+                }
+                @if (p.price_per_project !== null && p.price_per_project !== undefined) {
+                  <span class="meta-chip">{{ 'home.freelancer.price_per_project_label' | t : { price: p.price_per_project } }}</span>
+                }
+                @if (p.skills && p.skills.length > 0) {
+                  @for (s of p.skills; track s.id) {
+                    <span class="meta-chip meta-chip--skill">{{ s.name }}</span>
+                  }
+                } @else {
+                  <span class="meta-chip meta-chip--empty">{{ 'home.freelancer.preview_skill_empty' | t }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <section class="stats">
+        @for (s of stats; track s.labelKey) {
+          <article class="stat-card">
+            <div class="stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                @switch (s.icon) {
+                  @case ('eye')   { <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/> }
+                  @case ('mail')  { <rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/> }
+                  @case ('brief') { <rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/> }
+                  @case ('star')  { <path d="m12 2 3 7 7 .8-5.3 4.7L18 22l-6-3.5L6 22l1.3-7.5L2 9.8 9 9z"/> }
+                }
+              </svg>
+            </div>
+            <div class="stat-body">
+              <span class="stat-value">{{ s.value }}</span>
+              <span class="stat-label">{{ s.labelKey | t }}</span>
+              <span class="stat-hint">{{ s.hintKey | t }}</span>
+            </div>
+          </article>
+        }
+      </section>
+
+      <section class="tips">
+        <div class="section-head">
+          <h2>{{ 'home.freelancer.tips_title' | t }}</h2>
+          <p class="muted">{{ 'home.freelancer.tips_subtitle' | t }}</p>
+        </div>
+        <div class="tips-grid">
+          @for (t of tips; track t.titleKey) {
+            <article class="tip-card">
+              <div class="tip-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  @switch (t.icon) {
+                    @case ('upload') { <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8 12 3 7 8"/><path d="M12 3v12"/> }
+                    @case ('bolt')   { <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/> }
+                    @case ('tag')    { <path d="M20.6 13.4 13 21a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.4 11L10 3.4a2 2 0 0 1 2.8 0l7.2 7.2a2 2 0 0 1 .6 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/> }
+                  }
+                </svg>
+              </div>
+              <h3>{{ t.titleKey | t }}</h3>
+              <p>{{ t.bodyKey | t }}</p>
+            </article>
+          }
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p>{{ 'footer.copyright' | t : { tagline: 'app.tagline' | t } }}</p>
+      </footer>
+    </main>
+  }
+</div>

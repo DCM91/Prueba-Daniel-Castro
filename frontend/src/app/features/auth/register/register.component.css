@@ -1,0 +1,157 @@
+:host { display: block; }
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #0f0f12;
+  color: #f4f4f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.card {
+  width: 100%;
+  max-width: 460px;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 32px;
+  margin: 40px auto;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 24px;
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  color: #a1a1aa;
+  font-size: 14px;
+}
+
+.role-selector {
+  border: 0;
+  padding: 0;
+  margin: 0 0 20px;
+}
+
+.role-selector legend {
+  font-size: 13px;
+  color: #a1a1aa;
+  margin-bottom: 8px;
+}
+
+.role {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.role input {
+  accent-color: #7c3aed;
+}
+
+.role--active {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.12);
+}
+
+.role-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.role-body strong {
+  font-size: 14px;
+}
+
+.role-body span {
+  font-size: 12px;
+  color: #a1a1aa;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.field span {
+  font-size: 13px;
+  color: #d4d4d8;
+}
+
+.field input {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0f0f12;
+  color: #f4f4f5;
+  padding: 11px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.15s ease;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
+.error {
+  color: #f87171;
+  font-size: 12px;
+}
+
+.error--global {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 8px;
+}
+
+.submit {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  background: #7c3aed;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 15px;
+  margin-top: 6px;
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submit:not(:disabled):hover {
+  background: #6d28d9;
+}
+
+.footer-link {
+  margin: 20px 0 0;
+  text-align: center;
+  color: #a1a1aa;
+  font-size: 14px;
+}
+
+.footer-link a {
+  color: #c4b5fd;
+  text-decoration: none;
+}
+
+.footer-link a:hover {
+  text-decoration: underline;
+}

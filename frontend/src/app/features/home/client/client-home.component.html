@@ -1,0 +1,128 @@
+<div class="page">
+  <app-core-topbar variant="client" (logoutClick)="logout()" />
+
+  <section class="hero">
+    <div class="hero-inner">
+      <h1>{{ 'home.client.hero_title' | t }}</h1>
+      <p class="lead">
+        {{ 'home.client.hero_lead_before' | t }}<strong>{{ 'home.client.hero_lead_highlight' | t }}</strong>{{ 'home.client.hero_lead_after' | t }}
+      </p>
+
+      <form class="search" (ngSubmit)="onSearch()">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input
+          type="search"
+          [placeholder]="'home.client.search_placeholder' | t"
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+          [attr.aria-label]="'common.search' | t"
+        />
+        <button type="submit">{{ 'common.search' | t }}</button>
+      </form>
+
+      <div class="quick-filters">
+        <span class="filter-label">{{ 'home.client.quick_label' | t }}</span>
+      @for (cat of categories; track cat.category) {
+          <button
+            type="button"
+            class="chip"
+            [class.chip--active]="activeCategory() === cat.category"
+            (click)="toggleCategory(cat.category)"
+          >
+            {{ ('skill_categories.' + cat.category) | t }}
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section id="categorias" class="categories">
+    <div class="section-head">
+      <h2>{{ 'home.client.categories_title' | t }}</h2>
+      <p class="muted">{{ 'home.client.categories_subtitle' | t }}</p>
+    </div>
+    <div class="cat-grid">
+      @for (cat of categories; track cat.category) {
+        <button
+          type="button"
+          class="cat-card"
+          [attr.data-color]="cat.color"
+          (click)="goToCategory(cat.category)"
+          [attr.aria-label]="'home.client.category_aria' | t : { name: ('skill_categories.' + cat.category) | t }"
+        >
+          <div class="cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              @switch (cat.icon) {
+                @case ('camera') {
+                  <path d="M3 7h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="13" r="4"/>
+                }
+                @case ('video') {
+                  <rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/>
+                }
+                @case ('spark') {
+                  <path d="M12 2v6"/><path d="M12 16v6"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="M2 12h6"/><path d="M16 12h6"/>
+                }
+                @case ('megaphone') {
+                  <path d="M3 11v2a2 2 0 0 0 2 2h1l4 4V5L6 9H5a2 2 0 0 0-2 2z"/>
+                  <path d="M16 8a4 4 0 0 1 0 8"/>
+                  <path d="M19 5a8 8 0 0 1 0 14"/>
+                }
+              }
+            </svg>
+          </div>
+          <h3>{{ ('skill_categories.' + cat.category) | t }}</h3>
+          <p>{{ cat.description }}</p>
+        </button>
+      }
+    </div>
+  </section>
+
+  <section id="destacados" class="featured">
+    <div class="section-head">
+      <h2>{{ 'home.client.featured_title' | t }}</h2>
+      <p class="muted">{{ 'home.client.featured_subtitle' | t }}</p>
+    </div>
+    @if (featuredLoading()) {
+      <p class="muted featured-loading">{{ 'home.client.featured_loading' | t }}</p>
+    } @else if (hasFeatured()) {
+      <div class="featured-grid">
+        @for (card of featured(); track card.id) {
+          <app-freelancer-card [freelancer]="card" />
+        }
+      </div>
+      <div class="featured-cta">
+        <a routerLink="/freelancers" class="btn btn--primary">{{ 'home.client.view_all' | t }}</a>
+      </div>
+    } @else {
+      <p class="muted">{{ 'home.client.featured_empty' | t }}</p>
+    }
+  </section>
+
+  <section id="como-funciona" class="how">
+    <div class="section-head">
+      <h2>{{ 'home.client.how_title' | t }}</h2>
+      <p class="muted">{{ 'home.client.how_subtitle' | t }}</p>
+    </div>
+    <div class="how-grid">
+      <article class="how-step">
+        <div class="how-num">1</div>
+        <h3>{{ 'home.client.how_step1_title' | t }}</h3>
+        <p>{{ 'home.client.how_step1_body' | t }}</p>
+      </article>
+      <article class="how-step">
+        <div class="how-num">2</div>
+        <h3>{{ 'home.client.how_step2_title' | t }}</h3>
+        <p>{{ 'home.client.how_step2_body' | t }}</p>
+      </article>
+      <article class="how-step">
+        <div class="how-num">3</div>
+        <h3>{{ 'home.client.how_step3_title' | t }}</h3>
+        <p>{{ 'home.client.how_step3_body' | t }}</p>
+      </article>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>{{ 'footer.copyright' | t : { tagline: 'app.tagline' | t } }}</p>
+  </footer>
+</div>

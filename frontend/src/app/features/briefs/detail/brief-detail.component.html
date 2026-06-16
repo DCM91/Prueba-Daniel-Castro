@@ -1,0 +1,89 @@
+<div class="page">
+  <app-core-topbar
+    variant="public"
+    [backLink]="{ labelKey: 'topbar.back_to_briefs', route: '/briefs' }"
+  />
+
+  <main class="main">
+    @switch (state()) {
+      @case ('loading') {
+        <p class="state">{{ 'briefs.detail.loading' | t }}</p>
+      }
+      @case ('not-found') {
+        <p class="state state--error">{{ 'briefs.detail.not_found' | t }}</p>
+      }
+      @case ('ready') {
+        @if (brief(); as b) {
+          <article class="brief">
+            <header class="brief-head">
+              <span class="cat">{{ ('skill_categories.' + b.category) | t }}</span>
+              <h1>{{ b.title }}</h1>
+              <p class="meta">
+                @if (b.client) {
+                  <span>{{ 'briefs.detail.published_by_before' | t }}<strong>{{ b.client.name }}</strong></span>
+                }
+                @if (b.city) { <span>{{ b.city }}</span> }
+                @if (b.deadline) { <span>{{ 'briefs.list.deadline_label' | t }} {{ b.deadline }}</span> }
+              </p>
+            </header>
+
+            <section class="brief-body">
+              <h2>{{ 'briefs.detail.description' | t }}</h2>
+              <p>{{ b.description }}</p>
+            </section>
+
+            @if (b.budget_min !== null || b.budget_max !== null) {
+              <section class="brief-budget">
+                <h2>{{ 'briefs.detail.budget' | t }}</h2>
+                <p>
+                  @if (b.budget_min !== null && b.budget_max !== null) {
+                    @let min = b.budget_min;
+                    @let max = b.budget_max;
+                    <strong>{{ 'briefs.detail.budget_range' | t : { min, max } }}</strong>
+                  } @else if (b.budget_min !== null) {
+                    @let min = b.budget_min;
+                    <strong>{{ 'briefs.detail.budget_from' | t : { amount: min } }}</strong>
+                  } @else {
+                    @let max = b.budget_max!;
+                    <strong>{{ 'briefs.detail.budget_up_to' | t : { amount: max } }}</strong>
+                  }
+                </p>
+              </section>
+            }
+
+            @if (isOwner()) {
+              <section class="brief-proposals">
+                <h2>{{ 'briefs.detail.proposals_title' | t : { count: proposalsList().length } }}</h2>
+                @if (proposalsList().length === 0) {
+                  <p class="muted">{{ 'briefs.detail.proposals_empty' | t }}</p>
+                } @else {
+                  <ul class="proposal-list">
+                    @for (p of proposalsList(); track p.id) {
+                      <li class="proposal">
+                        <header>
+                          <strong>{{ p.freelancer?.display_name ?? ('briefs.detail.freelancer_fallback' | t) }}</strong>
+                          <span class="proposal-price">{{ p.price }}€</span>
+                        </header>
+                        <p>{{ p.message }}</p>
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+            } @else if (isFreelancer()) {
+              <section class="brief-cta">
+                <button class="btn btn--primary" (click)="toggleForm()">
+                  {{ showProposalForm() ? ('briefs.detail.cancel' | t) : ('briefs.detail.submit_proposal' | t) }}
+                </button>
+              </section>
+
+              @if (showProposalForm()) {
+                <app-proposal-form [briefId]="b.id" (submitted)="showProposalForm.set(false); load(b.id)" />
+              }
+            }
+          </article>
+        }
+      }
+    }
+  </main>
+</div>

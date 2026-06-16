@@ -1,0 +1,45 @@
+<article class="card" [class.card--unavailable]="!isAvailable()">
+  <a class="card-link" [routerLink]="detailLink()" [attr.aria-label]="'freelancers.card.aria_view_profile' | t : { name: (freelancer?.display_name ?? 'freelancers.card.initials_fallback' | t) }"></a>
+
+  <header class="head">
+    <div class="avatar" aria-hidden="true">{{ initials() }}</div>
+    <div class="head-info">
+      <h3 class="name">{{ freelancer?.display_name ?? 'freelancers.card.initials_fallback' | t }}</h3>
+      @if (freelancer?.city) {
+        <p class="city">{{ freelancer?.city }}</p>
+      }
+    </div>
+    @if (isAvailable()) {
+      <span class="status status--on" [attr.aria-label]="'freelancers.card.available' | t">{{ 'freelancers.card.available' | t }}</span>
+    } @else {
+      <span class="status status--off" [attr.aria-label]="'freelancers.card.busy' | t">{{ 'freelancers.card.busy' | t }}</span>
+    }
+  </header>
+
+  <div class="rate">
+    <span class="rate-label">{{ 'freelancers.card.rate_label' | t }}</span>
+    <span class="rate-value" [class.rate-value--muted]="freelancer?.hourly_rate === null">{{ hourlyRateLabel() }}</span>
+  </div>
+
+  @if (freelancer?.top_skills?.length) {
+    <ul class="skills" [attr.aria-label]="'home.freelancer.preview_title' | t">
+      @for (skill of freelancer?.top_skills; track skill.id) {
+        <li class="chip">
+          <span>{{ skill.name }}</span>
+          @if (skill.level) {
+            <span class="chip-level">{{ levelLabel(skill.level) }}</span>
+          }
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="muted">{{ 'freelancers.card.skills_empty' | t }}</p>
+  }
+
+  <footer class="foot">
+    <span class="meta">
+      {{ 'freelancers.card.footer_meta' | t : { count: skillsCount(), s: skillsCount() === 1 ? '' : 's', pct: profileCompletion() } }}
+    </span>
+    <span class="cta">{{ 'freelancers.card.view_profile' | t }}</span>
+  </footer>
+</article>

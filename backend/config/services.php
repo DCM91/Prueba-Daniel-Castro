@@ -35,4 +35,34 @@ return [
         ],
     ],
 
+    'google' => [
+        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect'      => env('GOOGLE_REDIRECT_URI'),
+    ],
+
+    'facebook' => [
+        'client_id'     => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect'      => env('FACEBOOK_REDIRECT_URI'),
+    ],
+
+    'cloudinary' => [
+        'cloud_name'    => env('CLOUDINARY_CLOUD_NAME'),
+        'api_key'       => env('CLOUDINARY_API_KEY'),
+        'api_secret'    => env('CLOUDINARY_API_SECRET'),
+        'presets'       => [
+            'avatar'    => env('CLOUDINARY_PRESET_AVATAR', 'fm_av_upl'),
+            'cover'     => env('CLOUDINARY_PRESET_COVER', 'fm_cv_upl'),
+            'portfolio' => env('CLOUDINARY_PRESET_PORTFOLIO', 'fm_pf_upl'),
+            'brief'     => env('CLOUDINARY_PRESET_BRIEF', 'fm_br_upl'),
+        ],
+        'folders'       => [
+            'avatar'    => 'framematch/avatars',
+            'cover'     => 'framematch/covers',
+            'portfolio' => 'framematch/portfolios',
+            'brief'     => 'framematch/briefs',
+        ],
+    ],
+
 ];

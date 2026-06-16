@@ -1,0 +1,124 @@
+<div class="page">
+  <app-core-topbar variant="public" />
+
+  <section class="hero">
+    <div class="hero-inner">
+      <h1>{{ 'freelancers.list.title' | t }}</h1>
+      <p class="lead">{{ 'freelancers.list.lead' | t }}</p>
+    </div>
+  </section>
+
+  <section class="filters" [attr.aria-label]="'freelancers.list.title' | t">
+    <form class="filter-bar" (ngSubmit)="applyFilters()">
+      <label class="field">
+        <span class="field-label">{{ 'freelancers.list.filter_search_label' | t }}</span>
+        <input
+          type="search"
+          [placeholder]="'freelancers.list.filter_search_placeholder' | t"
+          [ngModel]="q()"
+          (ngModelChange)="q.set($event)"
+          name="q"
+          [attr.aria-label]="'freelancers.list.filter_search_label' | t"
+        />
+      </label>
+
+      <label class="field">
+        <span class="field-label">{{ 'freelancers.list.filter_category_label' | t }}</span>
+        <select
+          [ngModel]="category()"
+          (ngModelChange)="category.set($event)"
+          name="category"
+          [attr.aria-label]="'freelancers.list.filter_category_label' | t"
+        >
+          @for (opt of categoryOptions; track opt.value) {
+            <option [ngValue]="opt.value">
+              {{ opt.value === '' ? ('freelancers.list.category_all' | t) : ('skill_categories.' + opt.value | t) }}
+            </option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field-label">{{ 'freelancers.list.filter_city_label' | t }}</span>
+        <input
+          type="text"
+          [placeholder]="'freelancers.list.filter_city_placeholder' | t"
+          [ngModel]="city()"
+          (ngModelChange)="city.set($event)"
+          name="city"
+          [attr.aria-label]="'freelancers.list.filter_city_label' | t"
+        />
+      </label>
+
+      <label class="field">
+        <span class="field-label">{{ 'freelancers.list.filter_max_rate_label' | t }}</span>
+        <input
+          type="number"
+          min="0"
+          [placeholder]="'freelancers.list.filter_max_rate_placeholder' | t"
+          [ngModel]="maxRate()"
+          (ngModelChange)="maxRate.set($event === null || $event === '' ? null : +$event)"
+          name="max_rate"
+          [attr.aria-label]="'freelancers.list.filter_max_rate_label' | t"
+        />
+      </label>
+
+      <div class="actions">
+        <button type="submit" class="btn btn--primary">{{ 'common.apply' | t }}</button>
+        @if (hasActiveFilters()) {
+          <button type="button" class="btn btn--ghost" (click)="clearFilters()">{{ 'common.clear' | t }}</button>
+        }
+      </div>
+    </form>
+  </section>
+
+  <main id="resultados" class="results">
+    @switch (state()) {
+      @case ('loading') {
+        <p class="state">{{ 'freelancers.list.loading' | t }}</p>
+      }
+      @case ('error') {
+        <div class="state state--error" role="alert">
+          <p>{{ errorMessage() }}</p>
+          <button type="button" class="btn btn--ghost" (click)="load()">{{ 'common.retry' | t }}</button>
+        </div>
+      }
+      @case ('empty') {
+        <div class="state state--empty">
+          <h2>{{ 'freelancers.list.empty_title' | t }}</h2>
+          <p>{{ 'freelancers.list.empty_body' | t }}</p>
+          <button type="button" class="btn btn--ghost" (click)="clearFilters()">{{ 'common.clear' | t }}</button>
+        </div>
+      }
+      @case ('ready') {
+        @if (result(); as r) {
+          <p class="count">
+            {{ (r.meta.total === 1 ? 'freelancers.list.results_count_one' : 'freelancers.list.results_count_other') | t : { total: r.meta.total } }}
+          </p>
+          <div class="grid">
+            @for (card of r.data; track card.id) {
+              <app-freelancer-card [freelancer]="card" />
+            }
+          </div>
+          @if (r.meta.last_page > 1) {
+            <nav class="pagination" [attr.aria-label]="'freelancers.list.title' | t">
+              <button
+                type="button"
+                class="btn btn--ghost"
+                [disabled]="r.meta.current_page === 1"
+                (click)="prevPage()"
+              >{{ 'freelancers.list.prev' | t }}</button>
+              <span class="page-info">{{ 'freelancers.list.page_info' | t : { current: r.meta.current_page, last: r.meta.last_page } }}</span>
+              <button
+                type="button"
+                class="btn btn--ghost"
+                [disabled]="r.meta.current_page === r.meta.last_page"
+                (click)="nextPage()"
+              >{{ 'freelancers.list.next' | t }}</button>
+            </nav>
+          }
+        }
+      }
+    }
+  </main>
+</div>

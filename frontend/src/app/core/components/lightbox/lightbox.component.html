@@ -1,0 +1,60 @@
+<div
+  #dialog
+  class="lightbox"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="'lightbox.dialog_label' | t"
+  (click)="close()()"
+>
+  <button
+    type="button"
+    class="close-btn"
+    [attr.aria-label]="'lightbox.close' | t"
+    (click)="close()(); $event.stopPropagation()"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  </button>
+
+  @if (currentItem(); as item) {
+    <button
+      type="button"
+      class="nav nav--prev"
+      [attr.aria-label]="'lightbox.prev' | t"
+      (click)="prev(); $event.stopPropagation()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
+    </button>
+
+    <figure class="frame" (click)="$event.stopPropagation()">
+      <img
+        class="image"
+        [src]="item.urls.full ?? item.url"
+        [alt]="('portfolio.image_alt' | t : { title: item.title ? ': ' + item.title : '' })"
+      />
+      @if (item.title || item.description) {
+        <figcaption class="caption">
+          @if (item.title) { <strong>{{ item.title }}</strong> }
+          @if (item.description) { <p>{{ item.description }}</p> }
+        </figcaption>
+      }
+    </figure>
+
+    <button
+      type="button"
+      class="nav nav--next"
+      [attr.aria-label]="'lightbox.next' | t"
+      (click)="next(); $event.stopPropagation()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </button>
+
+    <div class="counter" aria-live="polite">{{ counter() }}</div>
+  }
+</div>

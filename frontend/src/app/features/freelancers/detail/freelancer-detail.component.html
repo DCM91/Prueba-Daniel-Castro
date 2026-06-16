@@ -1,0 +1,125 @@
+<div class="page">
+  <app-core-topbar
+    variant="public"
+    [backLink]="{ labelKey: 'topbar.back_to_catalog', route: '/freelancers' }"
+  />
+
+  <main class="main">
+    @switch (state()) {
+      @case ('loading') {
+        <p class="state">{{ 'freelancers.detail.loading' | t }}</p>
+      }
+      @case ('not-found') {
+        <div class="state state--missing">
+          <h1>{{ 'freelancers.detail.not_found_title' | t }}</h1>
+          <p>{{ 'freelancers.detail.not_found_body' | t }}</p>
+          <a routerLink="/freelancers" class="btn btn--primary">{{ 'freelancers.detail.back_btn' | t }}</a>
+        </div>
+      }
+      @case ('ready') {
+        @if (freelancer(); as f) {
+          <article class="detail">
+            @if (f.cover_urls?.lg ?? f.cover_url; as coverUrl) {
+              <div class="cover" role="img" [attr.aria-label]="'cover.preview_alt' | t : { name: f.display_name ?? '' }">
+                <img class="cover-img" [src]="coverUrl" alt="" loading="lazy" />
+              </div>
+            }
+
+            <section class="hero">
+              <div class="avatar" aria-hidden="true">{{ initials() }}</div>
+              <div class="hero-text">
+                <h1>{{ f.display_name ?? 'freelancers.card.initials_fallback' | t }}</h1>
+                <p class="meta-line">
+                  @if (f.city) { <span>{{ f.city }}</span> }
+                  @if (f.is_available) {
+                    <span class="status status--on">{{ 'freelancers.detail.available' | t }}</span>
+                  } @else {
+                    <span class="status status--off">{{ 'freelancers.detail.busy' | t }}</span>
+                  }
+                  @if (memberSinceLabel(); as since) {
+                    <span class="muted">{{ 'freelancers.detail.member_since' | t : { date: since } }}</span>
+                  }
+                </p>
+              </div>
+            </section>
+
+            <section class="rates" [attr.aria-label]="'freelancers.detail.rate_hourly_label' | t">
+              <div class="rate">
+                <span class="rate-label">{{ 'freelancers.detail.rate_hourly_label' | t }}</span>
+                <span class="rate-value" [class.rate-value--muted]="f.hourly_rate === null">{{ hourlyRateLabel() }}</span>
+              </div>
+              <div class="rate">
+                <span class="rate-label">{{ 'freelancers.detail.rate_project_label' | t }}</span>
+                <span class="rate-value" [class.rate-value--muted]="f.price_per_project === null">{{ pricePerProjectLabel() }}</span>
+              </div>
+            </section>
+
+            @if (portfolios().length) {
+              <section class="portfolios" [attr.aria-label]="'portfolio.section_title' | t">
+                <h2>{{ 'portfolio.section_title' | t }}</h2>
+                <ul class="portfolio-grid" role="list">
+                  @for (item of portfolios(); track item.id; let i = $index) {
+                    <li>
+                      <button
+                        type="button"
+                        class="portfolio-thumb"
+                        [attr.aria-label]="'portfolio.view' | t"
+                        (click)="openLightbox(i)"
+                      >
+                        <img
+                          [src]="item.urls.card ?? item.url"
+                          [alt]="('portfolio.image_alt' | t : { title: item.title ? ': ' + item.title : '' })"
+                          loading="lazy"
+                        />
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+
+            @if (f.bio) {
+              <section class="bio">
+                <h2>{{ 'freelancers.detail.bio_title' | t }}</h2>
+                <p [class.bio--collapsed]="!bioExpanded()">{{ f.bio }}</p>
+                @if (f.bio.length > 240) {
+                  <button type="button" class="btn btn--ghost btn--sm" (click)="toggleBio()">
+                    {{ (bioExpanded() ? 'common.see_less' : 'common.see_more') | t }}
+                  </button>
+                }
+              </section>
+            }
+
+            @if (skills().length) {
+              <section class="skills" [attr.aria-label]="'freelancers.detail.skills_title' | t">
+                <h2>{{ 'freelancers.detail.skills_title' | t }}</h2>
+                <ul class="skill-list">
+                  @for (skill of skills(); track skill.id) {
+                    <li class="skill">
+                      <span class="skill-name">{{ skill.name }}</span>
+                      <span class="skill-cat" [attr.data-cat]="skill.category">{{ ('skill_categories.' + skill.category) | t }}</span>
+                      @if (skill.level) {
+                        <span class="skill-level">{{ levelLabel(skill.level) }}</span>
+                      }
+                      @if (skill.years_experience !== null) {
+                        <span class="skill-yrs">{{ (skill.years_experience === 1 ? 'freelancers.detail.skill_years_one' : 'freelancers.detail.skill_years_other') | t : { n: skill.years_experience } }}</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+          </article>
+        }
+      }
+    }
+  </main>
+
+  @if (lightboxIndex() !== null) {
+    <app-lightbox
+      [items]="portfolios()"
+      [startIndex]="lightboxIndex() ?? 0"
+      [close]="closeLightbox.bind(this)"
+    />
+  }
+</div>

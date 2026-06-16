@@ -1,0 +1,61 @@
+<div class="page">
+  <app-core-topbar variant="auth" />
+
+  <div class="card">
+    <h1>{{ 'auth.login.title' | t }}</h1>
+    <p class="subtitle">{{ 'auth.login.subtitle' | t }}</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label class="field">
+        <span>{{ 'auth.login.email' | t }}</span>
+        <input type="email" formControlName="email" autocomplete="email" />
+        @if (form.controls.email.touched && form.controls.email.errors) {
+          <small class="error">{{ 'auth.login.email_required' | t }}</small>
+        }
+      </label>
+
+      <label class="field">
+        <span>{{ 'auth.login.password' | t }}</span>
+        <input type="password" formControlName="password" autocomplete="current-password" />
+        @if (form.controls.password.touched && form.controls.password.errors) {
+          <small class="error">{{ 'auth.login.password_required' | t }}</small>
+        }
+      </label>
+
+      @if (errorMessage()) {
+        <p class="error error--global">{{ errorMessage() }}</p>
+      }
+
+      <button class="submit" type="submit" [disabled]="submitting()">
+        {{ (submitting() ? 'auth.login.submitting' : 'auth.login.submit') | t }}
+      </button>
+    </form>
+
+    <div class="oauth-divider">
+      <span>{{ 'auth.oauth.or' | t }}</span>
+    </div>
+
+    <div class="oauth-buttons">
+      <button type="button" class="oauth-btn oauth-btn--google" (click)="loginWithOAuth('google')">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47c-.28 1.4-1.07 2.59-2.27 3.4v2.81h3.66c2.16-1.99 3.42-4.91 3.42-8.45z"/>
+          <path fill="#34A853" d="M12 24c3.15 0 5.78-1.05 7.7-2.83l-3.66-2.81c-1.02.69-2.32 1.1-4.04 1.1-3.1 0-5.73-2.09-6.66-4.91H1.56v3.09A12 12 0 0 0 12 24z"/>
+          <path fill="#FBBC05" d="M5.34 14.45c-.24-.69-.38-1.43-.38-2.18s.14-1.49.38-2.18V7H1.56A12 12 0 0 0 0 12.27c0 1.94.46 3.78 1.56 5.27l3.78-3.09z"/>
+          <path fill="#EA4335" d="M12 4.78c1.84 0 3.49.63 4.79 1.88l3.25-3.25C17.78 1.19 15.13 0 12 0 7.31 0 3.26 2.69 1.56 6.91l3.78 3.09C6.27 6.87 8.9 4.78 12 4.78z"/>
+        </svg>
+        <span>{{ 'auth.oauth.continue_with_google' | t }}</span>
+      </button>
+      <button type="button" class="oauth-btn oauth-btn--facebook" (click)="loginWithOAuth('facebook')">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#FFFFFF" d="M24 12c0-6.63-5.37-12-12-12S0 5.37 0 12c0 5.99 4.39 10.95 10.13 11.85V15.47H7.08V12h3.05V9.36c0-3.01 1.79-4.67 4.53-4.67 1.31 0 2.69.23 2.69.23v2.95h-1.51c-1.49 0-1.96.93-1.96 1.88V12h3.32l-.53 3.47h-2.79v8.38C19.61 22.95 24 17.99 24 12z"/>
+        </svg>
+        <span>{{ 'auth.oauth.continue_with_facebook' | t }}</span>
+      </button>
+    </div>
+
+    <p class="footer-link">
+      {{ 'auth.login.no_account' | t }}
+      <a routerLink="/register">{{ 'auth.login.register_link' | t }}</a>
+    </p>
+  </div>
+</div>

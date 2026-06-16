@@ -1,0 +1,128 @@
+<div class="page">
+  <header class="topbar">
+    <a routerLink="/" class="brand-link" [attr.aria-label]="'FrameMatch, ' + ('topbar.go_home' | t)">
+      <app-brand-logo [brandSize]="'md'" />
+    </a>
+    <nav class="topbar-nav">
+      <a class="nav-link" href="#how">{{ 'nav.how' | t }}</a>
+      <a class="nav-link" href="#categories">{{ 'nav.categories' | t }}</a>
+    </nav>
+    <div class="topbar-cta">
+      <app-language-selector />
+      <a routerLink="/login" class="link-login">{{ 'landing.login_link' | t }}</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <h1>
+        <span class="grad-text">{{ 'landing.title' | t }}</span>
+      </h1>
+      <p class="tagline">
+        {{ 'landing.tagline' | t : { strong1: 'landing.tagline_disciplines' | t } }}
+      </p>
+
+      <div class="cta-row">
+        <button class="cta cta--primary" type="button" (click)="goToRegister('client')">
+          <span class="cta-label">{{ 'landing.cta_client' | t }}</span>
+          <span class="cta-arrow" aria-hidden="true">→</span>
+        </button>
+        <button class="cta cta--secondary" type="button" (click)="goToRegister('freelancer')">
+          <span class="cta-label">{{ 'landing.cta_freelancer' | t }}</span>
+          <span class="cta-arrow" aria-hidden="true">→</span>
+        </button>
+      </div>
+
+      <div class="auth-links">
+        {{ 'landing.have_account' | t }}
+        <a routerLink="/login" class="link-strong">{{ 'landing.login_link' | t }}</a>
+      </div>
+    </div>
+
+    <div class="hero-glow" aria-hidden="true">
+      <div class="orb orb--purple"></div>
+      <div class="orb orb--cyan"></div>
+    </div>
+  </section>
+
+  <section id="categories" class="categories">
+    <div class="section-head">
+      <h2>
+        {{ 'landing.section_categories_title_before' | t }}
+        <span class="grad-text">{{ 'landing.section_categories_title_highlight' | t }}</span>
+      </h2>
+      <p class="muted">{{ 'landing.section_categories_subtitle' | t }}</p>
+    </div>
+    <div class="cat-grid">
+      <article class="cat-card" data-color="purple">
+        <div class="cat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="13" r="4"/>
+          </svg>
+        </div>
+        <h3>{{ 'landing.cat_photo_title' | t }}</h3>
+        <p>{{ 'landing.cat_photo_body' | t }}</p>
+      </article>
+      <article class="cat-card" data-color="cyan">
+        <div class="cat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/>
+          </svg>
+        </div>
+        <h3>{{ 'landing.cat_video_title' | t }}</h3>
+        <p>{{ 'landing.cat_video_body' | t }}</p>
+      </article>
+      <article class="cat-card" data-color="pink">
+        <div class="cat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v6"/><path d="M12 16v6"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="M2 12h6"/><path d="M16 12h6"/>
+          </svg>
+        </div>
+        <h3>{{ 'landing.cat_edit_title' | t }}</h3>
+        <p>{{ 'landing.cat_edit_body' | t }}</p>
+      </article>
+      <article class="cat-card" data-color="amber">
+        <div class="cat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 11v2a2 2 0 0 0 2 2h1l4 4V5L6 9H5a2 2 0 0 0-2 2z"/>
+            <path d="M16 8a4 4 0 0 1 0 8"/>
+            <path d="M19 5a8 8 0 0 1 0 14"/>
+          </svg>
+        </div>
+        <h3>{{ 'landing.cat_content_title' | t }}</h3>
+        <p>{{ 'landing.cat_content_body' | t }}</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="how" class="how">
+    <div class="section-head">
+      <h2>{{ 'landing.section_how_title' | t }}</h2>
+      <p class="muted">{{ 'landing.section_how_subtitle' | t }}</p>
+    </div>
+    <div class="how-grid">
+      <article class="how-step">
+        <div class="how-num">1</div>
+        <h3>{{ 'landing.how_step1_title' | t }}</h3>
+        <p>{{ 'landing.how_step1_body' | t }}</p>
+      </article>
+      <article class="how-step">
+        <div class="how-num">2</div>
+        <h3>{{ 'landing.how_step2_title' | t }}</h3>
+        <p>{{ 'landing.how_step2_body' | t }}</p>
+      </article>
+      <article class="how-step">
+        <div class="how-num">3</div>
+        <h3>{{ 'landing.how_step3_title' | t }}</h3>
+        <p>{{ 'landing.how_step3_body' | t }}</p>
+      </article>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <app-brand-logo [brandSize]="'sm'" />
+      <p>{{ 'footer.copyright' | t : { tagline: 'app.tagline' | t } }}</p>
+    </div>
+  </footer>
+</div>

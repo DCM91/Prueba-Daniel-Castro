@@ -1,0 +1,216 @@
+:host { display: block; }
+
+.page {
+  min-height: 100vh;
+  background: #0f0f12;
+  color: #f4f4f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.head h1 {
+  font-size: clamp(28px, 4vw, 38px);
+  margin: 0 0 8px;
+  background: linear-gradient(135deg, #f4f4f5 0%, #c4b5fd 60%, #67e8f9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.lead { color: #a1a1aa; margin: 0; font-size: 16px; }
+
+.loading {
+  text-align: center;
+  color: #a1a1aa;
+  padding: 48px 0;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.card h2 { margin: 0; font-size: 20px; }
+
+.muted { color: #a1a1aa; font-size: 14px; margin: 0; }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.field > span {
+  font-size: 13px;
+  color: #d4d4d8;
+}
+
+.field input,
+.field textarea,
+.field select {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0f0f12;
+  color: #f4f4f5;
+  padding: 11px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.field textarea { resize: vertical; min-height: 96px; }
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+}
+
+.row {
+  display: flex;
+  gap: 14px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #d4d4d8;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.checkbox input { width: 18px; height: 18px; accent-color: #7c3aed; }
+
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #d4d4d8;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.chip:hover { background: rgba(255, 255, 255, 0.08); }
+
+.chip--selected {
+  background: rgba(124, 58, 237, 0.18);
+  border-color: rgba(124, 58, 237, 0.5);
+  color: #c4b5fd;
+}
+
+.selected-list {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.selected-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.selected-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.selected-name { font-weight: 600; font-size: 14px; }
+
+.remove-btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: #a1a1aa;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.remove-btn:hover { color: #f87171; }
+
+.error {
+  color: #f87171;
+  font-size: 12px;
+}
+
+.error--global {
+  margin: 0;
+  padding: 10px 12px;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 8px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.primary-btn {
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 22px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.primary-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px -6px rgba(124, 58, 237, 0.6);
+}
+.primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.secondary-btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: #f4f4f5;
+  border-radius: 10px;
+  padding: 12px 22px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.secondary-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); }
+.secondary-btn:disabled { opacity: 0.6; cursor: not-allowed; }

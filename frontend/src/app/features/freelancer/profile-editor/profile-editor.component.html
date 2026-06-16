@@ -1,0 +1,167 @@
+<div class="page">
+  <app-core-topbar
+    variant="freelancer"
+    [backLink]="{ labelKey: 'topbar.back_to_home', route: '/home/freelancer' }"
+  />
+
+  <main class="content">
+    <header class="head">
+      <h1>Edita tu perfil</h1>
+      <p class="lead">Cuéntales a los clientes quién eres, cuánto cobras y en qué destacar.</p>
+    </header>
+
+    @if (loading()) {
+      <p class="loading">Cargando…</p>
+    } @else if (errorMessage() && availableSkills().length === 0) {
+      <p class="error error--global">{{ errorMessage() }}</p>
+    } @else {
+      <form [formGroup]="basicForm" (ngSubmit)="submit()" novalidate>
+        <section class="card avatar-section">
+          <h2>{{ 'avatar.section_title' | t }}</h2>
+          <p class="muted">{{ 'avatar.section_hint' | t }}</p>
+          <app-avatar-uploader
+            [currentAvatarUrl]="currentUser()?.avatar_url ?? null"
+            [currentAvatarUrls]="currentUser()?.avatar_urls ?? null"
+            [userName]="currentUser()?.name ?? ''"
+          />
+        </section>
+
+        <section class="card">
+          <h2>{{ 'cover.section_title' | t }}</h2>
+          <p class="muted">{{ 'cover.section_hint' | t }}</p>
+          <app-cover-uploader
+            [currentCoverUrl]="currentUser()?.freelancer_profile?.cover_url ?? null"
+            [currentCoverUrls]="currentUser()?.freelancer_profile?.cover_urls ?? null"
+            (coverUpdated)="onCoverUpdated($event)"
+          />
+        </section>
+
+        <section class="card">
+          <h2>{{ 'portfolio.section_title' | t }}</h2>
+          <p class="muted">{{ 'portfolio.section_hint' | t }}</p>
+          <a routerLink="/freelancer/portfolio" class="primary-btn">
+            {{ 'portfolio.add_cta' | t }}
+          </a>
+        </section>
+
+        <section class="card">
+          <h2>Datos básicos</h2>
+
+          <label class="field">
+            <span>Nombre artístico</span>
+            <input type="text" formControlName="display_name" maxlength="100" placeholder="Ej. Luis Foto Pro" />
+            @if (errorFor('display_name'); as msg) {
+              <small class="error">{{ msg }}</small>
+            } @else if (basicForm.controls.display_name.touched && basicForm.controls.display_name.errors?.['maxlength']) {
+              <small class="error">Máximo 100 caracteres.</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Bio</span>
+            <textarea formControlName="bio" rows="4" maxlength="1000" placeholder="Cuéntales tu estilo y tu experiencia."></textarea>
+            @if (errorFor('bio'); as msg) {
+              <small class="error">{{ msg }}</small>
+            } @else if (basicForm.controls.bio.touched && basicForm.controls.bio.errors?.['maxlength']) {
+              <small class="error">Máximo 1000 caracteres.</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Ciudad</span>
+            <input type="text" formControlName="city" maxlength="80" placeholder="Ej. Madrid" />
+            @if (errorFor('city'); as msg) {
+              <small class="error">{{ msg }}</small>
+            } @else if (basicForm.controls.city.touched && basicForm.controls.city.errors?.['maxlength']) {
+              <small class="error">Máximo 80 caracteres.</small>
+            }
+          </label>
+
+          <div class="row">
+            <label class="field">
+              <span>Tarifa por hora (€)</span>
+              <input type="number" formControlName="hourly_rate" min="0" step="0.01" placeholder="60" />
+              @if (errorFor('hourly_rate'); as msg) {
+                <small class="error">{{ msg }}</small>
+              } @else if (basicForm.controls.hourly_rate.touched && basicForm.controls.hourly_rate.errors?.['min']) {
+                <small class="error">No puede ser negativo.</small>
+              }
+            </label>
+
+            <label class="field">
+              <span>Precio por proyecto (€)</span>
+              <input type="number" formControlName="price_per_project" min="0" step="0.01" placeholder="450" />
+              @if (errorFor('price_per_project'); as msg) {
+                <small class="error">{{ msg }}</small>
+              } @else if (basicForm.controls.price_per_project.touched && basicForm.controls.price_per_project.errors?.['min']) {
+                <small class="error">No puede ser negativo.</small>
+              }
+            </label>
+          </div>
+
+          <label class="checkbox">
+            <input type="checkbox" formControlName="is_available" />
+            <span>Estoy disponible para nuevos encargos</span>
+          </label>
+        </section>
+
+        <section class="card">
+          <h2>Tus skills</h2>
+          <p class="muted">Selecciona hasta 20 del catálogo. Indica tu nivel y años de experiencia.</p>
+
+          <div class="chip-grid">
+            @for (skill of availableSkills(); track skill.id) {
+              <button
+                type="button"
+                class="chip"
+                [class.chip--selected]="isSelected(skill)"
+                [attr.aria-pressed]="isSelected(skill)"
+                (click)="toggleSkill(skill)"
+              >
+                {{ skill.name }}
+              </button>
+            }
+          </div>
+
+          @if (skillsForm.controls.length > 0) {
+            <ul class="selected-list" formArrayName="skills">
+              @for (group of skillsForm.controls; track group.controls.skill_id.value; let i = $index) {
+                <li class="selected-item" [formGroupName]="i">
+                  <div class="selected-head">
+                    <span class="selected-name">{{ skillNameFor(group.controls.skill_id.value) }}</span>
+                    <button type="button" class="remove-btn" (click)="removeSkillAt(i)" aria-label="Quitar skill">×</button>
+                  </div>
+                  <div class="row">
+                    <label class="field">
+                      <span>Nivel</span>
+                      <select formControlName="level">
+                        <option value="junior">Junior</option>
+                        <option value="mid">Mid</option>
+                        <option value="senior">Senior</option>
+                      </select>
+                    </label>
+                    <label class="field">
+                      <span>Años</span>
+                      <input type="number" formControlName="years_experience" min="0" max="50" />
+                    </label>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        @if (errorMessage()) {
+          <p class="error error--global">{{ errorMessage() }}</p>
+        }
+
+        <div class="actions">
+          <button type="button" class="secondary-btn" (click)="cancel()" [disabled]="submitting()">Cancelar</button>
+          <button type="submit" class="primary-btn" [disabled]="submitting()">
+            {{ submitting() ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    }
+  </main>
+</div>

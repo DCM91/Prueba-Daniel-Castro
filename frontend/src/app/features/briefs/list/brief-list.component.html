@@ -1,0 +1,70 @@
+<div class="page">
+  <header class="topbar">
+    <a routerLink="/home" class="brand-link">
+      <app-brand-logo [brandSize]="'md'" />
+    </a>
+    <nav class="topbar-nav">
+      <button class="nav-link" [class.nav-link--active]="scope() === 'all'" (click)="changeScope('all')">{{ 'briefs.list.scope_all' | t }}</button>
+      @if (currentUser()?.role === 'client') {
+        <button class="nav-link" [class.nav-link--active]="scope() === 'mine'" (click)="changeScope('mine')">{{ 'briefs.list.scope_mine' | t }}</button>
+      }
+    </nav>
+    <div class="topbar-right">
+      <app-language-selector />
+      @if (currentUser()?.role === 'client') {
+        <a routerLink="/briefs/new" class="btn btn--primary">{{ 'briefs.list.new_brief' | t }}</a>
+      }
+    </div>
+  </header>
+
+  <main class="main">
+    <header class="page-head">
+      <h1>{{ 'briefs.list.title' | t }}</h1>
+      <p class="muted">{{ 'briefs.list.subtitle' | t }}</p>
+    </header>
+
+    @switch (state()) {
+      @case ('loading') {
+        <p class="state">{{ 'briefs.list.loading' | t }}</p>
+      }
+      @case ('error') {
+        <p class="state state--error">{{ 'briefs.list.error' | t }}</p>
+      }
+      @case ('empty') {
+        <p class="state">{{ 'briefs.list.empty' | t }}</p>
+      }
+      @case ('ready') {
+        <p class="count">{{ 'briefs.list.count' | t : { total: total() } }}</p>
+        <div class="grid">
+          @for (b of briefsList(); track b.id) {
+            <a [routerLink]="['/briefs', b.id]" class="brief-card">
+              <header class="brief-head">
+                <h3>{{ b.title }}</h3>
+                <span class="cat">{{ ('skill_categories.' + b.category) | t }}</span>
+              </header>
+              <p class="brief-body">{{ b.description }}</p>
+              <footer class="brief-foot">
+                <span class="meta">{{ formatBudget(b) }}</span>
+                @if (b.city) { <span class="meta">{{ b.city }}</span> }
+                @if (b.deadline) { <span class="meta">{{ 'briefs.list.deadline_label' | t }} {{ b.deadline }}</span> }
+                @if (b.proposals_count !== undefined) {
+                  @let count = b.proposals_count;
+                  <span class="meta">
+                    {{ (count === 1 ? 'briefs.list.proposal_count_one' : 'briefs.list.proposal_count_other') | t : { n: count } }}
+                  </span>
+                }
+              </footer>
+            </a>
+          }
+        </div>
+        @if (lastPage() > 1) {
+          <nav class="pagination">
+            <button class="btn btn--ghost" [disabled]="currentPage() === 1" (click)="prevPage()">{{ 'briefs.list.prev' | t }}</button>
+            <span class="page-info">{{ 'briefs.list.page_info' | t : { current: currentPage(), last: lastPage() } }}</span>
+            <button class="btn btn--ghost" [disabled]="currentPage() === lastPage()" (click)="nextPage()">{{ 'briefs.list.next' | t }}</button>
+          </nav>
+        }
+      }
+    }
+  </main>
+</div>

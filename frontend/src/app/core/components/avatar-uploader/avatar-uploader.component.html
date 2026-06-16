@@ -1,0 +1,87 @@
+<div class="avatar-uploader" [class.is-drag-over]="dragOver()">
+  <div class="avatar-preview" [class.has-image]="!!displayUrl()">
+    @if (displayUrl(); as url) {
+      <img
+        [src]="url"
+        [alt]="(displayUrl() ? ('avatar.preview_alt' | t : { name: userName() }) : ('avatar.fallback_alt' | t : { name: userName() }))"
+        class="avatar-img"
+      />
+    } @else {
+      <span class="avatar-fallback" aria-hidden="true">{{ initials() }}</span>
+    }
+
+    @if (isUploading()) {
+      <div class="avatar-uploading" role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="visually-hidden">{{ 'uploader.uploading' | t }}</span>
+      </div>
+    }
+  </div>
+
+  <div
+    class="drop-zone"
+    role="button"
+    tabindex="0"
+    [attr.aria-label]="'uploader.drop_zone' | t"
+    [attr.aria-disabled]="isUploading() ? 'true' : null"
+    (click)="openPicker()"
+    (keydown)="onKeydown($event)"
+    (drop)="onDrop($event)"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+  >
+    <svg
+      class="drop-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.6"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+    <span class="drop-text">{{ 'uploader.drop_zone' | t }}</span>
+    <span class="drop-hint">{{ maxMb() }} MB · JPG, PNG, WebP</span>
+  </div>
+
+  <input
+    #fileInput
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    class="visually-hidden"
+    (change)="onFileSelected($event)"
+  />
+
+  @if (errorMessage(); as msg) {
+    <div class="status status--error" role="alert">
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="status-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <span class="status-text">{{ msg | t }}</span>
+    </div>
+  } @else if (status().kind === 'success') {
+    <div class="status status--success" role="status" aria-live="polite">
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="status-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+      <span class="status-text">{{ 'uploader.success' | t }}</span>
+    </div>
+  }
+
+  @if (currentAvatarUrl() && !isUploading()) {
+    <button
+      type="button"
+      class="remove-btn"
+      [attr.aria-label]="'avatar.remove_cta' | t"
+      (click)="remove()"
+    >
+      {{ 'avatar.remove_cta' | t }}
+    </button>
+  }
+</div>

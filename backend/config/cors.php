@@ -19,6 +19,10 @@ return [
 
     'allowed_methods' => ['*'],
 
+    /*
+    | NOTA: allowed_origins ['*'] es para desarrollo local.
+    | En producción, restringir a los dominios específicos del frontend.
+    */
     'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],

@@ -1,0 +1,88 @@
+<div class="cover-uploader" [class.is-drag-over]="dragOver()">
+  <div
+    class="cover-preview"
+    [class.has-image]="!!displayUrl()"
+    role="button"
+    tabindex="0"
+    [attr.aria-label]="'cover.upload_cta' | t"
+    [attr.aria-disabled]="isUploading() ? 'true' : null"
+    (click)="openPicker()"
+    (keydown)="onKeydown($event)"
+    (drop)="onDrop($event)"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+  >
+    @if (displayUrl(); as url) {
+      <img
+        class="cover-img"
+        [src]="url"
+        [alt]="('cover.preview_alt' | t : { name: '' })"
+      />
+    } @else {
+      <div class="cover-fallback">
+        <svg
+          class="cover-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="2" y="5" width="20" height="14" rx="2" />
+          <circle cx="9" cy="11" r="1.6" />
+          <path d="M22 17l-5-5-9 8" />
+        </svg>
+        <span class="cover-fallback-text">{{ 'cover.upload_cta' | t }}</span>
+      </div>
+    }
+
+    @if (isUploading()) {
+      <div class="cover-uploading" role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="visually-hidden">{{ 'uploader.uploading' | t }}</span>
+      </div>
+    }
+  </div>
+
+  <input
+    #fileInput
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    class="visually-hidden"
+    (change)="onFileSelected($event)"
+  />
+
+  @if (errorMessage(); as msg) {
+    <div class="status status--error" role="alert">
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="status-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <span class="status-text">{{ msg | t }}</span>
+    </div>
+  } @else if (status().kind === 'success') {
+    <div class="status status--success" role="status" aria-live="polite">
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="status-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+      <span class="status-text">{{ 'uploader.success' | t }}</span>
+    </div>
+  }
+
+  <div class="actions">
+    <span class="hint">{{ maxMb() }} MB · JPG, PNG, WebP</span>
+    @if (currentCoverUrl() && !isUploading()) {
+      <button
+        type="button"
+        class="remove-btn"
+        [attr.aria-label]="'cover.remove_cta' | t"
+        (click)="remove()"
+      >
+        {{ 'cover.remove_cta' | t }}
+      </button>
+    }
+  </div>
+</div>
