@@ -39,7 +39,7 @@ export class CoverUploaderComponent {
 
   readonly currentCoverUrl = input<string | null>(null);
   readonly currentCoverUrls = input<CoverUrls | null>(null);
-  readonly maxBytes = input<number>(5 * 1024 * 1024);
+  readonly maxBytes = input<number>(10 * 1024 * 1024);
 
   readonly coverUpdated = output<FreelancerProfile>();
 

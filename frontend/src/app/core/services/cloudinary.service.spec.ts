@@ -80,7 +80,7 @@ describe('CloudinaryService', () => {
   });
 
   it('throws synchronously when file exceeds max bytes', () => {
-    const file = makeFile('big.jpg', 'image/jpeg', 5 * 1024 * 1024);
+    const file = makeFile('big.jpg', 'image/jpeg', 11 * 1024 * 1024);
 
     expect(() => service.uploadImage(file, 'avatar')).toThrow(/MB/);
   });

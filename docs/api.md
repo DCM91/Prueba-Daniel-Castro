@@ -600,6 +600,8 @@ Registra el avatar subido. **Requiere JWT.** Throttle: 30 req/min.
 - `format`: optional, in: `jpg, jpeg, png, webp, gif, avif`.
 - `bytes`: optional, integer 0-10485760 (10 MB).
 
+> **Limite uniforme de subida:** desde el ajuste de limites 10 MB, el frontend acepta archivos de hasta **10 MB para avatar, cover y portfolio** (antes 2/5/8 MB respectivamente). El backend rechazara cualquier `bytes` superior a 10 MB con 422. Cloudinary free tier capa tambien en 10 MB por archivo.
+
 **Validaciones de seguridad server-side** (no vienen del cliente, las aplica `CloudinaryService::verifyResource()`):
 - El `public_id` debe existir en Cloudinary (vía Admin API).
 - El recurso debe estar en la carpeta esperada (`framematch/avatars`).
@@ -777,6 +779,8 @@ Registra el avatar subido. **Requiere JWT.** Throttle: 30 req/min.
 - `width` / `height`: optional, integer 1-10000.
 - `format`: optional, in: `jpg, jpeg, png, webp, gif, avif`.
 - `bytes`: optional, integer 0-10485760 (10 MB).
+
+> **Limite uniforme de subida:** desde el ajuste de limites 10 MB, el frontend acepta archivos de hasta **10 MB para avatar, cover y portfolio** (antes 2/5/8 MB respectivamente). El backend rechazara cualquier `bytes` superior a 10 MB con 422. Cloudinary free tier capa tambien en 10 MB por archivo.
 
 **Validaciones de seguridad server-side** (no vienen del cliente, las aplica `CloudinaryService::verifyResource()`):
 - El `public_id` debe existir en Cloudinary (vía Admin API).

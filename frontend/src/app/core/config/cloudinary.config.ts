@@ -25,9 +25,9 @@ export const CLOUDINARY_CONFIG = {
     brief: 'framematch/briefs',
   },
   upload: {
-    maxAvatarBytes: 2 * 1024 * 1024,
-    maxCoverBytes: 5 * 1024 * 1024,
-    maxPortfolioBytes: 8 * 1024 * 1024,
+    maxAvatarBytes: 10 * 1024 * 1024,
+    maxCoverBytes: 10 * 1024 * 1024,
+    maxPortfolioBytes: 10 * 1024 * 1024,
     maxBriefBytes: 5 * 1024 * 1024,
     acceptedFormats: ['image/jpeg', 'image/png', 'image/webp'] as const,
     acceptedFormatsWithGif: [

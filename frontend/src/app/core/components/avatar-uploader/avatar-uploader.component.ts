@@ -40,7 +40,7 @@ export class AvatarUploaderComponent {
   readonly currentAvatarUrl = input<string | null>(null);
   readonly currentAvatarUrls = input<AvatarUrls | null>(null);
   readonly userName = input<string>('');
-  readonly maxBytes = input<number>(2 * 1024 * 1024);
+  readonly maxBytes = input<number>(10 * 1024 * 1024);
 
   readonly avatarUpdated = output<User>();
 
