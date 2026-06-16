@@ -350,11 +350,63 @@ Todos los endpoints de subida usan `throttle:30,1` (30 requests por minuto por I
 - Tipo `AvatarUrls` en `auth.types.ts` (frontend).
 - Si quieres eager transformation (no recomendado, ahorra créditos), añade a un futuro `CloudinaryService::buildEagerAvatarTransformations()`.
 
+## Deploy (Railway) — Fase 5.6
+
+> Detalle operacional completo en [docs/deploy.md](../../docs/deploy.md). Aquí solo lo que toca al código del backend.
+
+### Archivos en `backend/` que controlan el deploy
+
+| Archivo | Función | Notas |
+|---|---|---|
+| `composer.json` | Declara `"php": "^8.3"` | Symfony 8 (en lock) requiere 8.4+, por eso el pin va aparte |
+| `railpack.json` | Pin de PHP 8.4 | Railway usa Railpack, no Nixpacks. `nixpacks.toml` se ignora silenciosamente |
+| `start-container.sh` | Override del entrypoint de Railpack | Custom porque el default hace `migrate --force` sin `--seed`. Bit `+x` obligatorio |
+
+**`railpack.json` actual:**
+```json
+{
+  "$schema": "https://schema.railpack.com",
+  "packages": {
+    "php": "8.4"
+  }
+}
+```
+
+**`start-container.sh` actual (resumido):**
+```bash
+if [ "$IS_LARAVEL" = "true" ]; then
+  if [ "$RAILPACK_SKIP_MIGRATIONS" != "true" ]; then
+    php artisan migrate --force --seed
+  fi
+  php artisan storage:link
+  php artisan optimize:clear
+  php artisan optimize
+fi
+docker-php-entrypoint --config /Caddyfile --adapter caddyfile
+```
+
+> El servidor web es **FrankenPHP** (no `php artisan serve`). Lo monta Railpack automáticamente, no se configura en el repo. `set -e` arriba del script hace que cualquier comando que falle impida que FrankenPHP arranque, lo cual es un feature: si las migraciones fallan, la app no recibe tráfico y los logs muestran el error de inmediato.
+
+### Variables de entorno que importan en producción
+
+- `APP_KEY` — generado con `php artisan key:generate --show` (32 bytes base64).
+- `JWT_SECRET` — **mínimo 32 caracteres (256 bits)**. HS256 falla con `Key provided is shorter than 256 bits` si es más corto. Generar con `php artisan jwt:secret` y copiar el valor del `.env` (no existe `--show` en este paquete).
+- `DB_URL=${{MySQL.MYSQL_URL}}` — referencia interna de Railway al plugin MySQL del mismo proyecto. Nunca escribir la URL a mano.
+- `CACHE_STORE=database` y `SESSION_DRIVER=database` — requieren las tablas `cache` y `sessions`, creadas por las migraciones por defecto.
+- `FRONTEND_URL` — la URL de Vercel. Solo lo usa `OAuthController::callback`; sin OAuth configurado, da igual lo que pongas.
+
+### Si el deploy falla
+
+1. **Build con `requires php >= 8.4`**: Railpack eligió PHP 8.3. Verifica que `backend/railpack.json` tiene `{"packages":{"php":"8.4"}}` y está commiteado (no en `.gitignore`).
+2. **App arranca pero `/api/skills` devuelve tabla vacía o 500**: el seed no corrió. Verifica que `backend/start-container.sh` está commiteado con bit `+x` (`git ls-files --stage backend/start-container.sh` debe mostrar `100755`).
+3. **Register/login 500 con "shorter than 256 bits"**: `JWT_SECRET` < 32 chars. Regenera en local con `php artisan jwt:secret`, copia del `.env`, pega en Railway.
+4. **Cambio de variable no se refleja**: la caché de Laravel cachea config en `bootstrap/cache/config.php`. `start-container.sh` ya corre `optimize:clear` antes de `optimize`, así que el redeploy debería refrescarlo. Si no, trigger un redeploy manual desde el dashboard.
+
 ## Troubleshooting
 
 **"Class 'JWTAuth' not found"** → `composer require php-open-source-saver/jwt-auth` (ya hecho en Fase 1).
 
-**"Route [login] not defined" en 401** → Asegúrate de que `bootstrap/app.php` tiene el render handler para `AuthenticationException` (Fase 1 lo añadió).
+**"Route [login] not defined" en 401** → Asegúrate de que `bootstrap/app.php` tiene el render handler para `AuthenticationException` (Fase 1 lo añadió). **Bug conocido**: este handler solo captura `AuthenticationException`, no `RouteNotFoundException`. Cuando el `Authenticate` middleware dispara sin token en una ruta `api/*`, internamente intenta `route('login')` que no existe, lanza `RouteNotFoundException` con stack trace 500. Fix pendiente: extender el handler a `RouteNotFoundException` con `str_contains($e->getMessage(), 'login')` o similar. **No bloqueante** — solo afecta a respuestas 401 sin token, el flujo normal con token funciona.
 
 **"Unknown column 'role'" en INSERT** → Corriste `php artisan migrate:fresh --seed`? La BD en vivo necesita las migraciones nuevas.
 

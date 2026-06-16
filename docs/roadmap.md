@@ -483,6 +483,78 @@ framematch/
 
 **Total acumulado:** backend **114 tests / 579 assertions**, frontend **165 tests / 28 suites**.
 
+### ✅ Fase 5.6 · Deploy a Railway (backend) + Vercel (frontend)
+
+**Objetivo:** llevar la app a producción accesible públicamente, con backend y frontend separados pero comunicados, en un monorepo de GitHub que se desplegase automáticamente en cada push a `main`.
+
+**Arquitectura elegida**
+- **Backend** en Railway: servicio Laravel con MySQL gestionado (plugin de Railway, mismo proyecto). PHP 8.4 + FrankenPHP. Variable `DB_URL=${{MySQL.MYSQL_URL}}` para conectar al plugin MySQL por referencia interna.
+- **Frontend** en Vercel: build estático de Angular 21, servido como SPA con rewrites. Todas las llamadas a `/api/*` se redirigen a Railway mediante Vercel rewrites, evitando CORS y haciendo que el navegador vea todo como mismo origen.
+- **Push a `main`** dispara los dos deploys en paralelo.
+
+**Backend · 3 archivos críticos en `backend/`**
+- **`Procfile`** (añadido y luego borrado): la release/web de Heroku-style no las usa Railpack. Sirvió como documentación de la intención.
+- **`railpack.json`** (versión final): pin de PHP 8.4. Symfony 8 (en `composer.lock`) requiere 8.4+; el `^8.3` de `composer.json` hacía que Railpack eligiera 8.3.31, que reventaba el build.
+- **`start-container.sh`** (custom, bit `+x`): Railpack SÍ respeta este archivo y lo usa como entrypoint. El default corre `php artisan migrate --force` (sin `--seed`); el nuestro corre `migrate --force --seed` para que las 30 skills y los 6 freelancers demo estén poblados desde el primer deploy. Además ejecuta `storage:link`, `optimize:clear` y `optimize`, y arranca FrankenPHP.
+
+**Frontend · 1 archivo crítico en `frontend/`**
+- **`vercel.json`**: `installCommand: "npm install --legacy-peer-deps"` (sortea el peer dep conflict de `@angular-builders/jest@21.0.3` con `@angular/compiler@21.2.14`), `outputDirectory: "dist/frontend/browser"`, y dos rewrites:
+  - `/api/(.*)` → `https://<railway>.up.railway.app/api/$1` (proxy transparente)
+  - `/(.*)` → `/index.html` (catch-all para que el router de Angular tome el control en refreshes)
+
+**Issues encontrados durante el primer deploy (5 hits, todos resueltos)**
+1. **PHP 8.3 vs Symfony 8**: build falla con `requires php >= 8.4`. Fix: `railpack.json` con `{"packages":{"php":"8.4"}}`.
+2. **Railpack ignora `Procfile` y `nixpacks.toml`**: la `release:` del Procfile no se ejecutaba, las migraciones nunca corrían. Fix: custom `start-container.sh`.
+3. **Railpack corre `migrate` pero NO `--seed` por defecto**: las tablas existían pero vacías. Fix: custom `start-container.sh` con `--seed`.
+4. **`JWT_SECRET` demasiado corto (192 bits)**: register/login devolvían 500 con `Key provided is shorter than 256 bits`. `php artisan jwt:secret --show` no existe en el paquete; el valor hay que copiarlo del `.env`. Pegar uno ≥ 32 chars. Fix: regenerar y pegar.
+5. **Vercel build con `ERESOLVE`**: peer dep conflict. Fix: `installCommand: "npm install --legacy-peer-deps"` en `vercel.json`.
+6. **Vercel 404 en rutas SPA** (`/home`, `/login`): sin rewrite catch-all. Fix: segundo rewrite en `vercel.json` → `/index.html`.
+
+**Variables de entorno en Railway (referencia)**
+- `APP_*` (NAME, ENV=production, DEBUG=false, URL, KEY, BCRYPT)
+- `DB_CONNECTION=mysql` + `DB_URL=${{MySQL.MYSQL_URL}}` (referencia interna)
+- `CACHE_STORE=database` + `SESSION_DRIVER=database` (requieren tablas, creadas por migración)
+- `JWT_SECRET` (≥ 32 chars), `JWT_ALGO=HS256`, `JWT_TTL=60`, `JWT_REFRESH_TTL=20160`
+- `FRONTEND_URL=https://framematch.vercel.app` (placeholder hasta que se monte OAuth, ahí importa)
+- `CLOUDINARY_*` (placeholders válidos; sin ellos, endpoints de upload devuelven 500 pero el resto arranca)
+- OAuth (vacíos por ahora; cuando se monten, las redirect URIs en los providers deben ser la URL de **Vercel**, no de Railway, porque la cookie de sesión vive en el dominio que aparece en el navegador)
+
+**Verificación end-to-end (smoke tests ejecutados)**
+```powershell
+curl.exe -sS https://<railway>.up.railway.app/api/health
+# → {"status":"ok","service":"FrameMatch",...}
+
+curl.exe -sS https://<railway>.up.railway.app/api/skills
+# → 30 skills (8 photo, 8 video, 8 edit, 6 content)
+
+curl.exe -sS https://<railway>.up.railway.app/api/freelancers
+# → 6 freelancers demo con top_skills y profile_completion: 100
+
+curl.exe -sS https://framematch.vercel.app/api/health
+# → mismo resultado, via Vercel rewrite
+
+curl.exe -sS -X POST https://framematch.vercel.app/api/auth/register -d '...'
+# → 201 con user + access_token
+
+curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
+# → 200 con user + access_token (o 401 si password incorrecto)
+```
+
+**Documentación**
+- `docs/deploy.md` (nuevo): guía completa con la arquitectura, archivos críticos, variables, issues y troubleshooting.
+- `docs/roadmap.md`: esta entrada.
+- `docs/architecture.md`: nueva sección "Deploy" con el diagrama de la comunicación vía rewrites.
+- `README.md`: nueva sección "Deploy" con resumen y link a `docs/deploy.md`.
+- `.agents/skills/backend-conventions/SKILL.md`: nota sobre los archivos de deploy (`railpack.json`, `start-container.sh`) y las particularidades de Railway.
+- `.agents/skills/frontend-conventions/SKILL.md`: nota sobre `vercel.json`, los rewrites y la convención de URLs relativas.
+
+**Pendiente para futuro**
+- **OAuth** (cuando se monte): las redirect URIs en Google/Facebook console deben ser `https://framematch.vercel.app/api/auth/oauth/{provider}/callback`. La razón, en detalle, en `docs/deploy.md` §OAuth.
+- **Cloudinary real**: crear cuenta, 4 unsigned upload presets (`fm_av_upl`, `fm_cv_upl`, `fm_pf_upl`, `fm_br_upl`), pegar las credenciales en Railway → los endpoints de avatar/cover/portfolio pasan de 500 a 200.
+- **Bug pre-existente en `bootstrap/app.php`**: cuando `Authenticate` middleware dispara sin token en una ruta `api/*`, lanza `RouteNotFoundException("Route [login] not defined")` con stack trace 500 en vez de devolver 401 JSON. El handler solo captura `AuthenticationException`, no `RouteNotFoundException`. No es bloqueante para el flujo normal (con token funciona), pero conviene arreglar.
+
+**Total acumulado:** docs `deploy.md` nuevo, `roadmap.md` + Fase 5.6, `architecture.md` + sección Deploy, `README.md` + sección Deploy, 2 skills actualizadas. **Cero tests nuevos** (deploy no introduce funcionalidad; los tests existentes cubren el código que se desplegó).
+
 ## Fases pendientes (backlog priorizado)
 
 ### 🔵 Fase 6 · Mensajería (polling primero, websockets después)

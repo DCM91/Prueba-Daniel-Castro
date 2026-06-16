@@ -4,7 +4,7 @@ Plataforma que conecta **freelancers de fotografía y vídeo** con **clientes** 
 
 **Stack:** Laravel 13 (API REST + JWT) + Angular 21 (SPA standalone).
 
-> **Fases entregadas:** auth con JWT, registro como cliente/freelancer, landing pública de marketing, dos landings post-login diferenciadas por rol, editor de perfil del profesional con selección de skills del catálogo, catálogo público de freelancers con filtros (categoría, ciudad, tarifa, búsqueda) y vista de detalle, briefs + propuestas (matching cliente ↔ profesional), brand "FrameMatch" prominente con logo SVG inline, i18n bilingüe (ES + EN) con selector en topbar, OAuth con Google y Facebook, topbar unificado con 4 variants, y **Fase 5.5.A · subida de foto de perfil con Cloudinary** (frontend sube directo con unsigned preset; backend verifica contra Admin API antes de persistir; verifica carpeta esperada y resource_type).
+> **Fases entregadas:** auth con JWT, registro como cliente/freelancer, landing pública de marketing, dos landings post-login diferenciadas por rol, editor de perfil del profesional con selección de skills del catálogo, catálogo público de freelancers con filtros (categoría, ciudad, tarifa, búsqueda) y vista de detalle, briefs + propuestas (matching cliente ↔ profesional), brand "FrameMatch" prominente con logo SVG inline, i18n bilingüe (ES + EN) con selector en topbar, OAuth con Google y Facebook, topbar unificado con 4 variants, subida de foto de perfil con Cloudinary, cover + portfolio con lightbox accesible, y **Fase 5.6 · deploy a producción en Railway (backend) + Vercel (frontend)** con MySQL gestionado y FrankenPHP.
 
 ## Documentación
 
@@ -15,7 +15,63 @@ Plataforma que conecta **freelancers de fotografía y vídeo** con **clientes** 
 - **[docs/design-system.md](./docs/design-system.md)** — Paleta, tipografía, componentes, estados.
 - **[docs/api.md](./docs/api.md)** — Referencia de endpoints, JWT, errores.
 - **[docs/database.md](./docs/database.md)** — Esquema, índices, relaciones, decisiones.
+- **[docs/deploy.md](./docs/deploy.md)** — Guía completa del deploy (Railway + Vercel, env vars, issues, troubleshooting).
 - **[docs/roadmap.md](./docs/roadmap.md)** — Fases entregadas, backlog priorizado.
+
+---
+
+## Deploy en producción
+
+La app está desplegada y operativa. Ambos servicios se redespliegan automáticamente en cada `git push` a `main`.
+
+| Servicio | URL | Qué corre |
+|---|---|---|
+| **Frontend** (Vercel) | https://framematch.vercel.app | Angular 21 estático, build con rewrites a `/api/*` |
+| **Backend** (Railway) | https://prueba-daniel-castro-production.up.railway.app | Laravel 13 + FrankenPHP, PHP 8.4, MySQL 8 |
+| **Smoke test** | `curl https://framematch.vercel.app/api/health` | → `{"status":"ok","service":"FrameMatch",...}` |
+
+### Arquitectura
+
+```
+GitHub (push a main)
+  ├──► Vercel ──► SPA Angular estática
+  │       └─ rewrite /api/* ──► Railway
+  └──► Railway ──► Laravel + FrankenPHP
+                   └─► MySQL (plugin del mismo proyecto)
+```
+
+**Por qué el rewrite de Vercel y no CORS**: el frontend usa URLs relativas (`/api/...`) en todos los servicios. El rewrite hace que el navegador crea que habla con Vercel todo el tiempo, así no hay CORS, no hay preflight, y el OAuth (cuando se monte) puede guardar el `state` en sesión sin problemas.
+
+### Archivos críticos del deploy
+
+| Archivo | Plataforma | Función |
+|---|---|---|
+| `backend/railpack.json` | Railway | Pin de PHP 8.4 (Symfony 8 lo requiere) |
+| `backend/start-container.sh` | Railway | Override del entrypoint: `migrate --force --seed` + FrankenPHP |
+| `frontend/vercel.json` | Vercel | Build config + `installCommand` con `--legacy-peer-deps` + rewrites |
+
+### Variables de entorno mínimas (Railway)
+
+```dotenv
+APP_NAME=FrameMatch
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://<tu-dominio>.up.railway.app
+APP_KEY=<generar>
+DB_CONNECTION=mysql
+DB_URL=${{MySQL.MYSQL_URL}}
+CACHE_STORE=database
+SESSION_DRIVER=database
+JWT_SECRET=<mínimo 32 caracteres>
+JWT_ALGO=HS256
+JWT_TTL=60
+JWT_REFRESH_TTL=20160
+FRONTEND_URL=https://framematch.vercel.app
+```
+
+> **Cuidado con `JWT_SECRET`**: HS256 exige ≥ 256 bits (32 chars). Si pegas uno de 24 chars, register y login devuelven 500 con `Key provided is shorter than 256 bits`. Genera uno nuevo con `php artisan jwt:secret` y cópialo del `.env` (no existe `--show` en este paquete).
+
+La guía completa con paso a paso, todos los issues del primer deploy, smoke tests, troubleshooting y notas para el futuro OAuth está en **[docs/deploy.md](./docs/deploy.md)**.
 
 ---
 

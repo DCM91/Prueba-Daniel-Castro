@@ -307,6 +307,38 @@ HttpClient → backend
 - **Con CoreTopbar unificado (Fase 5.4):** todos los features usan `<app-core-topbar [variant]="…">` con 4 variants (`public`/`auth`/`client`/`freelancer`). Solo `LandingComponent` (anchors in-page) y `BriefListComponent` (scope tabs + CTA condicional) mantienen su topbar propio. Detalles en `docs/design-system.md` y `frontend-conventions/SKILL.md`.
 - **Sin design system formal fuera de CSS-in-component:** cada componente trae su `.css`. La cohesión la marca `docs/design-system.md`.
 
+## Deploy (Fase 5.6)
+
+> Detalle operacional paso a paso en [docs/deploy.md](./deploy.md). Aquí solo el "cómo encajan las piezas en producción".
+
+### Mapa de servicios
+
+| Capa | Dónde corre | URL pública |
+|---|---|---|
+| SPA Angular (estática) | **Vercel** | `https://framematch.vercel.app` |
+| API Laravel | **Railway** (FrankenPHP) | `https://prueba-daniel-castro-production.up.railway.app` |
+| MySQL 8 | **Railway** (plugin MySQL del mismo proyecto) | red interna, no público |
+| Repo | **GitHub** | `DCM91/Prueba-Daniel-Castro` |
+| Assets de usuario (avatares, cover, portfolio) | **Cloudinary** (fase 5.5+, sin credenciales reales aún) | — |
+
+### Comunicación frontend → backend sin CORS
+
+El frontend usa **URLs relativas** (`/api/...`) en todos los servicios (`auth.service.ts`, `briefs.service.ts`, `freelancer-profile.service.ts`, `user.service.ts`, etc.). En Vercel, `vercel.json` declara un rewrite:
+
+```json
+{ "source": "/api/(.*)", "destination": "https://<railway>/api/$1" }
+```
+
+Resultado: el navegador hace `GET https://framematch.vercel.app/api/auth/login` → Vercel proxy → Railway. La respuesta llega con cabeceras de Vercel, así que el navegador cree que habla con Vercel todo el tiempo. **No hay CORS, no hay preflight, no hay que tocar `config/cors.php` para producción** (el `allowed_origins=['*']` actual se mantiene como red de seguridad por si en el futuro hay clientes en otros dominios).
+
+### Por qué este setup funciona con el OAuth futuro
+
+Cuando se monte OAuth (Google/Facebook), la cookie de sesión del `OAuthController` se establece en el dominio que aparece en la barra del navegador. Con el rewrite, ese dominio es **Vercel**, no Railway. Por eso las redirect URIs que se configuren en Google/Facebook console deben ser `https://framematch.vercel.app/api/auth/oauth/{provider}/callback`, **no** la URL de Railway. Si fueran a Railway directamente, la cookie de sesión no llegaría y el `hash_equals` del `state` CSRF fallaría con 419.
+
+### Cero variables de entorno en el frontend
+
+El frontend no necesita env vars de runtime. El rewrite hardcodea la URL de Railway en `vercel.json`. Si en el futuro se quisiera cambiar la URL del backend sin redeploy del frontend, se movería a una env var de Vercel, pero para el MVP actual la simplicidad gana.
+
 ## Internacionalización (i18n)
 
 - **Diccionarios:** `frontend/src/assets/i18n/{es,en}.json`. Estructura plana con `dot.case.key` (anidable).

@@ -213,6 +213,7 @@ TestBed.runInInjectionContext(() => authGuard(route, state));
 
 - No usamos archivos `.env` en Angular 21. Las URLs del backend se asumen en `/api/*` (relativas) y se configuran vía `proxy.conf.json` en dev.
 - En prod, el frontend se sirve detrás del mismo dominio del backend, así que las URLs relativas siguen funcionando.
+- Si en el futuro hace falta una env var de runtime en frontend, va como env var de Vercel por rama (Production / Preview / Development) y se lee con un mecanismo de "runtime config" (p. ej. un `assets/config.json` que el `appInitializer` carga al arranque). **No** se usan `environment.ts` con `fileReplacements` en el build — eso fuerza a redeploy por cada cambio.
 
 ## Comandos útiles
 
@@ -394,6 +395,46 @@ frontend/src/
 - **i18n:** namespace `auth.oauth.*` con `or`, `continue_with_{google,facebook}`, `error_*`, `complete_profile_*`. Las claves del role selector (`role_client_title`, etc.) se reusan de `auth.register.*`.
 - **Tests:** mockear `AuthService` con `loginWithOAuth: jest.fn()` no es necesario (es void y dispara side-effect). Mockear `handleOAuthCallback`, `completeOAuthProfile` y `fetchCurrentUser` con `jest.fn().mockReturnValue(of(...))`. Para `OAuthCallbackComponent` y `OAuthCompleteProfileComponent`, mockear el `Router` directamente con `useValue: { navigate: jest.fn().mockResolvedValue(true) }` (más simple que `provideRouter`).
 - **Sesión en tests de OAuth callback:** `provideHttpClient` no es necesario en estos tests porque no se hace HTTP. Solo se necesita el mock del `AuthService` y del `Router`.
+
+## Deploy (Vercel) — Fase 5.6
+
+> Detalle operacional completo en [docs/deploy.md](../../docs/deploy.md). Aquí solo lo que toca al código del frontend.
+
+### Archivo `frontend/vercel.json`
+
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "angular",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/frontend/browser",
+  "installCommand": "npm install --legacy-peer-deps",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://<railway>/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+### Por qué cada decisión
+
+- **`outputDirectory: "dist/frontend/browser"`**: para Angular 21 con `@angular/build:application`, el output es `dist/<projectName>/browser/`. El `projectName` en `angular.json` es `frontend`, por eso ese path exacto. Si se cambia el nombre del proyecto en `angular.json`, hay que ajustar esto.
+- **`installCommand: "npm install --legacy-peer-deps"`**: `@angular-builders/jest@21.0.3` (devDep para tests) tiene un peer dep estricto que choca con `@angular/compiler@21.2.14`. Con `--legacy-peer-deps` se salta la comprobación; el `ng build` no necesita `@angular-builders/jest`. La alternativa era una env var `NPM_CONFIG_LEGACY_PEER_DEPS=true` en Vercel, pero tenerlo en el `vercel.json` es portable y se ve en el repo.
+- **Rewrite 1 (`/api/(.*)` → Railway)**: la URL del backend está hardcodeada. Si cambia el dominio de Railway, hay que editar este archivo y redeploy. Para un portfolio está bien; si en el futuro se quisiera abstraer, se podría usar una env var de Vercel y un build que la inyecte en runtime config.
+- **Rewrite 2 (`/(.*)` → `/index.html`)**: catch-all para que el router de Angular tome el control en refreshes (`/home`, `/login`, etc.) y en deep links. **Va después** del rewrite de `/api/` para que las llamadas a la API no caigan en el `index.html`.
+- **Cero env vars en Vercel** (por ahora): el frontend solo hace llamadas relativas. Si en el futuro hace falta, se gestiona con el patrón "runtime config" descrito en §Variables de entorno.
+
+### Lo que NO se hace
+
+- **No se sube `dist/` al repo**: está en `.gitignore`. Vercel hace el build con `npm run build` y sirve el output directamente desde su CDN.
+- **No se mete la URL del backend en `environment.ts`**: implicaría un build por entorno (dev/staging/prod) y un redeploy por cada cambio de URL. El rewrite es una solución estática que el repo puede versionar.
+
+### Si el deploy falla
+
+1. **Build con `ERESOLVE could not resolve`**: peer dep conflict. Verifica que `installCommand: "npm install --legacy-peer-deps"` está en `vercel.json`.
+2. **Landing carga pero `/home` da 404**: falta el rewrite catch-all. Verifica el segundo rewrite en `vercel.json` y que el orden es API primero, SPA después.
+3. **`/api/*` da 502 o se queda colgado**: el rewrite apunta a una URL de Railway incorrecta o el backend está caído. Comprueba con `curl https://<railway>/api/health` directo.
+4. **Build OK pero la SPA no carga estilos/imágenes**: el `outputDirectory` está mal. Para Angular 21 con `@angular/build:application` es `dist/frontend/browser`. Si usas `@angular-devkit/build-angular` clásico sería `dist/frontend`.
 
 ## Topbar (Fase 5.4)
 
