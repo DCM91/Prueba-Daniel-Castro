@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "angular",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/frontend/browser",
+  "installCommand": "npm install --legacy-peer-deps",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://prueba-daniel-castro-production.up.railway.app/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
