@@ -24,6 +24,7 @@ final class FreelancerCardResource extends JsonResource
             'id'                => $this->id,
             'user_id'           => $this->user_id,
             'display_name'      => $this->display_name,
+            'avatar_url'        => $this->user->avatar_url ?? null,
             'city'              => $this->city,
             'hourly_rate'       => $this->hourly_rate !== null ? (float) $this->hourly_rate : null,
             'is_available'      => (bool) $this->is_available,

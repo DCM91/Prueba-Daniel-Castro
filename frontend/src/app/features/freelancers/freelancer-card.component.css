@@ -51,6 +51,11 @@
   flex-shrink: 0;
 }
 
+.avatar--img {
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
 .head-info { flex: 1; min-width: 0; }
 .name {
   margin: 0;

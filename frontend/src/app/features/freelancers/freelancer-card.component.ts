@@ -36,6 +36,8 @@ export class FreelancerCardComponent {
       .join('') || this.lang.t('freelancers.card.initials_fallback');
   });
 
+  readonly avatarUrl = computed(() => this._freelancer()?.avatar_url ?? null);
+
   readonly hourlyRateLabel = computed(() => {
     const rate = this._freelancer()?.hourly_rate;
     if (rate === null || rate === undefined) return this.lang.t('freelancers.card.rate_consult');

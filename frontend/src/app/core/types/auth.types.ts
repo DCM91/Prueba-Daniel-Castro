@@ -78,6 +78,7 @@ export interface FreelancerCard {
   id: number;
   user_id: number;
   display_name: string | null;
+  avatar_url?: string | null;
   city: string | null;
   hourly_rate: number | null;
   is_available: boolean;
@@ -90,6 +91,7 @@ export interface FreelancerDetail extends Omit<FreelancerCard, 'top_skills' | 's
   bio: string | null;
   price_per_project: number | null;
   created_at: string | null;
+  avatar_url?: string | null;
   cover_url?: string | null;
   cover_urls?: CoverUrls | null;
   skills: FreelancerProfileSkill[];

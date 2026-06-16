@@ -2,7 +2,11 @@
   <a class="card-link" [routerLink]="detailLink()" [attr.aria-label]="'freelancers.card.aria_view_profile' | t : { name: (freelancer?.display_name ?? 'freelancers.card.initials_fallback' | t) }"></a>
 
   <header class="head">
-    <div class="avatar" aria-hidden="true">{{ initials() }}</div>
+    @if (avatarUrl(); as url) {
+      <img class="avatar avatar--img" [src]="url" alt="" aria-hidden="true" />
+    } @else {
+      <div class="avatar" aria-hidden="true">{{ initials() }}</div>
+    }
     <div class="head-info">
       <h3 class="name">{{ freelancer?.display_name ?? 'freelancers.card.initials_fallback' | t }}</h3>
       @if (freelancer?.city) {

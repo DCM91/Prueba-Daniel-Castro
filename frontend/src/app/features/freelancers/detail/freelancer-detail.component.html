@@ -26,7 +26,11 @@
             }
 
             <section class="hero">
-              <div class="avatar" aria-hidden="true">{{ initials() }}</div>
+              @if (avatarUrl(); as url) {
+                <img class="avatar avatar--img" [src]="url" alt="" aria-hidden="true" />
+              } @else {
+                <div class="avatar" aria-hidden="true">{{ initials() }}</div>
+              }
               <div class="hero-text">
                 <h1>{{ f.display_name ?? 'freelancers.card.initials_fallback' | t }}</h1>
                 <p class="meta-line">

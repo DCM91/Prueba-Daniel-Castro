@@ -38,6 +38,8 @@ export class FreelancerDetailComponent implements OnInit {
       .join('') || this.lang.t('freelancers.card.initials_fallback');
   });
 
+  readonly avatarUrl = computed(() => this.freelancer()?.avatar_url ?? null);
+
   readonly hourlyRateLabel = computed(() => {
     const r = this.freelancer()?.hourly_rate;
     if (r === null || r === undefined) return this.lang.t('freelancers.detail.rate_consult');
