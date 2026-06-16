@@ -1,9 +1,6 @@
 {
-  "$schema": "https://railpack.com/schema.json",
+  "$schema": "https://schema.railpack.com",
   "packages": {
     "php": "8.4"
-  },
-  "deploy": {
-    "releaseCommand": "php artisan config:cache && php artisan route:cache && php artisan migrate --force --seed"
   }
 }
