@@ -53,7 +53,11 @@
         </div>
         @if (profile(); as p) {
           <div class="preview-body">
-            <div class="preview-avatar">{{ initials() }}</div>
+            @if (avatarUrl(); as url) {
+              <img class="preview-avatar preview-avatar--img" [src]="url" [alt]="currentUser()?.name ?? ''" />
+            } @else {
+              <div class="preview-avatar">{{ initials() }}</div>
+            }
             <div class="preview-info">
               <h3>{{ p.display_name || user.name }}</h3>
               @if (p.city) {

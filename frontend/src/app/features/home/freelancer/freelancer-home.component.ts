@@ -76,6 +76,12 @@ export class FreelancerHomeComponent {
     { titleKey: 'home.freelancer.tip3_title', bodyKey: 'home.freelancer.tip3_body', icon: 'tag'    },
   ];
 
+  readonly avatarUrl = computed<string | null>(() => {
+    const u = this.currentUser();
+    if (!u) return null;
+    return u.avatar_urls?.sm ?? u.avatar_url ?? null;
+  });
+
   readonly initials = computed<string>(() => {
     const name = this.currentUser()?.name ?? this.lang.t('freelancers.card.initials_fallback');
     return name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();

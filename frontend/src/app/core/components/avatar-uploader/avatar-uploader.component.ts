@@ -173,6 +173,7 @@ export class AvatarUploaderComponent {
         })
         .subscribe({
           next: (user) => {
+            this.previewUrl.set(null);
             this.status.set({ kind: 'success' });
             this.auth.setCurrentUser(user);
             this.avatarUpdated.emit(user);

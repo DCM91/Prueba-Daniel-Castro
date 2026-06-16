@@ -121,6 +121,11 @@
   flex-shrink: 0;
 }
 
+.preview-avatar--img {
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
 .preview-info { flex: 1; min-width: 0; }
 .preview-info h3 { margin: 0 0 4px; font-size: 20px; }
 .preview-city { margin: 0 0 10px; color: #a1a1aa; font-size: 13px; }
