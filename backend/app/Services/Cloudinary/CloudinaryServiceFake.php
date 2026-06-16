@@ -16,6 +16,9 @@ final class CloudinaryServiceFake implements CloudinaryServiceInterface
     /**
      * @param array<string, array{folder: string, public_id?: string, width?: int, height?: int, format?: string, bytes?: int}> $resources
      *   Map of publicId => resource metadata. The folder MUST match what the test expects.
+     *   `folder` can be either the full path (`framematch/avatars`) or just the leaf (`avatars`) — the fake
+     *   mirrors the real CloudinaryService which accepts both formats. `public_id` is only needed in the
+     *   fixture if the test wants to simulate the leaf-only folder case.
      * @param array<int, string> $deleted Public IDs that have been "deleted" during the test.
      * @param array<int, string> $nonExistent Public IDs that should be reported as 404.
      */
@@ -50,14 +53,21 @@ final class CloudinaryServiceFake implements CloudinaryServiceInterface
         }
 
         $resource = $this->resources[$publicId];
-        if (($resource['folder'] ?? '') !== $expectedFolder
-            && ! str_starts_with($resource['folder'] ?? '', $expectedFolder . '/')) {
+        $folder = (string) ($resource['folder'] ?? '');
+        $publicIdFull = (string) ($resource['public_id'] ?? $publicId);
+
+        $matchesFolder = $folder === $expectedFolder
+            || str_starts_with($folder, $expectedFolder . '/');
+        $matchesPublicId = str_starts_with($publicIdFull, $expectedFolder . '/')
+            || $publicIdFull === $expectedFolder;
+
+        if (! $matchesFolder && ! $matchesPublicId) {
             throw new CloudinaryVerificationException('El recurso no pertenece a la carpeta esperada.');
         }
 
         return [
-            'public_id'     => $publicId,
-            'folder'        => $resource['folder'],
+            'public_id'     => $publicIdFull,
+            'folder'        => $folder,
             'url'           => "https://res.cloudinary.com/{$this->cloudName}/image/upload/{$publicId}.jpg",
             'secure_url'    => "https://res.cloudinary.com/{$this->cloudName}/image/upload/{$publicId}.jpg",
             'width'         => $resource['width'] ?? null,

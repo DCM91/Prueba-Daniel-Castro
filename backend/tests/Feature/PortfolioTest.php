@@ -89,6 +89,47 @@ final class PortfolioTest extends TestCase
             ->assertJsonPath('data.position', 1);
     }
 
+    public function test_admin_api_returns_leaf_only_folder_still_accepted(): void
+    {
+        $this->bindFakeCloudinary([
+            'framematch/portfolios/leaf-99' => [
+                'folder'    => 'portfolios',
+                'public_id' => 'framematch/portfolios/leaf-99',
+                'width'     => 800, 'height' => 600, 'format' => 'jpg', 'bytes' => 50000,
+            ],
+        ]);
+
+        $user = User::factory()->freelancer()->create();
+        $token = JWTAuth::fromUser($user);
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/freelancer/me/portfolios', $this->validPayload(['public_id' => 'framematch/portfolios/leaf-99']))
+            ->assertStatus(201)
+            ->assertJsonPath('data.public_id', 'framematch/portfolios/leaf-99');
+
+        $this->assertDatabaseHas('portfolios', [
+            'public_id' => 'framematch/portfolios/leaf-99',
+        ]);
+    }
+
+    public function test_admin_api_returns_wrong_leaf_folder_returns_403(): void
+    {
+        $this->bindFakeCloudinary([
+            'framematch/avatars/leak' => [
+                'folder'    => 'avatars',
+                'public_id' => 'framematch/avatars/leak',
+            ],
+        ]);
+
+        $user = User::factory()->freelancer()->create();
+        $token = JWTAuth::fromUser($user);
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/freelancer/me/portfolios', $this->validPayload(['public_id' => 'framematch/avatars/leak']))
+            ->assertStatus(403)
+            ->assertJsonPath('message', 'El recurso no pertenece a la carpeta esperada.');
+    }
+
     public function test_client_cannot_add_portfolio_item(): void
     {
         $this->bindFakeCloudinary();

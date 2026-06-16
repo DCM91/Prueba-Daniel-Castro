@@ -123,6 +123,47 @@ final class CoverUploadTest extends TestCase
             ->assertStatus(403);
     }
 
+    public function test_admin_api_returns_leaf_only_folder_still_accepted(): void
+    {
+        $this->bindFakeCloudinary([
+            'framematch/covers/leaf-abc' => [
+                'folder'    => 'covers',
+                'public_id' => 'framematch/covers/leaf-abc',
+                'width'     => 1600, 'height' => 320, 'format' => 'jpg', 'bytes' => 90000,
+            ],
+        ]);
+
+        $user = User::factory()->freelancer()->create();
+        $token = JWTAuth::fromUser($user);
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->putJson('/api/freelancer/me/cover', $this->validPayload(['public_id' => 'framematch/covers/leaf-abc']))
+            ->assertOk();
+
+        $this->assertDatabaseHas('freelancer_profiles', [
+            'user_id'         => $user->id,
+            'cover_public_id' => 'framematch/covers/leaf-abc',
+        ]);
+    }
+
+    public function test_admin_api_returns_wrong_leaf_folder_returns_403(): void
+    {
+        $this->bindFakeCloudinary([
+            'framematch/portfolios/leak' => [
+                'folder'    => 'portfolios',
+                'public_id' => 'framematch/portfolios/leak',
+            ],
+        ]);
+
+        $user = User::factory()->freelancer()->create();
+        $token = JWTAuth::fromUser($user);
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->putJson('/api/freelancer/me/cover', $this->validPayload(['public_id' => 'framematch/portfolios/leak']))
+            ->assertStatus(403)
+            ->assertJsonPath('message', 'El recurso no pertenece a la carpeta esperada.');
+    }
+
     public function test_freelancer_can_delete_cover(): void
     {
         $fake = $this->bindFakeCloudinary();

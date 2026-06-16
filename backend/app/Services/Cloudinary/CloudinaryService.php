@@ -64,14 +64,21 @@ final class CloudinaryService implements CloudinaryServiceInterface
             throw new CloudinaryVerificationException('El recurso no es una imagen.');
         }
 
-        $folder = $resource['folder'] ?? '';
-        if ($folder !== $expectedFolder && ! str_starts_with($folder, $expectedFolder . '/')) {
+        $folder = (string) ($resource['folder'] ?? '');
+        $publicIdFull = (string) ($resource['public_id'] ?? $publicId);
+
+        $matchesFolder = $folder === $expectedFolder
+            || str_starts_with($folder, $expectedFolder . '/');
+        $matchesPublicId = str_starts_with($publicIdFull, $expectedFolder . '/')
+            || $publicIdFull === $expectedFolder;
+
+        if (! $matchesFolder && ! $matchesPublicId) {
             throw new CloudinaryVerificationException('El recurso no pertenece a la carpeta esperada.');
         }
 
         return [
-            'public_id'     => (string) ($resource['public_id'] ?? $publicId),
-            'folder'        => (string) $folder,
+            'public_id'     => $publicIdFull,
+            'folder'        => $folder,
             'url'           => (string) ($resource['url'] ?? ''),
             'secure_url'    => (string) ($resource['secure_url'] ?? ''),
             'width'         => isset($resource['width']) ? (int) $resource['width'] : null,

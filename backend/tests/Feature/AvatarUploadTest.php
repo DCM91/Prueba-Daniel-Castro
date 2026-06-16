@@ -143,6 +143,48 @@ final class AvatarUploadTest extends TestCase
         ]);
     }
 
+    public function test_admin_api_returns_leaf_only_folder_still_accepted(): void
+    {
+        $this->bindFakeCloudinary([
+            'framematch/avatars/leaf-abc' => [
+                'folder'    => 'avatars',
+                'public_id' => 'framematch/avatars/leaf-abc',
+                'width'     => 800, 'height' => 800, 'format' => 'jpg', 'bytes' => 12345,
+            ],
+        ]);
+
+        $user = User::factory()->create();
+        $token = JWTAuth::fromUser($user);
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/me/avatar', $this->validPayload(['public_id' => 'framematch/avatars/leaf-abc']))
+            ->assertOk()
+            ->assertJsonPath('data.avatar_urls.md', 'https://res.cloudinary.com/fake-cloud/image/upload/w_200,h_200,c_fill,g_auto,r_max,q_auto,f_auto/framematch/avatars/leaf-abc');
+
+        $this->assertDatabaseHas('users', [
+            'id'               => $user->id,
+            'avatar_public_id' => 'framematch/avatars/leaf-abc',
+        ]);
+    }
+
+    public function test_admin_api_returns_wrong_leaf_folder_returns_403(): void
+    {
+        $this->bindFakeCloudinary([
+            'framematch/portfolios/leak' => [
+                'folder'    => 'portfolios',
+                'public_id' => 'framematch/portfolios/leak',
+            ],
+        ]);
+
+        $user = User::factory()->create();
+        $token = JWTAuth::fromUser($user);
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/me/avatar', $this->validPayload(['public_id' => 'framematch/portfolios/leak']))
+            ->assertStatus(403)
+            ->assertJsonPath('message', 'El recurso no pertenece a la carpeta esperada.');
+    }
+
     public function test_nonexistent_public_id_returns_403(): void
     {
         $this->bindFakeCloudinary();
