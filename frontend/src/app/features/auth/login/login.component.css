@@ -12,21 +12,12 @@
 
 .card {
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
   background: #18181b;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 32px;
   margin: auto;
-}
-
-.card {
-  width: 100%;
-  max-width: 420px;
-  background: #18181b;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 32px;
 }
 
 h1 {
@@ -149,6 +140,7 @@ h1 {
   justify-content: center;
   gap: 10px;
   width: 100%;
+  min-height: 44px;
   padding: 11px 16px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -157,17 +149,27 @@ h1 {
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+  white-space: nowrap;
 }
 
 .oauth-btn:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
 }
 
 .oauth-btn svg {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
+}
+
+.oauth-btn span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .oauth-btn--facebook {

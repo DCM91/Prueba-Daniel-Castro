@@ -34,6 +34,7 @@ export class FreelancerCatalogService {
       params = params.set('max_rate', String(filters.max_rate));
     }
     if (filters.page)      params = params.set('page', String(filters.page));
+    if (filters.sort)      params = params.set('sort', filters.sort);
 
     return this.http
       .get<CatalogResponse>('/api/freelancers', { params })

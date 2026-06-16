@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\UserRole;
 use App\Models\FreelancerProfile;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +19,7 @@ final class FreelancerProfileFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id'           => null,
+            'user_id'           => User::factory()->state(['role' => UserRole::Freelancer]),
             'display_name'      => fake()->name(),
             'bio'               => fake()->paragraph(),
             'city'              => fake()->city(),

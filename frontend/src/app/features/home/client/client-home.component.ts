@@ -50,7 +50,7 @@ export class ClientHomeComponent implements OnInit {
   readonly hasFeatured = computed(() => this.featured().length > 0);
 
   ngOnInit(): void {
-    this.catalog.search({}).subscribe({
+    this.catalog.search({ sort: 'featured' }).subscribe({
       next: (result) => {
         this.featured.set(result.data.slice(0, 6));
         this.featuredLoading.set(false);

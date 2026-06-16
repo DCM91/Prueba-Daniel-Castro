@@ -1,0 +1,86 @@
+<div class="page">
+  <app-core-topbar
+    [variant]="isFreelancer() ? 'freelancer' : 'client'"
+    [backLink]="{ labelKey: 'topbar.back_to_home', route: backRoute() }"
+    (logoutClick)="topbarLogoutClick()"
+  />
+
+  <main class="content">
+    <header class="head">
+      <h1>{{ 'account.title' | t }}</h1>
+      <p class="lead">{{ 'account.subtitle' | t }}</p>
+    </header>
+
+    @if (loading()) {
+      <p class="loading">{{ 'account.loading' | t }}</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <section class="card">
+          <h2>{{ 'account.section_personal' | t }}</h2>
+          <p class="muted">{{ 'account.section_personal_hint' | t }}</p>
+
+          <label class="field">
+            <span>{{ 'account.label_name' | t }}</span>
+            <input type="text" formControlName="name" maxlength="100" autocomplete="name" />
+            @if (errorFor('name'); as msg) {
+              <small class="error">{{ msg }}</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>{{ 'account.label_email' | t }}</span>
+            <input type="email" formControlName="email" maxlength="255" autocomplete="email" />
+            @if (errorFor('email'); as msg) {
+              <small class="error">{{ msg }}</small>
+            }
+          </label>
+
+          <div class="row">
+            <label class="field">
+              <span>{{ 'account.label_phone' | t }}</span>
+              <input type="tel" formControlName="phone" maxlength="30" autocomplete="tel" placeholder="+34 600 000 000" />
+              @if (errorFor('phone'); as msg) {
+                <small class="error">{{ msg }}</small>
+              }
+            </label>
+
+            <label class="field">
+              <span>{{ 'account.label_city' | t }}</span>
+              <input type="text" formControlName="city" maxlength="80" autocomplete="address-level2" placeholder="Madrid" />
+              @if (errorFor('city'); as msg) {
+                <small class="error">{{ msg }}</small>
+              }
+            </label>
+          </div>
+        </section>
+
+        @if (isFreelancer()) {
+          <section class="card card--link">
+            <h2>{{ 'account.section_professional' | t }}</h2>
+            <p class="muted">{{ 'account.section_professional_hint' | t }}</p>
+            <a routerLink="/freelancer/profile/edit" class="primary-btn">
+              {{ 'account.open_professional_editor' | t }}
+            </a>
+          </section>
+        }
+
+        @if (errorMessage()) {
+          <p class="error error--global" role="alert">{{ errorMessage() }}</p>
+        }
+
+        @if (savedAt() !== null) {
+          <p class="success" role="status">{{ 'account.success' | t }}</p>
+        }
+
+        <div class="actions">
+          <button type="button" class="secondary-btn" (click)="cancel()" [disabled]="submitting()">
+            {{ 'account.cancel' | t }}
+          </button>
+          <button type="submit" class="primary-btn" [disabled]="submitting() || form.invalid">
+            {{ submitting() ? ('account.submitting' | t) : ('account.save_changes' | t) }}
+          </button>
+        </div>
+      </form>
+    }
+  </main>
+</div>

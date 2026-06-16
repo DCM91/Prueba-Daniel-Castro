@@ -146,6 +146,9 @@ h1 {
 .section-head h2 { font-size: 32px; margin: 0 0 8px; font-weight: 700; letter-spacing: -0.02em; }
 .muted { color: #a1a1aa; font-size: 15px; margin: 0; }
 
+/* ---- Anchor offset (compensate sticky topbar ~80px + 8px buffer) ---- */
+section[id] { scroll-margin-top: 88px; }
+
 /* ---- Categories ---- */
 .categories { max-width: 1100px; margin: 0 auto; padding: 64px 24px 24px; }
 .cat-grid {
@@ -256,6 +259,7 @@ h1 {
 
   .categories { padding: 48px 18px 16px; }
   .cat-card { padding: 20px; }
+  section[id] { scroll-margin-top: 72px; }
 
   .how { padding: 40px 18px 64px; }
   .how-step { padding: 22px; }

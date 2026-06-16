@@ -23,11 +23,13 @@ const CLIENT_DEFAULT_LINKS: readonly TopbarNavLink[] = [
   { labelKey: 'topbar.nav.home',          route: '/home' },
   { labelKey: 'topbar.nav.professionals', route: '/freelancers' },
   { labelKey: 'topbar.nav.briefs',        route: '/briefs' },
+  { labelKey: 'topbar.nav.account',       route: '/account' },
 ];
 
 const FREELANCER_DEFAULT_LINKS: readonly TopbarNavLink[] = [
   { labelKey: 'topbar.nav.home',    route: '/home' },
   { labelKey: 'topbar.nav.profile', route: '/freelancer/profile/edit' },
+  { labelKey: 'topbar.nav.account', route: '/account' },
 ];
 
 @Component({

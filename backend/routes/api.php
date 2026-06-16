@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\FreelancerProfileController;
 use App\Http\Controllers\Api\OAuthController;
 use App\Http\Controllers\Api\ProposalController;
 use App\Http\Controllers\Api\SkillController;
+use App\Http\Controllers\Api\UserAccountController;
 use App\Http\Controllers\Api\UserAvatarController;
 use App\Http\Middleware\EnsureUserIsFreelancer;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +47,8 @@ Route::middleware('auth:api')->group(function () {
         ->middleware('throttle:30,1');
     Route::delete('/me/avatar', [UserAvatarController::class, 'destroy'])
         ->middleware('throttle:30,1');
+
+    Route::put('/me', [UserAccountController::class, 'update']);
 });
 
 Route::prefix('auth')->group(function () {

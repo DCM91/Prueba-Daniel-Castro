@@ -7,6 +7,7 @@ import { redirectIfAuthenticatedGuard } from './core/guards/redirect-if-authenti
 export const routes: Routes = [
   {
     path: '',
+    canActivate: [redirectIfAuthenticatedGuard],
     loadComponent: () => import('./features/landing/landing.component').then((m) => m.LandingComponent),
   },
   {
@@ -27,6 +28,11 @@ export const routes: Routes = [
     path: 'auth/complete-profile',
     canActivate: [authGuard],
     loadComponent: () => import('./features/auth/oauth-complete-profile/oauth-complete-profile.component').then((m) => m.OAuthCompleteProfileComponent),
+  },
+  {
+    path: 'account',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/account/account.component').then((m) => m.AccountComponent),
   },
   {
     path: 'home',

@@ -97,7 +97,7 @@ describe('ClientHomeComponent', () => {
   it('loads up to 6 featured freelancers on init', () => {
     const cards = Array.from({ length: 8 }, (_, i) => ({ ...sampleCard, id: i + 1 }));
     configure(cards);
-    expect(searchMock).toHaveBeenCalledWith({});
+    expect(searchMock).toHaveBeenCalledWith({ sort: 'featured' });
     expect(component.featured().length).toBe(6);
   });
 

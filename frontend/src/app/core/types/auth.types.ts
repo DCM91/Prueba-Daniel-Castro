@@ -102,6 +102,7 @@ export interface FreelancerSearchFilters {
   city?: string;
   max_rate?: number;
   page?: number;
+  sort?: FreelancerSearchSort;
 }
 
 export interface Paginated<T> {
@@ -180,6 +181,8 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  phone?: string | null;
+  city?: string | null;
   role: Role;
   created_at: string | null;
   avatar_url?: string | null;
@@ -206,6 +209,15 @@ export interface RegisterPayload {
 export interface LoginPayload {
   email: string;
   password: string;
+}
+
+export type FreelancerSearchSort = 'featured' | 'price_asc' | 'price_desc' | 'recent';
+
+export interface UpdateAccountPayload {
+  name?: string;
+  email?: string;
+  phone?: string | null;
+  city?: string | null;
 }
 
 export interface ApiError {

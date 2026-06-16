@@ -28,6 +28,7 @@ final class SearchFreelancersRequest extends FormRequest
             'city'     => ['nullable', 'string', 'max:80'],
             'max_rate' => ['nullable', 'numeric', 'min:0'],
             'page'     => ['nullable', 'integer', 'min:1'],
+            'sort'     => ['nullable', 'string', Rule::in(['featured', 'price_asc', 'price_desc', 'recent'])],
         ];
     }
 

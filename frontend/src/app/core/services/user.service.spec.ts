@@ -75,4 +75,26 @@ describe('UserService', () => {
     expect(req.request.method).toBe('DELETE');
     req.flush({ data: makeUser({ avatar_url: null, avatar_urls: null }) });
   });
+
+  it('PUTs account update payload and unwraps the data envelope', (done) => {
+    const payload = {
+      name: 'Lucia Marin',
+      email: 'lucia.new@example.com',
+      phone: '+34 600 000 000',
+      city: 'Madrid',
+    };
+
+    service.updateAccount(payload).subscribe((user) => {
+      expect(user.id).toBe(42);
+      expect(user.email).toBe('lucia.new@example.com');
+      expect(user.phone).toBe('+34 600 000 000');
+      expect(user.city).toBe('Madrid');
+      done();
+    });
+
+    const req = httpMock.expectOne('/api/me');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(payload);
+    req.flush({ data: makeUser({ email: 'lucia.new@example.com', phone: '+34 600 000 000', city: 'Madrid' }) });
+  });
 });

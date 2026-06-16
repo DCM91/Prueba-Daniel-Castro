@@ -52,7 +52,8 @@
       "home": "Inicio",
       "professionals": "Profesionales",
       "briefs": "Briefs",
-      "profile": "Mi perfil"
+      "profile": "Mi perfil",
+      "account": "Mi cuenta"
     }
   },
   "landing": {
@@ -278,6 +279,25 @@
     "loading_profile": "Cargando perfil…",
     "error_load": "No se pudo cargar el perfil.",
     "error_save": "No se pudo guardar el perfil."
+  },
+  "account": {
+    "title": "Mi cuenta",
+    "subtitle": "Actualiza tus datos personales y de contacto.",
+    "loading": "Cargando…",
+    "section_personal": "Datos personales",
+    "section_personal_hint": "Tu nombre y email aparecen en tu perfil público y en los emails que te enviamos.",
+    "section_professional": "Perfil profesional",
+    "section_professional_hint": "Tu escaparate de profesional (bio, tarifas, portfolio) se edita aparte.",
+    "open_professional_editor": "Editar perfil profesional",
+    "label_name": "Nombre",
+    "label_email": "Email",
+    "label_phone": "Teléfono",
+    "label_city": "Ciudad",
+    "save_changes": "Guardar cambios",
+    "submitting": "Guardando…",
+    "cancel": "Cancelar",
+    "success": "Datos actualizados.",
+    "error_generic": "No se pudieron guardar los cambios."
   },
   "nav": {
     "categories": "Categorías",

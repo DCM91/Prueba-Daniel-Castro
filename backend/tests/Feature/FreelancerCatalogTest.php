@@ -226,4 +226,83 @@ final class FreelancerCatalogTest extends TestCase
             ->assertJsonCount(3, 'data')
             ->assertJsonPath('data.0.display_name', 'P12');
     }
+
+    public function test_index_sort_featured_orders_by_completion_desc_then_antiquity_asc(): void
+    {
+        $oldestMostComplete = $this->makeFreelancer([
+            'display_name'      => 'OldestFull',
+            'bio'               => 'Bio',
+            'city'              => 'Madrid',
+            'hourly_rate'       => 50,
+            'price_per_project' => 300,
+        ]);
+        $oldestMostComplete->forceFill(['created_at' => now()->subMonths(12)])->save();
+        $this->attachSkills($oldestMostComplete, ['fotografia-de-producto']);
+
+        $newestAlsoFull = $this->makeFreelancer([
+            'display_name'      => 'NewestFull',
+            'bio'               => 'Bio',
+            'city'              => 'Madrid',
+            'hourly_rate'       => 50,
+            'price_per_project' => 300,
+        ]);
+        $newestAlsoFull->forceFill(['created_at' => now()->subDays(5)])->save();
+        $this->attachSkills($newestAlsoFull, ['video-corporativo']);
+
+        $incomplete = $this->makeFreelancer([
+            'display_name'      => 'Incomplete',
+            'bio'               => null,
+            'city'              => null,
+            'hourly_rate'       => null,
+            'price_per_project' => null,
+        ]);
+        $incomplete->forceFill(['created_at' => now()->subYears(2)])->save();
+
+        $response = $this->getJson('/api/freelancers?sort=featured');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('meta.total', 3);
+
+        $names = collect($response->json('data'))->pluck('display_name')->all();
+
+        $this->assertSame('OldestFull', $names[0], 'El más antiguo con perfil completo va primero.');
+        $this->assertSame('NewestFull', $names[1], 'El más reciente con perfil completo va segundo.');
+        $this->assertSame('Incomplete', $names[2], 'El perfil incompleto va el último.');
+    }
+
+    public function test_index_sort_recent_orders_by_created_at_desc(): void
+    {
+        $old = $this->makeFreelancer(['display_name' => 'Old']);
+        $old->forceFill(['created_at' => now()->subMonths(6)])->save();
+        $new = $this->makeFreelancer(['display_name' => 'New']);
+        $new->forceFill(['created_at' => now()->subDays(2)])->save();
+
+        $response = $this->getJson('/api/freelancers?sort=recent');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.0.display_name', 'New');
+    }
+
+    public function test_index_rejects_unknown_sort(): void
+    {
+        $response = $this->getJson('/api/freelancers?sort=banana');
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['sort']);
+    }
+
+    public function test_index_excludes_orphan_profiles_without_user(): void
+    {
+        $this->makeFreelancer(['display_name' => 'Con Usuario']);
+
+        $orphan = $this->makeFreelancer(['display_name' => 'Huerfano']);
+        $orphanUserId = $orphan->user_id;
+        \App\Models\User::where('id', $orphanUserId)->delete();
+
+        $response = $this->getJson('/api/freelancers');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.display_name', 'Con Usuario');
+    }
 }

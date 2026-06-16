@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
-import { User } from '../types/auth.types';
+import { UpdateAccountPayload, User } from '../types/auth.types';
 
 export interface AvatarUploadPayload {
   public_id: string;
@@ -26,6 +26,12 @@ export class UserService {
   removeAvatar(): Observable<User> {
     return this.http
       .delete<{ data: User }>('/api/me/avatar')
+      .pipe(map((r) => r.data));
+  }
+
+  updateAccount(payload: UpdateAccountPayload): Observable<User> {
+    return this.http
+      .put<{ data: User }>('/api/me', payload)
       .pipe(map((r) => r.data));
   }
 }

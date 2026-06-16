@@ -132,7 +132,7 @@
 }
 
 @media (max-width: 420px) {
-  .logout { display: none; }
+  .logout { padding: 5px 10px; font-size: 12px; }
   .role-pill { display: none; }
   .back { display: none; }
 }

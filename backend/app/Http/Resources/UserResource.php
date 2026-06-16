@@ -27,6 +27,8 @@ final class UserResource extends JsonResource
             'id'         => $this->id,
             'name'       => $this->name,
             'email'      => $this->email,
+            'phone'      => $this->phone,
+            'city'       => $this->city,
             'role'       => $this->role instanceof UserRole ? $this->role->value : $this->role,
             'created_at' => $this->created_at?->toIso8601String(),
             'avatar_url' => $this->avatar_url,
