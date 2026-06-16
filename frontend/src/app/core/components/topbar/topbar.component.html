@@ -36,7 +36,7 @@
         <span class="role-pill">{{ rolePillKey() | t }}</span>
       }
       @if (variant() === 'freelancer') {
-        @if (u.avatar_urls?.sm ?? u.avatar_url; as avatarUrl) {
+        @if (u.avatar_url ?? u.avatar_urls?.sm; as avatarUrl) {
           <img
             class="avatar avatar--image"
             [src]="avatarUrl"

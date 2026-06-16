@@ -64,9 +64,9 @@ export class AvatarUploaderComponent {
   readonly displayUrl = computed<string | null>(() => {
     const preview = this.previewUrl();
     if (preview !== null) return preview;
-    const urls = this.currentAvatarUrls();
-    if (urls?.md) return urls.md;
-    return this.currentAvatarUrl();
+    const raw = this.currentAvatarUrl();
+    if (raw) return raw;
+    return this.currentAvatarUrls()?.md ?? null;
   });
 
   readonly isUploading = computed<boolean>(() => this.status().kind === 'uploading');

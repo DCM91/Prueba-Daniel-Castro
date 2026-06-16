@@ -79,7 +79,7 @@ export class FreelancerHomeComponent {
   readonly avatarUrl = computed<string | null>(() => {
     const u = this.currentUser();
     if (!u) return null;
-    return u.avatar_urls?.sm ?? u.avatar_url ?? null;
+    return u.avatar_url ?? u.avatar_urls?.sm ?? null;
   });
 
   readonly initials = computed<string>(() => {
