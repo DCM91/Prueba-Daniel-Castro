@@ -108,6 +108,35 @@ Si XAMPP MySQL no está corriendo o la BD `prueba_tecnica_daniel_castro` no exis
 - `cd frontend && npm test` → verde.
 - `cd frontend && npm run build` → verde (sin warnings nuevos).
 
+## Estrategia de ramas
+
+| Rama | Entorno | Descripción |
+|---|---|---|
+| `main` | Producción | Código estable, probado y desplegado. Railway + Vercel escuchan push a `main`. **Solo se escribe vía PR desde `beta`.** |
+| `beta` | Desarrollo | Rama activa de trabajo. Features nuevas, fixes y experimentos. Se mergea a `main` cuando está lista para release. |
+
+**Flujo:**
+
+```
+beta (desarrollo activo)
+  │
+  ├─ feature, fix, refactor...
+  │  ├─ php artisan test  → verde
+  │  ├─ npm test          → verde
+  │  └─ commit
+  │
+  ├─ Listo para release:
+  │   1. PR: beta → main
+  │   2. Revisión + CI en verde
+  │   3. Merge
+  │   4. Railway + Vercel despliegan automáticamente desde main
+  │
+  ▼
+main (producción, intocable directamente)
+```
+
+> Los deploys de Railway y Vercel están configurados para dispararse con push a `main`. La rama `beta` no dispara deploys de producción. Para previews de `beta`, se puede configurar Vercel Preview Deployments en el dashboard.
+
 ## Glosario del dominio
 
 | Término | Significado |

@@ -212,33 +212,6 @@ final class CloudinaryService implements CloudinaryServiceInterface
         ];
     }
 
-    public function briefAttachmentUrl(?string $publicId, string $variant = 'thumb'): ?string
-    {
-        if ($publicId === null) {
-            return null;
-        }
-
-        $t = match ($variant) {
-            'thumb' => 'w_300,h_200,c_fill,q_auto,f_auto',
-            'full'  => 'w_1200,c_limit,q_auto,f_auto',
-            default => 'w_300,h_200,c_fill,q_auto,f_auto',
-        };
-
-        return $this->buildUrl($publicId, $t);
-    }
-
-    public function briefAttachmentUrls(?string $publicId): ?array
-    {
-        if ($publicId === null) {
-            return null;
-        }
-
-        return [
-            'thumb' => $this->briefAttachmentUrl($publicId, 'thumb'),
-            'full'  => $this->briefAttachmentUrl($publicId, 'full'),
-        ];
-    }
-
     public function presetFor(string $type): string
     {
         return (string) ($this->presets[$type] ?? '');

@@ -53,18 +53,15 @@
 
 ## Tablas del sistema (no de dominio)
 
-Laravel crea por defecto estas tablas para soporte interno:
+Laravel crea por defecto algunas tablas de soporte. FrameMatch solo conserva las necesarias:
 
-| Tabla | Propósito |
-|---|---|
-| `cache` | Cache de aplicación (config, sesiones caché). |
-| `cache_locks` | Locks para evitar race conditions en cache. |
-| `jobs` | Cola de jobs (cuando se ejecute `php artisan queue:work`). |
-| `password_reset_tokens` | Reset de password vía email (futuro). |
-| `sessions` | Sesiones de driver `database` (no se usan en API, pero Laravel las crea por defecto). |
-| `migrations` | Estado de migraciones ejecutadas. |
+| Tabla | Propósito | ¿Se usa? |
+|---|---|---|
+| `cache` | Cache de aplicación. | Conservada — disponible si se activa caché en BD. |
+| `cache_locks` | Locks para evitar race conditions en cache. | Conservada. |
+| `migrations` | Estado de migraciones ejecutadas. | Interna de Laravel. |
 
-> En producción se podría desactivar `sessions` y `password_reset_tokens` ya que usamos JWT. Por ahora las dejamos porque el `User` model las referencia.
+> Las tablas `password_reset_tokens`, `sessions`, `jobs`, `job_batches` y `failed_jobs` se dropean en la migración `2026_06_17_000000_drop_unused_tables` porque FrameMatch no las usa: auth es JWT stateless (sin sesiones web), no hay flujo de reset de contraseña, y no se usan colas.
 
 ## Tabla `users`
 

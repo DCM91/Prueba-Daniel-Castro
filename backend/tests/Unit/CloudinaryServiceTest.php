@@ -166,16 +166,6 @@ final class CloudinaryServiceTest extends TestCase
         $this->assertStringContainsString('c_limit,', $full);
     }
 
-    public function test_brief_attachment_url_uses_correct_transformations(): void
-    {
-        $service = $this->makeService();
-        $thumb = $service->briefAttachmentUrl('framematch/briefs/b1/a', 'thumb');
-        $full  = $service->briefAttachmentUrl('framematch/briefs/b1/a', 'full');
-
-        $this->assertStringContainsString('w_300,h_200,c_fill', $thumb);
-        $this->assertStringContainsString('w_1200,c_limit', $full);
-    }
-
     public function test_preset_and_folder_helpers_return_configured_values(): void
     {
         $service = $this->makeService();

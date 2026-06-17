@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { ProposalsService } from '../../../core/services/proposals.service';
-import { BriefInput } from '../../../core/types/auth.types';
 
 @Component({
   selector: 'app-proposal-form',

@@ -53,16 +53,6 @@ interface CloudinaryServiceInterface
     public function portfolioUrls(?string $publicId): ?array;
 
     /**
-     * Build the URL of a brief attachment at a given variant.
-     */
-    public function briefAttachmentUrl(?string $publicId, string $variant = 'thumb'): ?string;
-
-    /**
-     * @return array{thumb: ?string, full: ?string}|null
-     */
-    public function briefAttachmentUrls(?string $publicId): ?array;
-
-    /**
      * Get the unsigned upload preset name for a given image type.
      */
     public function presetFor(string $type): string;

@@ -121,8 +121,8 @@ BCRYPT_ROUNDS=12
 DB_CONNECTION=mysql
 DB_URL=${{MySQL.MYSQL_URL}}
 
-CACHE_STORE=database
-SESSION_DRIVER=database
+CACHE_STORE=file
+SESSION_DRIVER=array
 SESSION_LIFETIME=120
 QUEUE_CONNECTION=sync
 
@@ -262,8 +262,8 @@ Y desde el navegador: abrir `https://framematch.vercel.app` → landing con el l
 | `BCRYPT_ROUNDS` | `12` | |
 | `DB_CONNECTION` | `mysql` | |
 | `DB_URL` | `${{MySQL.MYSQL_URL}}` | Referencia interna al plugin MySQL |
-| `CACHE_STORE` | `database` | Requiere tabla `cache` (creada por migración) |
-| `SESSION_DRIVER` | `database` | Requiere tabla `sessions` |
+| `CACHE_STORE` | `file` | Sin Redis en MVP |
+| `SESSION_DRIVER` | `array` | Auth JWT stateless, sin sesiones web |
 | `QUEUE_CONNECTION` | `sync` | Sin colas reales en MVP |
 | `JWT_SECRET` | ≥ 32 chars | Ver "Issues" si falla con "shorter than 256 bits" |
 | `JWT_ALGO` | `HS256` | |

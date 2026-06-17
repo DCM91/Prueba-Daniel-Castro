@@ -168,27 +168,6 @@ final class CloudinaryServiceFake implements CloudinaryServiceInterface
         ];
     }
 
-    public function briefAttachmentUrl(?string $publicId, string $variant = 'thumb'): ?string
-    {
-        if ($publicId === null) {
-            return null;
-        }
-
-        return "https://res.cloudinary.com/{$this->cloudName}/image/upload/w_300,h_200,c_fill,q_auto,f_auto/{$publicId}";
-    }
-
-    public function briefAttachmentUrls(?string $publicId): ?array
-    {
-        if ($publicId === null) {
-            return null;
-        }
-
-        return [
-            'thumb' => $this->briefAttachmentUrl($publicId, 'thumb'),
-            'full'  => $this->briefAttachmentUrl($publicId, 'full'),
-        ];
-    }
-
     public function presetFor(string $type): string
     {
         return (string) ($this->presets[$type] ?? '');
