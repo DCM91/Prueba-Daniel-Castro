@@ -25,6 +25,7 @@
 - [x] **Fase 5.4** · Topbar unificado (CoreTopbarComponent con 4 variants, 11 features refactorizados, OAuth-complete-profile fixes, navegación role-aware)
 - [x] **Fase 5.5.A** · Foundations + Avatar con Cloudinary (compositor `cloudinary/cloudinary_php` + 4 unsigned presets, `CloudinaryService` interface + fake + bind, `POST/DELETE /api/me/avatar` con throttle:30,1, verificación Admin API + folder + resource_type, migración `avatar_public_id`, `AvatarUploaderComponent` con drop-zone + canvas preview + a11y, integración en `CoreTopbar` (avatar real en vez de iniciales) y `ProfileEditor`, i18n `uploader.*` + `avatar.*` ES+EN, 22 tests backend + 19 tests frontend nuevos)
 - [x] **Fase 5.5.B** · Cover + Portfolio con Cloudinary (migración `add_cover_to_freelancer_profiles` + tabla `portfolios` con position e índice, `FreelancerCoverController` PUT/DELETE, `FreelancerPortfolioController` CRUD + reorder + public, throttle 30/min cover y 60/min portfolio, `CoverUploaderComponent` aspect 16:5, `LightboxComponent` accesible role=dialog + focus trap + Escape + ←/→, `PortfolioEditorComponent` en `/freelancer/portfolio` con grid + reorder por teclado, integración en `FreelancerDetail` con cover banner + galería + lightbox, i18n `cover.*` + `portfolio.*` + `lightbox.*` ES+EN, 18 tests backend + 13 tests frontend nuevos)
+- [x] **Fase 5.7** · Limpieza + Branching + CI (migración dropea 5 tablas no usadas, eliminados `briefAttachment*` de Cloudinary + `web.php` vacío + `BriefInput` import fantasma, `SESSION_DRIVER=array`, `QUEUE_CONNECTION=sync`, `CACHE_STORE=file`, documentado flujo `beta` → `main`, `.github/workflows/test.yml` con PHPUnit + Jest en push/PR a ambas ramas, docs actualizados con estrategia de branching y entorno de producción vs local)
 
 ---
 
@@ -133,6 +134,7 @@
 **Validación 5.2 (disciplina Content + rebalanceo):** `npm test` (113/113, 21 suites) + `npm run build` (sin NG8113) + `php artisan test` (62/388) — todo en verde. ✅
 **Validación 5.3 (OAuth Google + Facebook):** `npm test` (124/124, 23 suites) + `npm run build` (sin NG8113) + `php artisan test` (74/431) — todo en verde. ✅
 **Validación 5.4 (Topbar unificado):** `npm test` (137/137, 24 suites) + `npm run build` (sin NG8113) + `php artisan test` (74/431) — todo en verde. ✅
+**Validación 5.7 (Limpieza + Branching + CI):** `npm test` (172/172, 29 suites) + `npm run build` (sin NG8113) + `php artisan test` (133/133, 634 assertions) — todo en verde. ✅
 
 ---
 
@@ -241,19 +243,19 @@
 ## 🟢 Backlog futuro (sin atomizar, expandir cuando toque)
 
 ### P3 · Capacidades transversales
-- [ ] Reset de password (`password_reset_tokens` ya existe).
+- [ ] Reset de password (requiere crear tabla `password_reset_tokens` — se eliminó en Fase 5.7 por no usarse).
 - [ ] Verificación de email (`email_verified_at` ya existe).
-- [ ] Edición de cuenta (`PUT /api/auth/me`).
+- [x] Edición de cuenta (`PUT /api/me`) — ✅ Fase 5.6 (UserAccountController + UpdateAccountRequest + tests).
 - [ ] **Aceptar / rechazar propuesta** (`PATCH /api/briefs/{id}/proposals/{pid}/status`).
 
 ### P4 · Fases del producto
-- [ ] **Fase 3.5** · Portfolio de imágenes para freelancers.
+- [x] **Fase 3.5** · Portfolio de imágenes para freelancers — ✅ Fase 5.5.B (tabla `portfolios` + `PortfolioEditorComponent` + `LightboxComponent`).
 - [ ] **Fase 6** · Mensajería (polling primero, websockets después).
 - [ ] **Fase 7** · Reviews y ratings.
 
 ### P5 · Calidad de plataforma / DevEx
 - [ ] E2E con Playwright.
-- [ ] CI/CD con GitHub Actions.
+- [x] CI/CD con GitHub Actions — ✅ Fase 5.7 (`.github/workflows/test.yml` con PHPUnit + Jest en push/PR a `main` y `beta`).
 - [ ] Pipeline de lint (ESLint + Pint).
 - [ ] Docker compose dev (php-fpm + nginx + mysql + node).
 - [ ] Búsqueda full-text (Meilisearch).
@@ -264,7 +266,7 @@
 ### P6 · Roles extendidos
 - [ ] Sub-perfiles `agency` y `company`.
 - [ ] Admin panel.
-- [ ] OAuth (Google / GitHub).
+- [x] OAuth — ✅ Fase 5.3 (Google + Facebook vía Socialite, auto-vincular por email, complete-profile).
 
 ---
 

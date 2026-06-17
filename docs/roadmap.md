@@ -513,7 +513,7 @@ framematch/
 **Variables de entorno en Railway (referencia)**
 - `APP_*` (NAME, ENV=production, DEBUG=false, URL, KEY, BCRYPT)
 - `DB_CONNECTION=mysql` + `DB_URL=${{MySQL.MYSQL_URL}}` (referencia interna)
-- `CACHE_STORE=database` + `SESSION_DRIVER=database` (requieren tablas, creadas por migración)
+- `CACHE_STORE=file` + `SESSION_DRIVER=array` (auth JWT stateless, sin sesiones web)
 - `JWT_SECRET` (≥ 32 chars), `JWT_ALGO=HS256`, `JWT_TTL=60`, `JWT_REFRESH_TTL=20160`
 - `FRONTEND_URL=https://framematch.vercel.app` (placeholder hasta que se monte OAuth, ahí importa)
 - `CLOUDINARY_*` (placeholders válidos; sin ellos, endpoints de upload devuelven 500 pero el resto arranca)
@@ -555,24 +555,37 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
 
 **Total acumulado:** docs `deploy.md` nuevo, `roadmap.md` + Fase 5.6, `architecture.md` + sección Deploy, `README.md` + sección Deploy, 2 skills actualizadas. **Cero tests nuevos** (deploy no introduce funcionalidad; los tests existentes cubren el código que se desplegó).
 
+### ✅ Fase 5.7 · Limpieza + Branching + CI
+
+**Objetivo:** eliminar código muerto, tablas no usadas, y formalizar la estrategia de ramas `beta` → `main` con integración continua.
+
+**Backend**
+- Migración `2026_06_17_000000_drop_unused_tables` dropea 5 tablas no usadas (`password_reset_tokens`, `sessions`, `jobs`, `job_batches`, `failed_jobs`). Se conservan `cache` y `cache_locks`.
+- Eliminados métodos `briefAttachmentUrl`/`briefAttachmentUrls` de `CloudinaryService`, `CloudinaryServiceFake` y `CloudinaryServiceInterface` (feature de brief attachments no existe aún).
+- Eliminado `routes/web.php` vacío y referencias en `bootstrap/app.php`.
+- `.env` local: `SESSION_DRIVER=array`, `QUEUE_CONNECTION=sync`, `CACHE_STORE=file`.
+- Tests: eliminado test `brief_attachment_url_uses_correct_transformations` por dependencia removida.
+
+**Frontend**
+- Eliminado `import { BriefInput }` sin uso en `proposal-form.component.ts`.
+
+**Branching & CI**
+- Estrategia documentada en `AGENTS.md`: `beta` (desarrollo activo) → PR → `main` (producción). Railway + Vercel despliegan desde `main`.
+- `.github/workflows/test.yml`: PHPUnit + Jest en push/PR para `main` y `beta`.
+
+**Documentación**
+- `docs/deploy.md`: actualizados `SESSION_DRIVER`/`QUEUE_CONNECTION`/`CACHE_STORE`.
+- `docs/database.md`: sección de tablas del sistema actualizada.
+- `docs/roadmap.md`: esta entrada.
+- `CHECKLIST.md`: marcados items ya completados (edición cuenta, portfolio, CI/CD, OAuth), añadida Fase 5.7.
+
+**Validación 5.7:** `npm test` (172/172, 29 suites) + `php artisan test` (133/133, 634 assertions) — todo en verde. ✅
+
+**Total acumulado:** backend **133 tests / 634 assertions**, frontend **172 tests / 29 suites**.
+
 ## Fases pendientes (backlog priorizado)
 
 ### 🔵 Fase 6 · Mensajería (polling primero, websockets después)
-
-**Objetivo:** el cliente publica un brief; freelancers envían propuestas.
-
-**Backend**
-- Tablas `briefs` y `proposals`.
-- `BriefController` y `ProposalController`.
-- Estados del brief: `draft`, `published`, `in_review`, `assigned`, `completed`, `cancelled`.
-- Emails (futuro, vía cola).
-
-**Frontend**
-- `BriefListComponent` (cliente) y `BriefDetailComponent`.
-- `BriefFormComponent` para crear/editar.
-- `ProposalFormComponent` para freelancers.
-
-### 🔵 Fase 6 · Mensajería
 
 Chat cliente ↔ freelancer dentro de un brief aceptado.
 
@@ -583,18 +596,14 @@ Tabla `reviews`. Tras completar un encargo, ambas partes se valoran.
 ### ⚪ Otros (backlog sin priorizar)
 
 - **Verificación de email**: envío de mail con `MAIL_MAILER`, link firmado, `email_verified_at` actualizado.
-- **Reset de password**: tabla `password_reset_tokens` ya existe.
-- **OAuth / login social**: Google, GitHub, etc.
+- **Reset de password**: crear tabla `password_reset_tokens` (eliminada en Fase 5.7).
 - **Roles `agency` y `company`**: sub-perfil, multi-freelancer.
 - **Admin panel**: para asignar roles elevados, banear, etc.
-- **i18n**: extraer todos los strings a un sistema de traducciones.
 - **SSR (Angular Universal)**: para SEO de la landing pública.
 - **WebSockets / realtime**: para mensajes y notificaciones.
 - **Pagos**: Stripe Connect, escrow.
-- **Subida de portfolio**: S3 o similar, miniaturas, CDN.
 - **Búsqueda full-text**: Meilisearch o Algolia cuando el catálogo crezca.
 - **E2E tests**: Playwright o Cypress.
-- **CI/CD**: GitHub Actions para tests + deploy.
 - **Docker**: `docker-compose.yml` con PHP-FPM, nginx, MySQL, node.
 
 ## Criterios para cerrar una fase

@@ -1,6 +1,6 @@
 # Referencia de la API
 
-> Última revisión: Fase 5.5.B (cover + portfolio con Cloudinary). Base URL en dev: `http://127.0.0.1:8000` (backend Laravel). El frontend hace proxy de `/api/*` desde `localhost:4200` (ver `frontend/proxy.conf.json`).
+> Última revisión: Fase 5.7 (limpieza + branching + CI). Base URL en dev: `http://127.0.0.1:8000` (backend Laravel). El frontend hace proxy de `/api/*` desde `localhost:4200` (ver `frontend/proxy.conf.json`). En producción, Vercel hace rewrite de `/api/*` a Railway (ver `frontend/vercel.json`).
 
 ## Convenciones
 
@@ -925,14 +925,21 @@ Por ahora, sin prefijo de versión (v1 implícito). Cuando haya un breaking chan
 
 ## Tests de la API
 
-Cubiertos por cuatro Feature suites en `backend/tests/Feature/`:
+Cubiertos por 10 Feature suites + 2 Unit suites en `backend/tests/`:
 
-- `AuthTest.php` — 15 tests / 71 assertions.
-- `FreelancerProfileTest.php` — 10 tests / 119 assertions (Fase 3).
-- `FreelancerCatalogTest.php` — 13 tests / 90 assertions (Fase 4): filtros, paginación, empty results, detalle OK, 404.
-- `BriefsAndProposalsTest.php` — 16 tests / 41 assertions (Fase 5): CRUD de briefs, propuestas con validaciones, owner-only access.
+- `AuthTest.php` — 16 tests (register, login, me, logout, refresh, skills, health).
+- `FreelancerProfileTest.php` — 11 tests (edición de perfil + skills + sync).
+- `FreelancerCatalogTest.php` — 17 tests (catálogo público, filtros, paginación, orden).
+- `BriefsAndProposalsTest.php` — 16 tests (CRUD briefs + propuestas).
+- `AvatarUploadTest.php` — 12 tests (subir/borrar avatar con Cloudinary).
+- `CoverUploadTest.php` — 9 tests (subir/borrar cover con Cloudinary).
+- `PortfolioTest.php` — 13 tests (CRUD portfolio, reorder, endpoint público).
+- `OAuthTest.php` — 12 tests (redirect, callback, complete-profile).
+- `UserAccountTest.php` — 7 tests (edición de cuenta, validaciones).
+- `CloudinaryServiceTest.php` (Unit) — 14 tests (Admin API, URLs, transformaciones).
+- `UserTest.php` (Unit) — 5 tests (modelo, JWT claims, relaciones).
 
-**Total: 74 tests, 431 assertions.** Para correrlos:
+**Total: 133 tests, 634 assertions.** Para correrlos:
 
 ```bash
 cd backend
