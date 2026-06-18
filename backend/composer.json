@@ -12,8 +12,8 @@
         "laravel/socialite": "^5.21",
         "laravel/tinker": "^3.0",
         "php-open-source-saver/jwt-auth": "^2.9",
-        "socialiteproviders/facebook": "^4.0",
-        "socialiteproviders/google": "^4.1"
+        "socialiteproviders/facebook": "^5.0",
+        "socialiteproviders/google": "^5.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
