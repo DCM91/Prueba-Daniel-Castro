@@ -127,4 +127,26 @@ final class UserAccountTest extends TestCase
 
         $response->assertStatus(401);
     }
+
+    public function test_phone_rejects_letters(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->withHeaders($this->authHeaders($user))
+            ->putJson('/api/me', ['phone' => 'asdf']);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['phone']);
+    }
+
+    public function test_phone_accepts_international_format(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->withHeaders($this->authHeaders($user))
+            ->putJson('/api/me', ['phone' => '+1 (415) 555-2671']);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.phone', '+1 (415) 555-2671');
+    }
 }

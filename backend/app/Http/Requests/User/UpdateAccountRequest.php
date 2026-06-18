@@ -21,7 +21,7 @@ final class UpdateAccountRequest extends FormRequest
         return [
             'name'  => ['sometimes', 'string', 'min:2', 'max:100'],
             'email' => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'phone' => ['nullable', 'string', 'max:30', 'regex:/^[+0-9 ()\-]{6,30}$/'],
             'city'  => ['nullable', 'string', 'max:80'],
         ];
     }
@@ -34,6 +34,7 @@ final class UpdateAccountRequest extends FormRequest
             'email.email' => 'Introduce un email válido.',
             'email.unique' => 'Este email ya está en uso por otra cuenta.',
             'phone.max' => 'El teléfono no puede tener más de 30 caracteres.',
+            'phone.regex' => 'El teléfono solo puede contener dígitos, espacios, paréntesis, guiones y un + inicial.',
             'city.max'  => 'La ciudad no puede tener más de 80 caracteres.',
         ];
     }
