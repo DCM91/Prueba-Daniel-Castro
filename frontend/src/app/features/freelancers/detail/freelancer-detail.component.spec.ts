@@ -116,10 +116,4 @@ describe('FreelancerDetailComponent', () => {
     configure('1', jest.fn().mockReturnValue(of({ ...detail, hourly_rate: null })));
     expect(component.hourlyRateLabel()).toBe('Consultar');
   });
-
-  it('renders the back-to-catalog button in the topbar', () => {
-    configure('1', jest.fn().mockReturnValue(of(detail)));
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('← Volver al catálogo');
-  });
 });

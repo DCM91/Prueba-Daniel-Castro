@@ -3,11 +3,9 @@ import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Va
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
-import { CoreTopbarComponent } from '../../core/components/topbar/topbar.component';
 import { AvatarUploaderComponent } from '../../core/components/avatar-uploader/avatar-uploader.component';
 import { UserService } from '../../core/services/user.service';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
-import { Role } from '../../core/types/auth.types';
 
 type AccountForm = FormGroup<{
   name: FormControl<string>;
@@ -19,7 +17,7 @@ type AccountForm = FormGroup<{
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [ReactiveFormsModule, CoreTopbarComponent, AvatarUploaderComponent, RouterLink, TranslatePipe],
+  imports: [ReactiveFormsModule, AvatarUploaderComponent, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './account.component.html',
   styleUrl: './account.component.css',
@@ -38,10 +36,6 @@ export class AccountComponent implements OnInit {
   readonly fieldErrors = signal<Record<string, string[]>>({});
 
   readonly isFreelancer = computed<boolean>(() => this.currentUser()?.role === 'freelancer');
-  readonly backRoute = computed<unknown[]>(() => {
-    const role: Role | null = this.currentUser()?.role ?? null;
-    return role === 'freelancer' ? ['/home/freelancer'] : ['/home/client'];
-  });
 
   readonly form: AccountForm = this.fb.group({
     name:  this.fb.control('', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]),
@@ -123,17 +117,6 @@ export class AccountComponent implements OnInit {
         }
       },
     });
-  }
-
-  logout(): void {
-    this.auth.logout().subscribe({
-      next: () => this.router.navigateByUrl('/'),
-      error: () => this.router.navigateByUrl('/'),
-    });
-  }
-
-  topbarLogoutClick(): void {
-    this.logout();
   }
 
   cancel(): void {

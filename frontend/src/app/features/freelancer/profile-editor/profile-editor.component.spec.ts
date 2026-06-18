@@ -171,10 +171,4 @@ describe('ProfileEditorComponent', () => {
     expect(component.errorFor('bio')).toBe('demasiado larga');
     expect(component.submitting()).toBe(false);
   });
-
-  it('renders the back-to-home button in the topbar', () => {
-    flushInitialLoad();
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('← Inicio');
-  });
 });

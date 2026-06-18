@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { FreelancerCatalogService } from '../../../core/services/freelancer-catalog.service';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
 import { LanguageService } from '../../../core/services/language.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { FreelancerCardComponent } from '../freelancer-card.component';
@@ -22,7 +21,7 @@ interface CategoryOption {
 @Component({
   selector: 'app-freelancer-list',
   standalone: true,
-  imports: [FormsModule, FreelancerCardComponent, CoreTopbarComponent, TranslatePipe],
+  imports: [FormsModule, FreelancerCardComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './freelancer-list.component.html',
   styleUrl: './freelancer-list.component.css',

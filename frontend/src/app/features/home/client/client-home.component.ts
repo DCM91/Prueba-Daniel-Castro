@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
 import { FreelancerCatalogService } from '../../../core/services/freelancer-catalog.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import {
@@ -22,7 +21,7 @@ interface Category {
 @Component({
   selector: 'app-client-home',
   standalone: true,
-  imports: [RouterLink, FreelancerCardComponent, CoreTopbarComponent, TranslatePipe],
+  imports: [RouterLink, FreelancerCardComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './client-home.component.html',
   styleUrl: './client-home.component.css',
@@ -82,13 +81,6 @@ export class ClientHomeComponent implements OnInit {
     this.activeCategory.set(category);
     void this.router.navigate(['/freelancers'], {
       queryParams: { category },
-    });
-  }
-
-  logout(): void {
-    this.auth.logout().subscribe({
-      next: () => this.router.navigateByUrl('/'),
-      error: () => this.router.navigateByUrl('/'),
     });
   }
 }

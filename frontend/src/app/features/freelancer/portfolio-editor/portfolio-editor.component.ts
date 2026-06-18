@@ -9,7 +9,6 @@ import {
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
 import { LightboxComponent } from '../../../core/components/lightbox/lightbox.component';
 import { CloudinaryService } from '../../../core/services/cloudinary.service';
 import { FreelancerProfileService } from '../../../core/services/freelancer-profile.service';
@@ -26,7 +25,7 @@ const MAX_PORTFOLIO_ITEMS = 30;
 @Component({
   selector: 'app-portfolio-editor',
   standalone: true,
-  imports: [ReactiveFormsModule, CoreTopbarComponent, LightboxComponent, TranslatePipe],
+  imports: [ReactiveFormsModule, LightboxComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './portfolio-editor.component.html',
   styleUrl: './portfolio-editor.component.css',

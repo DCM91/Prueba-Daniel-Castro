@@ -84,10 +84,4 @@ describe('BriefDetailComponent', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Brief no encontrado');
   });
-
-  it('renders the back-to-briefs button in the topbar', () => {
-    configure(ownerUser);
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('← Briefs');
-  });
 });

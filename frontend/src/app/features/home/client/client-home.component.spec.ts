@@ -50,7 +50,6 @@ describe('ClientHomeComponent', () => {
         },
         provideLanguageServiceMock('es', {
           roles: { client: 'Cliente', freelancer: 'Profesional' },
-          topbar: { logout: 'Cerrar sesión' },
           home: {
             client: {
               hero_title: 'Encuentra al profesional perfecto para tu proyecto.',
@@ -70,12 +69,6 @@ describe('ClientHomeComponent', () => {
     fixture.detectChanges();
   };
 
-  it('renders the welcome hero with the user name in the topbar', () => {
-    configure();
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('Ana Cliente');
-  });
-
   it('shows the search input', () => {
     configure();
     const input = (fixture.nativeElement as HTMLElement).querySelector('.search input');
@@ -86,12 +79,6 @@ describe('ClientHomeComponent', () => {
     configure();
     expect(component.categories.length).toBe(4);
     expect(component.categories.map((c) => c.category)).toEqual(['photo', 'video', 'edit', 'content']);
-  });
-
-  it('shows the "Cerrar sesión" button', () => {
-    configure();
-    const btn = (fixture.nativeElement as HTMLElement).querySelector('.logout');
-    expect(btn?.textContent?.trim()).toBe('Cerrar sesión');
   });
 
   it('loads up to 6 featured freelancers on init', () => {

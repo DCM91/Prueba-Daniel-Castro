@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
 import { LanguageService } from '../../../core/services/language.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { FreelancerProfile } from '../../../core/types/auth.types';
@@ -23,7 +22,7 @@ interface Tip {
 @Component({
   selector: 'app-freelancer-home',
   standalone: true,
-  imports: [CoreTopbarComponent, TranslatePipe],
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './freelancer-home.component.html',
   styleUrl: './freelancer-home.component.css',
@@ -86,13 +85,6 @@ export class FreelancerHomeComponent {
     const name = this.currentUser()?.name ?? this.lang.t('freelancers.card.initials_fallback');
     return name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
   });
-
-  logout(): void {
-    this.auth.logout().subscribe({
-      next: () => this.router.navigateByUrl('/'),
-      error: () => this.router.navigateByUrl('/'),
-    });
-  }
 
   goToEdit(): void {
     this.router.navigate(['/freelancer/profile/edit']);

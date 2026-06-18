@@ -44,15 +44,22 @@
   "topbar": {
     "go_home": "Go to home",
     "logout": "Log out",
-    "back_to_catalog": "Back to catalog",
+    "menu_open": "Open menu",
+    "menu_close": "Close menu",
+    "menu_label": "Navigation menu",
+    "back_to_catalog": "← Back to catalog",
     "back_to_briefs": "← Briefs",
     "back_to_home": "← Home",
     "back_to_profile": "← Back to profile",
     "nav": {
       "home": "Home",
+      "login": "Log in",
+      "register": "Register",
       "professionals": "Professionals",
       "briefs": "Briefs",
+      "new_brief": "+ New Brief",
       "profile": "My profile",
+      "portfolio": "Portfolio",
       "account": "My account"
     }
   },
@@ -278,7 +285,8 @@
     "selected_count": "{{count}} selected",
     "loading_profile": "Loading profile…",
     "error_load": "Could not load the profile.",
-    "error_save": "Could not save the profile."
+    "error_save": "Could not save the profile.",
+    "preview_profile": "Preview public profile"
   },
   "account": {
     "title": "My account",

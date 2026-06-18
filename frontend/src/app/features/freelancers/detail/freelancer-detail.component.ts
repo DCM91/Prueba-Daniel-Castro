@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { FreelancerCatalogService } from '../../../core/services/freelancer-catalog.service';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
 import { LightboxComponent } from '../../../core/components/lightbox/lightbox.component';
 import { LanguageService } from '../../../core/services/language.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
@@ -11,7 +10,7 @@ import { FreelancerDetail, PortfolioItem, SkillLevel } from '../../../core/types
 @Component({
   selector: 'app-freelancer-detail',
   standalone: true,
-  imports: [RouterLink, CoreTopbarComponent, LightboxComponent, TranslatePipe],
+  imports: [RouterLink, LightboxComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './freelancer-detail.component.html',
   styleUrl: './freelancer-detail.component.css',
@@ -19,7 +18,6 @@ import { FreelancerDetail, PortfolioItem, SkillLevel } from '../../../core/types
 export class FreelancerDetailComponent implements OnInit {
   private readonly catalog = inject(FreelancerCatalogService);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly lang = inject(LanguageService);
 
   readonly state = signal<'loading' | 'ready' | 'not-found'>('loading');
@@ -84,10 +82,6 @@ export class FreelancerDetailComponent implements OnInit {
 
   toggleBio(): void {
     this.bioExpanded.update((v) => !v);
-  }
-
-  goBack(): void {
-    void this.router.navigate(['/freelancers']);
   }
 
   openLightbox(index: number): void {

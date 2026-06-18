@@ -3,7 +3,6 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
 import { LanguageService } from '../../../core/services/language.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { OAuthProvider, RegisterableRole } from '../../../core/types/auth.types';
@@ -11,7 +10,7 @@ import { OAuthProvider, RegisterableRole } from '../../../core/types/auth.types'
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, CoreTopbarComponent, TranslatePipe],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './register.component.html',
   styleUrl: './register.component.css',

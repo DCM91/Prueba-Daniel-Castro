@@ -1,9 +1,4 @@
 <div class="page">
-  <app-core-topbar
-    [variant]="isFreelancer() ? 'freelancer' : 'client'"
-    [backLink]="{ labelKey: 'topbar.back_to_home', route: backRoute() }"
-    (logoutClick)="topbarLogoutClick()"
-  />
 
   <main class="content">
     <header class="head">

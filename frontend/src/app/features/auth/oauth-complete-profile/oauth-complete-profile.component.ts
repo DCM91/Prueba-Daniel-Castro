@@ -2,18 +2,16 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { RegisterableRole } from '../../../core/types/auth.types';
 
 @Component({
   selector: 'app-oauth-complete-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe, CoreTopbarComponent],
+  imports: [ReactiveFormsModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page">
-      <app-core-topbar variant="auth" />
 
       <main class="main">
         <header class="head">

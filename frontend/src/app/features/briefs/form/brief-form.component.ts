@@ -3,21 +3,16 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { BriefsService } from '../../../core/services/briefs.service';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { SkillCategory } from '../../../core/types/auth.types';
 
 @Component({
   selector: 'app-brief-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, CoreTopbarComponent, TranslatePipe],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page">
-      <app-core-topbar
-        variant="auth"
-        [backLink]="{ labelKey: 'topbar.back_to_briefs', route: '/briefs' }"
-      />
 
       <main class="main">
         <header class="page-head">

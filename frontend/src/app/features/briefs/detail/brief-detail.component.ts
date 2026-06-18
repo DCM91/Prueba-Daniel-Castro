@@ -4,7 +4,6 @@ import { ActivatedRoute } from '@angular/router';
 import { BriefsService } from '../../../core/services/briefs.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { Brief, Proposal } from '../../../core/types/auth.types';
 import { ProposalFormComponent } from './proposal-form.component';
@@ -12,7 +11,7 @@ import { ProposalFormComponent } from './proposal-form.component';
 @Component({
   selector: 'app-brief-detail',
   standalone: true,
-  imports: [CoreTopbarComponent, TranslatePipe, ProposalFormComponent],
+  imports: [TranslatePipe, ProposalFormComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './brief-detail.component.html',
   styleUrl: './brief-detail.component.css',

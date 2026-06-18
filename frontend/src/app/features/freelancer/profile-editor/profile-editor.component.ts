@@ -4,8 +4,6 @@ import { Router, RouterLink } from '@angular/router';
 import { forkJoin, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
-import { AvatarUploaderComponent } from '../../../core/components/avatar-uploader/avatar-uploader.component';
 import { CoverUploaderComponent } from '../../../core/components/cover-uploader/cover-uploader.component';
 import { FreelancerProfileService } from '../../../core/services/freelancer-profile.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
@@ -28,8 +26,6 @@ type SkillGroup = FormGroup<{
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    CoreTopbarComponent,
-    AvatarUploaderComponent,
     CoverUploaderComponent,
     RouterLink,
     TranslatePipe,

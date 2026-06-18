@@ -44,15 +44,22 @@
   "topbar": {
     "go_home": "Ir al inicio",
     "logout": "Cerrar sesión",
-    "back_to_catalog": "Volver al catálogo",
+    "menu_open": "Abrir menú",
+    "menu_close": "Cerrar menú",
+    "menu_label": "Menú de navegación",
+    "back_to_catalog": "← Volver al catálogo",
     "back_to_briefs": "← Briefs",
     "back_to_home": "← Inicio",
     "back_to_profile": "← Volver al perfil",
     "nav": {
       "home": "Inicio",
+      "login": "Iniciar sesión",
+      "register": "Registrarse",
       "professionals": "Profesionales",
       "briefs": "Briefs",
+      "new_brief": "+ Nuevo Brief",
       "profile": "Mi perfil",
+      "portfolio": "Portfolio",
       "account": "Mi cuenta"
     }
   },
@@ -278,7 +285,8 @@
     "selected_count": "{{count}} seleccionada{{s}}",
     "loading_profile": "Cargando perfil…",
     "error_load": "No se pudo cargar el perfil.",
-    "error_save": "No se pudo guardar el perfil."
+    "error_save": "No se pudo guardar el perfil.",
+    "preview_profile": "Ver mi perfil público"
   },
   "account": {
     "title": "Mi cuenta",

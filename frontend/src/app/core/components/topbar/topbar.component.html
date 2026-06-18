@@ -1,54 +1,144 @@
-<header
-  class="topbar"
-  [class.topbar--sticky]="isSticky()"
-  [attr.data-variant]="variant()"
->
-  <a
-    [routerLink]="brandHref()"
-    class="brand-link"
-    [attr.aria-label]="('app.brand' | t) + ', ' + ('topbar.go_home' | t)"
+<!-- Global topbar: hidden on / (landing) and /briefs (brief list), which keep their own topbar -->
+@if (!isHidden()) {
+  <header
+    class="topbar"
+    [class.topbar--sticky]="isSticky()"
+    [attr.data-variant]="variant()"
   >
-    <app-brand-logo brandSize="md" />
-  </a>
+    <a
+      [routerLink]="brandHref()"
+      class="brand-link"
+      [attr.aria-label]="('app.brand' | t) + ', ' + ('topbar.go_home' | t)"
+    >
+      <app-brand-logo brandSize="md" />
+    </a>
 
-  @if (navLinks().length > 0) {
-    <nav class="topbar-nav">
-      @for (link of navLinks(); track link.labelKey) {
-        <a class="nav-link" [routerLink]="link.route">{{ link.labelKey | t }}</a>
-      }
-    </nav>
-  }
-
-  <div class="topbar-right">
-    @if (backLink(); as back) {
-      <button type="button" class="back" (click)="onBack()">
-        {{ back.labelKey | t }}
-      </button>
-    }
-
-    @if (langSelector()) {
-      <app-language-selector />
-    }
-
-    @if (showUser() && user(); as u) {
-      <span class="user-name">{{ u.name }}</span>
-      @if (variant() === 'client') {
-        <span class="role-pill">{{ rolePillKey() | t }}</span>
-      }
-      @if (variant() === 'freelancer') {
-        @if (u.avatar_url ?? u.avatar_urls?.sm; as avatarUrl) {
-          <img
-            class="avatar avatar--image"
-            [src]="avatarUrl"
-            [alt]="('avatar.preview_alt' | t : { name: u.name })"
-          />
-        } @else {
-          <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+    <!-- Desktop nav -->
+    @if (navLinks().length > 0) {
+      <nav class="topbar-nav" role="navigation" aria-label="Navegación principal">
+        @for (link of navLinks(); track link.labelKey) {
+          <a
+            class="nav-link"
+            [class.nav-link--cta]="link.cta"
+            [routerLink]="link.route"
+            routerLinkActive="nav-link--active"
+            [routerLinkActiveOptions]="{ exact: link.route === '/' }"
+          >{{ link.labelKey | t }}</a>
         }
-      }
-      <button type="button" class="logout" (click)="onLogout()">
-        {{ 'topbar.logout' | t }}
-      </button>
+      </nav>
     }
-  </div>
-</header>
+
+    <div class="topbar-right">
+      @if (backLink(); as back) {
+        <a [routerLink]="back.route" class="back-link">{{ back.labelKey | t }}</a>
+      }
+
+      <app-language-selector />
+
+      @if (showUserArea() && user(); as u) {
+        <span class="user-name">{{ u.name }}</span>
+        @if (variant() === 'client') {
+          <span class="role-pill">{{ rolePillKey() | t }}</span>
+        }
+        @if (variant() === 'freelancer') {
+          @if (u.avatar_url ?? u.avatar_urls?.sm; as avatarUrl) {
+            <img
+              class="avatar avatar--image"
+              [src]="avatarUrl"
+              [alt]="('avatar.preview_alt' | t : { name: u.name })"
+            />
+          } @else {
+            <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+          }
+        }
+        <button type="button" class="logout-btn" (click)="onLogout()">{{ 'topbar.logout' | t }}</button>
+      }
+
+      @if (showHamburger()) {
+        <button
+          type="button"
+          class="hamburger"
+          [class.hamburger--open]="mobileMenuOpen()"
+          [attr.aria-label]="mobileMenuOpen() ? ('topbar.menu_close' | t) : ('topbar.menu_open' | t)"
+          [attr.aria-expanded]="mobileMenuOpen()"
+          (click)="toggleMobileMenu()"
+        >
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- Mobile slide-out panel -->
+  @if (mobileMenuOpen()) {
+    <div class="mobile-overlay" (click)="closeMobileMenu()" aria-hidden="true"></div>
+    <aside
+      class="mobile-panel"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'topbar.menu_label' | t"
+      (keydown)="onPanelKeydown($event)"
+    >
+      <button type="button" class="panel-close" (click)="closeMobileMenu()" [attr.aria-label]="'topbar.menu_close' | t">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6 6 18"/><path d="M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <div class="panel-scroll">
+        @if (showUserArea() && user(); as u) {
+          <div class="panel-user">
+            @if (variant() === 'freelancer') {
+              @if (u.avatar_url ?? u.avatar_urls?.sm; as avatarUrl) {
+                <img class="avatar avatar--image" [src]="avatarUrl" [alt]="u.name" />
+              } @else {
+                <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+              }
+            }
+            <div>
+              <div class="panel-user-name">{{ u.name }}</div>
+              <span class="role-pill">{{ rolePillKey() | t }}</span>
+            </div>
+          </div>
+          <hr class="panel-divider" />
+        }
+
+        @if (backLink(); as back) {
+          <a [routerLink]="back.route" class="panel-link panel-link--back" (click)="closeMobileMenu()">
+            {{ back.labelKey | t }}
+          </a>
+        }
+
+        @if (navLinks().length > 0) {
+          <nav class="panel-nav" role="navigation" aria-label="Navegación principal">
+            @for (link of navLinks(); track link.labelKey) {
+              <a
+                class="panel-link"
+                [class.panel-link--cta]="link.cta"
+                [routerLink]="link.route"
+                routerLinkActive="panel-link--active"
+                [routerLinkActiveOptions]="{ exact: link.route === '/' }"
+                (click)="closeMobileMenu()"
+              >{{ link.labelKey | t }}</a>
+            }
+          </nav>
+          <hr class="panel-divider" />
+        }
+      </div>
+
+      <div class="panel-foot">
+        <div class="panel-lang">
+          <app-language-selector />
+        </div>
+
+        @if (showUserArea()) {
+          <button type="button" class="panel-logout" (click)="onLogout()">
+            {{ 'topbar.logout' | t }}
+          </button>
+        }
+      </div>
+    </aside>
+  }
+}

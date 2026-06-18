@@ -32,6 +32,7 @@ export const routes: Routes = [
   {
     path: 'account',
     canActivate: [authGuard],
+    data: { backLink: '/home' },
     loadComponent: () => import('./features/account/account.component').then((m) => m.AccountComponent),
   },
   {
@@ -57,11 +58,13 @@ export const routes: Routes = [
   {
     path: 'freelancer/profile/edit',
     canActivate: [authGuard, roleGuard(['freelancer'])],
+    data: { backLink: '/home' },
     loadComponent: () => import('./features/freelancer/profile-editor/profile-editor.component').then((m) => m.ProfileEditorComponent),
   },
   {
     path: 'freelancer/portfolio',
     canActivate: [authGuard, roleGuard(['freelancer'])],
+    data: { backLink: '/home' },
     loadComponent: () => import('./features/freelancer/portfolio-editor/portfolio-editor.component').then((m) => m.PortfolioEditorComponent),
   },
   {
@@ -70,6 +73,7 @@ export const routes: Routes = [
   },
   {
     path: 'freelancers/:id',
+    data: { backLink: '/freelancers' },
     loadComponent: () => import('./features/freelancers/detail/freelancer-detail.component').then((m) => m.FreelancerDetailComponent),
   },
   {
@@ -79,10 +83,12 @@ export const routes: Routes = [
   {
     path: 'briefs/new',
     canActivate: [authGuard, roleGuard(['client'])],
+    data: { backLink: '/briefs' },
     loadComponent: () => import('./features/briefs/form/brief-form.component').then((m) => m.BriefFormComponent),
   },
   {
     path: 'briefs/:id',
+    data: { backLink: '/briefs' },
     loadComponent: () => import('./features/briefs/detail/brief-detail.component').then((m) => m.BriefDetailComponent),
   },
   { path: '**', redirectTo: '' },
