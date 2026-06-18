@@ -123,7 +123,7 @@ describe('AccountComponent', () => {
     component.form.setValue({
       name: 'Ana',
       email: 'ana@example.com',
-      phone: '   ',
+      phone: '',
       city: '',
     });
 
@@ -192,5 +192,18 @@ describe('AccountComponent', () => {
     const text = freelancerFixture.nativeElement.textContent ?? '';
     expect(text).toContain('Perfil profesional');
     expect(text).toContain('Editar perfil profesional');
+  });
+
+  it('marks phone as invalid when it contains letters', () => {
+    component.form.controls.phone.setValue('asdf');
+    component.form.controls.phone.markAsTouched();
+    fixture.detectChanges();
+    expect(component.form.controls.phone.errors?.['pattern']).toBeTruthy();
+    expect(component.errorFor('phone')).toContain('Solo dígitos');
+  });
+
+  it('accepts phone with international format', () => {
+    component.form.controls.phone.setValue('+1 (415) 555-2671');
+    expect(component.form.controls.phone.errors).toBeNull();
   });
 });
