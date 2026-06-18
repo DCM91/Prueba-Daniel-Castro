@@ -22,11 +22,18 @@ export class RegisterComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly lang = inject(LanguageService);
 
+  private static readonly REGISTRABLE_ROLES: readonly RegisterableRole[] = ['client', 'freelancer'];
+
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly selectedRole = signal<RegisterableRole>(
-    (this.route.snapshot.queryParamMap.get('role') as RegisterableRole) || 'client'
-  );
+  readonly selectedRole = signal<RegisterableRole>(this.parseRoleFromQuery());
+
+  private parseRoleFromQuery(): RegisterableRole {
+    const param = this.route.snapshot.queryParamMap.get('role');
+    return RegisterComponent.REGISTRABLE_ROLES.includes(param as RegisterableRole)
+      ? (param as RegisterableRole)
+      : 'client';
+  }
 
   readonly form = this.fb.nonNullable.group(
     {

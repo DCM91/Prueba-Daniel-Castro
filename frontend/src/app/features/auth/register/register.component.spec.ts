@@ -54,6 +54,68 @@ describe('RegisterComponent', () => {
     expect(component.form.controls.role.value).toBe('freelancer');
   });
 
+  it('honours ?role=freelancer query param when present', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [RegisterComponent, ReactiveFormsModule],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ role: 'freelancer' }) } },
+        },
+        provideLanguageServiceMock('es', {}),
+      ],
+    }).compileComponents();
+    const f = TestBed.createComponent(RegisterComponent);
+    f.detectChanges();
+    expect(f.componentInstance.selectedRole()).toBe('freelancer');
+    expect(f.componentInstance.form.controls.role.value).toBe('freelancer');
+  });
+
+  it('ignores ?role=admin (not in the registrable whitelist) and falls back to client', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [RegisterComponent, ReactiveFormsModule],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ role: 'admin' }) } },
+        },
+        provideLanguageServiceMock('es', {}),
+      ],
+    }).compileComponents();
+    const f = TestBed.createComponent(RegisterComponent);
+    f.detectChanges();
+    expect(f.componentInstance.selectedRole()).toBe('client');
+    expect(f.componentInstance.form.controls.role.value).toBe('client');
+  });
+
+  it('ignores garbage in ?role= and falls back to client', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [RegisterComponent, ReactiveFormsModule],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ role: '<script>' }) } },
+        },
+        provideLanguageServiceMock('es', {}),
+      ],
+    }).compileComponents();
+    const f = TestBed.createComponent(RegisterComponent);
+    f.detectChanges();
+    expect(f.componentInstance.selectedRole()).toBe('client');
+  });
+
   it('rejects role values not in client/freelancer (server-side enforcement)', () => {
     component.form.setValue({
       name: 'Ana',
