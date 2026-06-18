@@ -48,7 +48,7 @@
     "menu_close": "Cerrar menú",
     "menu_label": "Menú de navegación",
     "back_to_catalog": "← Volver al catálogo",
-    "back_to_briefs": "← Briefs",
+    "back_to_briefs": "← Proyectos",
     "back_to_home": "← Inicio",
     "back_to_profile": "← Volver al perfil",
     "nav": {
@@ -56,8 +56,8 @@
       "login": "Iniciar sesión",
       "register": "Registrarse",
       "professionals": "Profesionales",
-      "briefs": "Briefs",
-      "new_brief": "+ Nuevo Brief",
+      "briefs": "Proyectos",
+      "new_brief": "+ Nuevo proyecto",
       "profile": "Mi perfil",
       "portfolio": "Portfolio",
       "account": "Mi cuenta"
@@ -90,7 +90,7 @@
     "how_step2_title": "Encuentra o muéstrate",
     "how_step2_body": "Los clientes filtran por categoría, ciudad y tarifa. Los profesionales completan su perfil.",
     "how_step3_title": "Conecta y crea",
-    "how_step3_body": "Charla, acuerda el brief y empieza el proyecto."
+    "how_step3_body": "Charla, acuerda el proyecto y empieza a crear."
   },
   "auth": {
     "login": {
@@ -317,15 +317,15 @@
   },
   "briefs": {
     "list": {
-      "title": "Briefs",
+      "title": "Proyectos",
       "subtitle": "Proyectos publicados por clientes en busca de talento.",
       "scope_all": "Todos",
-      "scope_mine": "Mis briefs",
-      "new_brief": "+ Nuevo brief",
-      "loading": "Cargando briefs…",
-      "error": "No se pudo cargar el catálogo de briefs.",
-      "empty": "No hay briefs disponibles.",
-      "count": "{{total}} briefs encontrados.",
+      "scope_mine": "Mis proyectos",
+      "new_brief": "+ Nuevo proyecto",
+      "loading": "Cargando proyectos…",
+      "error": "No se pudo cargar el catálogo de proyectos.",
+      "empty": "No hay proyectos disponibles.",
+      "count": "{{total}} proyectos encontrados.",
       "deadline_label": "Fecha límite:",
       "proposal_count_one": "{{n}} propuesta",
       "proposal_count_other": "{{n}} propuestas",
@@ -334,8 +334,8 @@
       "page_info": "Página {{current}} de {{last}}"
     },
     "detail": {
-      "loading": "Cargando brief…",
-      "not_found": "Brief no encontrado.",
+      "loading": "Cargando proyecto…",
+      "not_found": "Proyecto no encontrado.",
       "published_by_before": "Publicado por ",
       "published_by_name": "{{name}}",
       "description": "Descripción",
@@ -350,8 +350,8 @@
       "submit_proposal": "Enviar propuesta"
     },
     "form": {
-      "back": "← Briefs",
-      "title": "Nuevo brief",
+      "back": "← Proyectos",
+      "title": "Nuevo proyecto",
       "subtitle": "Describe tu proyecto para que los profesionales puedan enviarte propuestas.",
       "label_title": "Título",
       "title_min": "Mínimo 5 caracteres.",
@@ -362,7 +362,7 @@
       "label_budget_min": "Presupuesto mínimo (€)",
       "label_budget_max": "Presupuesto máximo (€)",
       "label_deadline": "Fecha límite",
-      "submit": "Publicar brief",
+      "submit": "Publicar proyecto",
       "submitting": "Publicando…"
     }
   },
