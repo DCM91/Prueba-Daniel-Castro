@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, map, tap } from 'rxjs';
 
 import { TokenStorageService } from './token-storage.service';
+import { environment } from '../../../environments/environment';
 import {
   AuthPayload,
   FreelancerProfile,
@@ -117,7 +118,11 @@ export class AuthService {
   }
 
   loginWithOAuth(provider: OAuthProvider): void {
-    window.location.href = `/api/auth/oauth/${provider}/redirect`;
+    window.location.href = this.buildOAuthRedirectUrl(provider);
+  }
+
+  buildOAuthRedirectUrl(provider: OAuthProvider): string {
+    return `${environment.apiBaseUrl}/api/auth/oauth/${provider}/redirect`;
   }
 
   handleOAuthCallback(token: string, expiresIn: number): void {

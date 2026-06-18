@@ -4,7 +4,7 @@ import { of, throwError } from 'rxjs';
 
 import { AuthService } from './auth.service';
 import { TokenStorageService } from './token-storage.service';
-import { AuthPayload, OAuthProvider, User } from '../types/auth.types';
+import { AuthPayload, User } from '../types/auth.types';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -168,8 +168,12 @@ describe('AuthService', () => {
 
   describe('OAuth', () => {
     it('loginWithOAuth() builds the correct provider redirect URL', () => {
+      expect(service.buildOAuthRedirectUrl('google')).toBe('http://127.0.0.1:8000/api/auth/oauth/google/redirect');
+      expect(service.buildOAuthRedirectUrl('facebook')).toBe('http://127.0.0.1:8000/api/auth/oauth/facebook/redirect');
+    });
+
+    it('loginWithOAuth() does not throw', () => {
       expect(() => service.loginWithOAuth('google')).not.toThrow();
-      expect(() => service.loginWithOAuth('facebook')).not.toThrow();
     });
 
     it('handleOAuthCallback() stores the token and schedules a refresh', () => {
