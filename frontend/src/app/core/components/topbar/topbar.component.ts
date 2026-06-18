@@ -94,7 +94,14 @@ export class CoreTopbarComponent {
   readonly navLinks = computed<readonly TopbarNavLink[]>(() => {
     switch (this.variant()) {
       case 'public': return PUBLIC_LINKS;
-      case 'client': return CLIENT_LINKS;
+      case 'client': {
+        // Solo los clientes reales (no agency/company/admin) pueden crear proyectos.
+        const user = this.auth.currentUser();
+        if (user && user.role !== 'client') {
+          return CLIENT_LINKS.filter((l) => l.route !== '/briefs/new');
+        }
+        return CLIENT_LINKS;
+      }
       case 'freelancer': return FREELANCER_LINKS;
       default: return [];
     }

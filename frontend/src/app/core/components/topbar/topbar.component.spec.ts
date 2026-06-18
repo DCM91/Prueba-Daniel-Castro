@@ -154,6 +154,21 @@ describe('CoreTopbarComponent', () => {
     expect(text).toContain('Cerrar sesión');
   });
 
+  it.each([
+    ['agency' as const,  { id: 3, name: 'Agencia', email: 'a@e.com', role: 'agency'  as const, created_at: null }],
+    ['company' as const, { id: 4, name: 'Empresa', email: 'e@e.com', role: 'company' as const, created_at: null }],
+    ['admin' as const,   { id: 5, name: 'Admin',   email: 'ad@e.com', role: 'admin'   as const, created_at: null }],
+  ])('hides the "+ Nuevo proyecto" CTA for non-client roles (%s)', (_role, user) => {
+    userSignal.set(user);
+    configure('/home');
+    emitNavigationEnd();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Inicio');
+    expect(text).toContain('Briefs');
+    expect(text).not.toContain('+ Nuevo Brief');
+    expect(text).not.toContain('+ Nuevo proyecto');
+  });
+
   it('handles logout by calling auth.logout and navigating to /', () => {
     userSignal.set(clientUser);
     configure('/home');
