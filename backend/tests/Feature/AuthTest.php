@@ -263,4 +263,13 @@ final class AuthTest extends TestCase
         $response->assertStatus(200)
             ->assertJson(['status' => 'ok', 'service' => 'FrameMatch']);
     }
+
+    public function test_protected_api_without_token_returns_401_json_not_500_html(): void
+    {
+        $response = $this->getJson('/api/freelancer/me');
+
+        $response->assertStatus(401)
+            ->assertJson(['message' => 'No autenticado. Token inválido o expirado.'])
+            ->assertHeader('Content-Type', 'application/json');
+    }
 }
