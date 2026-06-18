@@ -40,7 +40,7 @@ export class AccountComponent implements OnInit {
   readonly form: AccountForm = this.fb.group({
     name:  this.fb.control('', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]),
     email: this.fb.control('', [Validators.required, Validators.email, Validators.maxLength(255)]),
-    phone: this.fb.control('', [Validators.maxLength(30), Validators.pattern(/^[+0-9 ()\-]{6,30}$/)]),
+    phone: this.fb.control('', [Validators.maxLength(30), Validators.pattern(/^[+0-9 ()-]{6,30}$/)]),
     city:  this.fb.control('', [Validators.maxLength(80)]),
   });
 
