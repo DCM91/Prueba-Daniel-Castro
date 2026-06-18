@@ -5,12 +5,14 @@ import { FreelancerCatalogService } from '../../../core/services/freelancer-cata
 import { LightboxComponent } from '../../../core/components/lightbox/lightbox.component';
 import { LanguageService } from '../../../core/services/language.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
-import { FreelancerDetail, PortfolioItem, SkillLevel } from '../../../core/types/auth.types';
+import { FreelancerDetail, PortfolioItem, ReviewRating, SkillLevel } from '../../../core/types/auth.types';
+import { RatingStarsComponent } from '../../reviews/rating-stars/rating-stars.component';
+import { ReviewListComponent } from '../../reviews/review-list/review-list.component';
 
 @Component({
   selector: 'app-freelancer-detail',
   standalone: true,
-  imports: [RouterLink, LightboxComponent, TranslatePipe],
+  imports: [RouterLink, LightboxComponent, TranslatePipe, RatingStarsComponent, ReviewListComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './freelancer-detail.component.html',
   styleUrl: './freelancer-detail.component.css',
@@ -37,6 +39,25 @@ export class FreelancerDetailComponent implements OnInit {
   });
 
   readonly avatarUrl = computed(() => this.freelancer()?.avatar_url ?? null);
+
+  readonly rating = computed<ReviewRating | null>(() => {
+    const f = this.freelancer();
+    if (f === null || f.user_id === undefined) return null;
+    return (f as FreelancerDetail & { rating?: ReviewRating }).rating ?? null;
+  });
+
+  readonly ratingSummary = computed<string>(() => {
+    const r = this.rating();
+    if (r === null || r.count === 0) return 'rating.summary_no_reviews';
+    if (r.count === 1) return 'rating.summary_one';
+    return 'rating.summary';
+  });
+
+  readonly ratingSummaryParams = computed<{ average: number; count: number } | null>(() => {
+    const r = this.rating();
+    if (r === null || r.count === 0) return null;
+    return { average: r.average ?? 0, count: r.count };
+  });
 
   readonly hourlyRateLabel = computed(() => {
     const r = this.freelancer()?.hourly_rate;

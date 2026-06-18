@@ -35,6 +35,13 @@ final class UserResource extends JsonResource
             'avatar_urls'=> $this->avatarUrls,
         ];
 
+        $data['has_password'] = $this->hasPassword();
+
+        if ($this->relationLoaded('oauthIdentities')) {
+            $data['oauth_only']      = $this->isOAuthOnly();
+            $data['oauth_identities'] = OAuthIdentityResource::collection($this->oauthIdentities)->resolve();
+        }
+
         if ($this->role === UserRole::Freelancer && $this->relationLoaded('freelancerProfile')) {
             $profile = $this->freelancerProfile;
             $data['freelancer_profile'] = $profile

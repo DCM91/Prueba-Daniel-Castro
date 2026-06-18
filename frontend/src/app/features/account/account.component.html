@@ -28,7 +28,7 @@
             <span>{{ 'account.label_name' | t }}</span>
             <input type="text" formControlName="name" maxlength="100" autocomplete="name" />
             @if (errorFor('name'); as msg) {
-              <small class="error">{{ msg }}</small>
+              <small class="error">{{ msg.key | t : msg.params }}</small>
             }
           </label>
 
@@ -36,24 +36,24 @@
             <span>{{ 'account.label_email' | t }}</span>
             <input type="email" formControlName="email" maxlength="255" autocomplete="email" />
             @if (errorFor('email'); as msg) {
-              <small class="error">{{ msg }}</small>
+              <small class="error">{{ msg.key | t : msg.params }}</small>
             }
           </label>
 
           <div class="row">
             <label class="field">
               <span>{{ 'account.label_phone' | t }}</span>
-              <input type="tel" formControlName="phone" maxlength="30" autocomplete="tel" placeholder="+34 600 000 000" />
+              <input type="tel" formControlName="phone" maxlength="30" autocomplete="tel" [attr.placeholder]="'account.placeholder_phone' | t" />
               @if (errorFor('phone'); as msg) {
-                <small class="error">{{ msg }}</small>
+                <small class="error">{{ msg.key | t : msg.params }}</small>
               }
             </label>
 
             <label class="field">
               <span>{{ 'account.label_city' | t }}</span>
-              <input type="text" formControlName="city" maxlength="80" autocomplete="address-level2" placeholder="Madrid" />
+              <input type="text" formControlName="city" maxlength="80" autocomplete="address-level2" [attr.placeholder]="'account.placeholder_city' | t" />
               @if (errorFor('city'); as msg) {
-                <small class="error">{{ msg }}</small>
+                <small class="error">{{ msg.key | t : msg.params }}</small>
               }
             </label>
           </div>
@@ -76,6 +76,8 @@
         @if (savedAt() !== null) {
           <p class="success" role="status">{{ 'account.success' | t }}</p>
         }
+
+        <app-linked-accounts />
 
         <div class="actions">
           <button type="button" class="secondary-btn" (click)="cancel()" [disabled]="submitting()">

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\Review;
 use App\Services\Cloudinary\CloudinaryServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -54,6 +55,19 @@ final class FreelancerProfileResource extends JsonResource
                 'created_at'  => $p->created_at?->toIso8601String(),
             ])->all();
         }
+
+        if ($this->user_id !== null) {
+            $aggregate = Review::query()
+                ->where('reviewee_id', $this->user_id)
+                ->selectRaw('COUNT(*) as count, AVG(rating) as average')
+                ->first();
+            $data['rating'] = [
+                'count'   => (int) ($aggregate->count ?? 0),
+                'average' => $aggregate->average !== null ? round((float) $aggregate->average, 2) : null,
+            ];
+        }
+
+        $data['onboarding_completed_at'] = $this->onboarding_completed_at?->toIso8601String();
 
         return $data;
     }

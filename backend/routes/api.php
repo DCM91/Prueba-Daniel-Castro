@@ -3,13 +3,16 @@
 use App\Enums\OAuthProvider;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BriefController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\FreelancerCatalogController;
 use App\Http\Controllers\Api\FreelancerCoverController;
 use App\Http\Controllers\Api\FreelancerPortfolioController;
 use App\Http\Controllers\Api\FreelancerProfileController;
 use App\Http\Controllers\Api\OAuthController;
+use App\Http\Controllers\Api\OnboardingController;
 use App\Http\Controllers\Api\ProfileCompletionController;
 use App\Http\Controllers\Api\ProposalController;
+use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SkillController;
 use App\Http\Controllers\Api\UserAccountController;
 use App\Http\Controllers\Api\UserAvatarController;
@@ -40,9 +43,22 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/briefs', [BriefController::class, 'store']);
     Route::put('/briefs/{id}', [BriefController::class, 'update'])->whereNumber('id');
     Route::delete('/briefs/{id}', [BriefController::class, 'destroy'])->whereNumber('id');
+    Route::post('/briefs/{id}/attachments', [BriefController::class, 'attachImage'])->whereNumber('id');
+    Route::delete('/briefs/{id}/attachments/{attachmentId}', [BriefController::class, 'detachImage'])
+        ->whereNumber('id')
+        ->whereNumber('attachmentId');
+    Route::patch('/briefs/{id}/attachments/reorder', [BriefController::class, 'reorderAttachments'])->whereNumber('id');
+    Route::patch('/briefs/{id}/complete', [BriefController::class, 'complete'])->whereNumber('id');
+    Route::post('/briefs/{id}/reviews', [ReviewController::class, 'store'])->whereNumber('id');
+    Route::get('/briefs/{id}/reviews', [ReviewController::class, 'forBrief'])->whereNumber('id');
+    Route::get('/users/{id}/reviews', [ReviewController::class, 'forUser'])->whereNumber('id');
+    Route::get('/users/{id}/rating', [ReviewController::class, 'aggregateForUser'])->whereNumber('id');
 
     Route::post('/briefs/{briefId}/proposals', [ProposalController::class, 'store'])
         ->whereNumber('briefId');
+    Route::patch('/briefs/{briefId}/proposals/{id}', [ProposalController::class, 'update'])
+        ->whereNumber('briefId')
+        ->whereNumber('id');
 
     Route::post('/me/avatar', [UserAvatarController::class, 'store'])
         ->middleware('throttle:30,1');
@@ -52,6 +68,19 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/me', [UserAccountController::class, 'update']);
 
     Route::get('/me/completion', [ProfileCompletionController::class, 'show']);
+    Route::post('/me/onboarding-complete', [OnboardingController::class, 'complete']);
+
+    Route::get('/me/oauth-identities', [OAuthController::class, 'listIdentities']);
+    Route::delete('/me/oauth-identities/{provider}', [OAuthController::class, 'unlinkIdentity'])
+        ->whereIn('provider', OAuthProvider::values());
+
+    Route::get('/conversations', [ChatController::class, 'index']);
+    Route::get('/conversations/unread-count', [ChatController::class, 'unreadCount']);
+    Route::get('/conversations/{id}', [ChatController::class, 'show'])->whereNumber('id');
+    Route::get('/conversations/{id}/messages', [ChatController::class, 'messages'])->whereNumber('id');
+    Route::post('/conversations/{id}/messages', [ChatController::class, 'send'])->whereNumber('id');
+    Route::post('/conversations/{id}/read', [ChatController::class, 'read'])->whereNumber('id');
+    Route::post('/briefs/{id}/conversation', [ChatController::class, 'ensureForBrief'])->whereNumber('id');
 });
 
 Route::prefix('auth')->group(function () {

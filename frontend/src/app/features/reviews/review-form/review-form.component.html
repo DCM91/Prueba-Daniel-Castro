@@ -1,0 +1,48 @@
+<form class="review-form" [formGroup]="form" (ngSubmit)="submit()" data-test="review-form">
+  <header class="review-form__head">
+    <h3 class="review-form__title">{{ 'reviews.form_title' | t }}</h3>
+    <p class="review-form__subtitle muted">{{ 'reviews.form_subtitle' | t }}</p>
+  </header>
+
+  <div class="review-form__field" role="group" [attr.aria-label]="'reviews.rating_label' | t">
+    <span class="review-form__label">{{ 'reviews.rating_label' | t }}</span>
+    <app-rating-stars
+      [value]="starValue()"
+      [interactive]="true"
+      size="lg"
+      (valueChange)="onStarChange($event)"
+    />
+    <p class="review-form__helper muted">{{ 'reviews.rating_helper' | t }}</p>
+    @if (form.controls.rating.touched && form.controls.rating.errors?.['required']) {
+      <p class="review-form__error" role="alert">{{ 'reviews.rating_required' | t }}</p>
+    }
+  </div>
+
+  <div class="review-form__field">
+    <label class="review-form__label" for="review-comment">
+      {{ 'reviews.comment_label' | t }}
+    </label>
+    <textarea
+      id="review-comment"
+      formControlName="comment"
+      rows="4"
+      [attr.maxlength]="maxComment"
+      [attr.placeholder]="'reviews.comment_placeholder' | t"
+    ></textarea>
+    <p class="review-form__helper muted">{{ previewCharCount() }} / {{ maxComment }}</p>
+  </div>
+
+  @if (errorMessage(); as msg) {
+    <p class="review-form__error" role="alert">{{ msg | t }}</p>
+  }
+
+  <div class="review-form__actions">
+    <button
+      type="submit"
+      class="review-form__submit"
+      [disabled]="form.invalid || saving()"
+    >
+      {{ saving() ? ('reviews.submitting' | t) : ('reviews.submit' | t) }}
+    </button>
+  </div>
+</form>

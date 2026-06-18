@@ -4,7 +4,7 @@ Plataforma que conecta **freelancers de fotografía y vídeo** con **clientes** 
 
 **Stack:** Laravel 13 (API REST + JWT) + Angular 21 (SPA standalone).
 
-> **Fases entregadas:** auth con JWT, registro como cliente/freelancer, landing pública de marketing, dos landings post-login diferenciadas por rol, editor de perfil del profesional con selección de skills del catálogo, catálogo público de freelancers con filtros (categoría, ciudad, tarifa, búsqueda) y vista de detalle, briefs + propuestas (matching cliente ↔ profesional), brand "FrameMatch" prominente con logo SVG inline, i18n bilingüe (ES + EN) con selector en topbar, OAuth con Google y Facebook, topbar unificado con 4 variants, subida de foto de perfil con Cloudinary, cover + portfolio con lightbox accesible, y **Fase 5.6 · deploy a producción en Railway (backend) + Vercel (frontend)** con MySQL gestionado y FrankenPHP.
+> **Fases entregadas:** auth con JWT, registro como cliente/freelancer, landing pública de marketing, dos landings post-login diferenciadas por rol, editor de perfil del profesional con selección de skills del catálogo (4 categorías: foto, vídeo, edición, contenido), catálogo público de freelancers con filtros (categoría, ciudad, tarifa, búsqueda) y vista de detalle, briefs + propuestas (matching cliente ↔ profesional), brand "FrameMatch" prominente con logo SVG inline, i18n bilingüe (ES + EN) con selector en topbar, OAuth con Google y Facebook (auto-vinculación por email), topbar unificado con 4 variants, subida de foto de perfil con Cloudinary, cover + portfolio con lightbox accesible, brief attachments (hasta 10 imágenes por brief), profile completion + onboarding wizard, edición de cuenta, OAuth N:M (vincular varios providers), chat cliente↔freelancer ligado a briefs con propuesta aceptada (polling 5s), reviews y ratings cruzados, y **deploy a producción en Railway (backend) + Vercel (frontend)** con MySQL gestionado y FrankenPHP. Detalle completo en [docs/roadmap.md](./docs/roadmap.md).
 
 ## Documentación
 
@@ -311,13 +311,25 @@ php artisan test
 
 | Suite | Archivo | Tests | Qué verifican |
 |---|---|---|---|
-| Feature | `AuthTest.php` | 15 | Registro cliente/freelancer, validaciones, login, me, logout, refresh, health, seeder |
-| Feature | `FreelancerProfileTest.php` | 10 | `GET /api/skills`, `GET/PUT /api/freelancer/me`, `PUT /me/skills` (422/403/200, re-sync del pivot) |
-| Feature | `FreelancerCatalogTest.php` | 13 | `GET /api/freelancers` (filtros, paginación, empty), `GET /api/freelancers/{id}` (200/404) |
-| Feature | `BriefsAndProposalsTest.php` | 16 | CRUD de briefs, propuestas con validaciones, owner-only access |
-| Unit | — | 0 | (vacío) |
+| Feature | `AuthTest.php` | 16 | Registro cliente/freelancer, validaciones, login, me, logout, refresh, health, seeder (4 categorías: photo/video/edit/content) |
+| Feature | `FreelancerProfileTest.php` | 11 | `GET /api/skills`, `GET/PUT /api/freelancer/me`, `PUT /me/skills` (422/403/200, re-sync del pivot) |
+| Feature | `FreelancerCatalogTest.php` | 17 | `GET /api/freelancers` (filtros, paginación, empty, orden featured), `GET /api/freelancers/{id}` (200/404, no expone email) |
+| Feature | `BriefsAndProposalsTest.php` | 16 | CRUD de briefs, propuestas con validaciones, owner-only access, auto-creación de conversación al aceptar |
+| Feature | `BriefAttachmentTest.php` | 16 | Attach/detach/reorder de imágenes de referencia en briefs (max 10, folder verification, anti-duplicados) |
+| Feature | `ChatTest.php` | 18 | Mensajería 1:1 cliente↔freelancer (listado, envío, polling `?since=`, mark-read, permisos, unread-count) |
+| Feature | `ReviewTest.php` | 19 | Reviews 1-5 con comentario, anti-duplicados por `(brief, reviewer)`, validaciones, aggregate rating, complete-brief |
+| Feature | `AvatarUploadTest.php` | 12 | Subir/borrar avatar con Cloudinary (Admin API verification, replace, 401/403) |
+| Feature | `CoverUploadTest.php` | 9 | Subir/borrar cover del freelancer con Cloudinary |
+| Feature | `PortfolioTest.php` | 13 | CRUD de portfolio + reorder + endpoint público |
+| Feature | `OAuthTest.php` | 13 | OAuth Google/Facebook (redirect, callback, complete-profile, re-login con identidad existente) |
+| Feature | `OAuthIdentityTest.php` | 11 | `GET/DELETE /me/oauth-identities` (multi-provider, guard "no puedes desvincular tu único método de login") |
+| Feature | `UserAccountTest.php` | 7 | `PUT /api/me` con regex de teléfono internacional, 422, 401 |
+| Feature | `OnboardingEndpointTest.php` | 9 | `POST /api/me/onboarding-complete` (idempotente, 403 para no-freelancer) |
+| Feature | `ProfileCompletionTest.php` | 11 | `ProfileCompletionService` + `GET /api/me/completion` (10 campos, 100 pts) |
+| Unit | `CloudinaryServiceTest.php` | 14 | Admin API, URLs con transformaciones, helpers |
+| Unit | `UserTest.php` | 5 | Modelo `User`, JWT claims, relaciones |
 
-**Total backend: 74 tests, 431 assertions.**
+**Total backend: 227 tests / 927 assertions, todos en verde.**
 
 ### Frontend
 
@@ -328,39 +340,53 @@ npm test
 
 | Suite | Tests | Qué verifican |
 |---|---|---|
-| `auth.service.spec.ts` | 8 | Signals, login/logout, restoreSession, hasAnyRole, homePathFor, roleLabel |
+| `auth.service.spec.ts` | 12 | Signals, login/logout, restoreSession, hasAnyRole, homePathFor, roleLabel, OAuth (link, list, unlink) |
 | `auth.guard.spec.ts` | 2 | Acceso autenticado y redirección con returnUrl |
 | `redirect-if-authenticated.guard.spec.ts` | 4 | Si ya hay sesión, salta de /login o /register a /home |
 | `home-redirect.component.spec.ts` | 3 | Enruta a /home/client, /home/freelancer y a /login si no hay user |
 | `login.component.spec.ts` | 3 | Validación, submit → /home, error 401 |
 | `register.component.spec.ts` | 6 | Role selector, validaciones, mismatch password, submit → /home, error 422 |
-| `client-home.component.spec.ts` | 4 | Render del topbar, search, categorías, freelancers, toggleCategory |
+| `oauth-callback.component.spec.ts` | 4 | Lee `?token`/`?new_user` de query params, decide ruta |
+| `oauth-complete-profile.component.spec.ts` | 3 | Role selector, submit → POST /auth/oauth/complete-profile, redirige a /home |
+| `client-home.component.spec.ts` | 4 | Render del topbar, search, 4 categorías, 6 freelancers, toggleCategory |
 | `freelancer-home.component.spec.ts` | 7 | Saludo, profileCompletion con perfil vacío/parcial/lleno, missingFields, stats, tips |
 | `freelancer-profile.service.spec.ts` | 4 | 4 métodos (getSkills, getMyProfile, updateMyProfile, syncMySkills) |
 | `profile-editor.component.spec.ts` | 4 | Carga inicial, form inválido, submit OK con 2 PUT, error 422 con errores por campo |
 | `freelancer-catalog.service.spec.ts` | 4 | `search()` con/sin filtros + `getById()` |
-| `freelancer-card.component.spec.ts` | 7 | Render de card, level labels, "Consultar" cuando hourly_rate es null |
+| `freelancer-card.component.spec.ts` | 7 | Render de card, level labels, "Consultar" cuando hourly_rate es null, rating stars |
 | `freelancer-list.component.spec.ts` | 4 | Carga inicial con resultados, estado vacío, lectura de queryParams, hasActiveFilters |
-| `freelancer-detail.component.spec.ts` | 5 | Render del detalle, 404 desde error 404, 404 por id inválido, "Ver más" en bio, "Consultar" |
+| `freelancer-detail.component.spec.ts` | 5 | Render del detalle, 404 desde error 404, 404 por id inválido, "Ver más" en bio, "Consultar", hero rating |
 | `brand-logo.component.spec.ts` | 5 | Render del wordmark, showWordmark/hideWordmark, tamaños |
-| `landing.component.spec.ts` | 5 | Topbar, CTAs, secciones con i18n |
-| `language.service.spec.ts` | 6 | Carga de diccionarios, interpolación, persistencia |
+| `landing.component.spec.ts` | 5 | Topbar, CTAs, secciones con i18n (4 categorías) |
+| `language.service.spec.ts` | 6 | Carga de diccionarios, interpolación, persistencia, detección de navegador, FOUT |
 | `language-selector.component.spec.ts` | 3 | Trigger con código actual, apertura menú, selección |
+| `topbar.component.spec.ts` | 10 | 4 variants, back-link, logout emit, back emit, hide user area, initials |
+| `lightbox.component.spec.ts` | 6 | Dialog ARIA, render, navegación, wrap, close |
 | `brief-list.component.spec.ts` | 3 | Carga inicial con briefs, estado vacío, plural i18n `propuesta/propuestas` |
 | `brief-detail.component.spec.ts` | 2 | Render del brief, estado 404 |
+| `brief-attachment-uploader.component.spec.ts` | 7 | Drop-zone, upload con Cloudinary, error handling, remove |
+| `chat-list.component.spec.ts` | 6 | Polling 5s, empty/loading/error, badge unread, selectConversation |
+| `chat-thread.component.spec.ts` | 9 | Polling `?since=`, scroll-to-bottom, send con validaciones, markRead, own/alien alignment |
+| `review-list.component.spec.ts` | 4 | Empty/loading/error, render de items, brief endpoint |
+| `onboarding.service.spec.ts` | 9 | 7 steps, persistencia en localStorage, goNext/goPrev/skip/complete, idempotencia |
+| `account.component.spec.ts` | 4 | Form init desde currentUser, updateAccount, errors 422, linked-accounts section |
+| `user.service.spec.ts` | 3 | setAvatar/removeAvatar |
+| `cloudinary.service.spec.ts` | 6 | Upload con validación client-side, formatos, setAvatar, removeAvatar |
+| `avatar-uploader.component.spec.ts` | 10 | Render, file selection, success, error, remove, double-call guard, emit |
 
-**Total frontend: 111 tests / 21 suites, todos verdes.**
+**Total frontend: 36 suites, 249 tests verdes.** `npm run build` OK. Bug del runner `setupZoneTestEnv()` y los 16 tests con bugs pre-existentes en specs resueltos (ver [§ Pendiente de tests frontend](./docs/roadmap.md#pendiente-de-tests-frontend) y hotfix 0.18).
 
 ---
 
 ## Próximas fases (roadmap)
 
-> Detalle completo en [docs/roadmap.md](./docs/roadmap.md). Resumen:
+> Detalle completo en [docs/roadmap.md](./docs/roadmap.md) (que ahora incluye el checklist operativo fusionado). Resumen de lo que viene:
 
-1. **Fase 6 · Mensajería** — chat cliente ↔ freelancer dentro de un brief aceptado.
-2. **Fase 7 · Reviews y ratings** — valoración tras encargos completados.
-3. **Fase 3.5 · Portfolio de imágenes** — subida de portfolio de los freelancers.
-4. **Backlog menor** — verificación de email, reset de password, SSR, E2E, CI/CD, Docker.
+1. **Aceptar / rechazar propuesta** — `PATCH /api/briefs/{id}/proposals/{pid}/status` con UI en `brief-detail`.
+2. **Editar / borrar la propia review** — `PUT/DELETE /api/reviews/{id}`.
+3. **Migrar chat de polling a WebSockets** — Laravel Reverb + push notifications.
+4. **Reset de password + verificación de email** — links firmados con TTL 30 min, email transaccional.
+5. **Backlog DevEx / Roles / SEO** — E2E con Playwright, pipeline lint, Docker compose, sub-perfiles `agency`/`company`, admin panel, SSR Angular Universal, búsqueda full-text, pagos Stripe, OG image.
 
 ### Login con Google / Facebook (Fase 5.3)
 

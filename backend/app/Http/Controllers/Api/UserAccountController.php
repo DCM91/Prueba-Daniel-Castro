@@ -25,7 +25,7 @@ final class UserAccountController extends Controller
         $user->fill($request->validated());
         $user->save();
 
-        $user->load('freelancerProfile.skills');
+        $user->load(['freelancerProfile.skills', 'oauthIdentities']);
 
         return response()->json([
             'data' => new UserResource(

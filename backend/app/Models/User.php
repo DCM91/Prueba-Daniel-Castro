@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\OAuthProvider;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -26,8 +27,6 @@ final class User extends Authenticatable implements JWTSubject
         'email_verified_at',
         'avatar_url',
         'avatar_public_id',
-        'oauth_provider',
-        'oauth_id',
     ];
 
     protected $hidden = [
@@ -41,7 +40,6 @@ final class User extends Authenticatable implements JWTSubject
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'role'              => UserRole::class,
-            'oauth_provider'    => OAuthProvider::class,
         ];
     }
 
@@ -62,6 +60,36 @@ final class User extends Authenticatable implements JWTSubject
         return $this->hasOne(FreelancerProfile::class);
     }
 
+    public function oauthIdentities(): HasMany
+    {
+        return $this->hasMany(UserOAuthIdentity::class);
+    }
+
+    public function clientConversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class, 'client_id');
+    }
+
+    public function freelancerConversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class, 'freelancer_id');
+    }
+
+    public function sentMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    public function reviewsAuthored(): HasMany
+    {
+        return $this->hasMany(Review::class, 'reviewer_id');
+    }
+
+    public function reviewsReceived(): HasMany
+    {
+        return $this->hasMany(Review::class, 'reviewee_id');
+    }
+
     public function isFreelancer(): bool
     {
         return $this->role === UserRole::Freelancer;
@@ -72,9 +100,20 @@ final class User extends Authenticatable implements JWTSubject
         return $this->role === UserRole::Client;
     }
 
-    public function isOAuthUser(): bool
+    public function hasPassword(): bool
     {
-        return $this->oauth_provider instanceof OAuthProvider
-            && !empty($this->oauth_id);
+        return $this->password !== null && $this->password !== '';
+    }
+
+    public function isOAuthOnly(): bool
+    {
+        return ! $this->hasPassword() && $this->oauthIdentities()->exists();
+    }
+
+    public function hasOAuthProvider(OAuthProvider $provider): bool
+    {
+        return $this->oauthIdentities()
+            ->where('provider', $provider->value)
+            ->exists();
     }
 }

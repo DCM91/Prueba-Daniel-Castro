@@ -57,9 +57,10 @@
       "register": "Register",
       "professionals": "Professionals",
       "briefs": "Briefs",
-      "new_brief": "+ New Brief",
+      "new_brief": "+ New brief",
       "profile": "My profile",
       "portfolio": "Portfolio",
+      "messages": "Messages",
       "account": "My account"
     }
   },
@@ -224,7 +225,8 @@
       "footer_meta": "{{count}} skill{{s}} · {{pct}}% complete",
       "view_profile": "View profile →",
       "aria_view_profile": "View {{name}}'s profile",
-      "initials_fallback": "?"
+      "initials_fallback": "?",
+      "rate_per_hour": "{{rate}}€/h"
     },
     "list": {
       "title": "Available professionals",
@@ -284,12 +286,21 @@
     "submitting": "Saving…",
     "cancel": "Cancel",
     "add_skill": "Add skill",
-    "remove_skill": "Remove",
+    "remove_skill": "Remove skill",
     "selected_count": "{{count}} selected",
     "loading_profile": "Loading profile…",
     "error_load": "Could not load the profile.",
     "error_save": "Could not save the profile.",
-    "preview_profile": "Preview public profile"
+    "preview_profile": "Preview public profile",
+    "placeholder_display_name": "E.g. Luis Foto Pro",
+    "placeholder_bio": "Tell them about your style and experience.",
+    "placeholder_city": "E.g. Madrid",
+    "placeholder_price": "450",
+    "error_max_display_name": "Maximum 100 characters.",
+    "error_max_bio": "Maximum 1000 characters.",
+    "error_max_city": "Maximum 80 characters.",
+    "error_negative": "Cannot be negative.",
+    "skills_hint": "Pick up to 20 from the catalog. Set your level and years of experience."
   },
   "account": {
     "title": "My account",
@@ -310,7 +321,31 @@
     "submitting": "Saving…",
     "cancel": "Cancel",
     "success": "Details updated.",
-    "error_generic": "Could not save your changes."
+    "error_generic": "Could not save your changes.",
+    "placeholder_phone": "+34 600 000 000",
+    "placeholder_city": "Madrid",
+    "error_required": "This field is required.",
+    "error_email": "Enter a valid email.",
+    "error_minlength": "Minimum {{n}} characters.",
+    "error_maxlength": "Maximum {{n}} characters.",
+    "error_phone_format": "Only digits, spaces, parentheses, hyphens and a leading +.",
+    "section_oauth": "Connected accounts",
+    "section_oauth_hint": "Sign in faster with an external provider. You can link more than one.",
+    "oauth_link_google": "Connect with Google",
+    "oauth_link_facebook": "Connect with Facebook",
+    "oauth_unlink": "Disconnect",
+    "oauth_unlink_confirm": "Disconnect {{provider}}? You will no longer be able to sign in with this account.",
+    "oauth_linked_on": "Linked on {{date}}",
+    "oauth_last_used": "Last used: {{date}}",
+    "oauth_never_used": "Linked but never used",
+    "oauth_provider_email": "Email at {{provider}}: {{email}}",
+    "oauth_no_accounts": "You have no external accounts linked.",
+    "oauth_loading": "Loading connected accounts…",
+    "oauth_error_load": "Could not load connected accounts.",
+    "oauth_error_unlink": "Could not disconnect the account.",
+    "oauth_linked_success": "{{provider}} linked successfully.",
+    "oauth_linked_error": "Could not link the account: {{reason}}",
+    "oauth_only_warning": "Your account can only be accessed via external providers. Add a password so you do not lose access."
   },
   "nav": {
     "categories": "Categories",
@@ -334,7 +369,10 @@
       "proposal_count_other": "{{n}} proposals",
       "prev": "← Previous",
       "next": "Next →",
-      "page_info": "Page {{current}} of {{last}}"
+      "page_info": "Page {{current}} of {{last}}",
+      "budget_range": "{{min}}€ - {{max}}€",
+      "budget_from": "From {{amount}}€",
+      "budget_up_to": "Up to {{amount}}€"
     },
     "detail": {
       "loading": "Loading brief…",
@@ -367,7 +405,124 @@
       "label_deadline": "Deadline",
       "submit": "Publish brief",
       "submitting": "Publishing…"
+    },
+    "proposal_form": {
+      "title": "Your proposal",
+      "label_message": "Message",
+      "placeholder_message": "Tell the client why you are the right person for this project...",
+      "label_price": "Price (€)",
+      "submit": "Send proposal",
+      "submitting": "Sending…",
+      "error_generic": "Could not send the proposal."
+    },
+    "proposals": {
+      "accept": "Accept",
+      "reject": "Reject",
+      "confirm_accept": "Accept this proposal? The project will move to assigned.",
+      "confirm_reject": "Reject this proposal?",
+      "status_pending": "Pending",
+      "status_accepted": "Accepted",
+      "status_rejected": "Rejected",
+      "status_withdrawn": "Withdrawn"
     }
+  },
+  "reviews": {
+    "title": "Reviews",
+    "section_title": "Reviews",
+    "section_help": "Rate the work with your client or professional.",
+    "form_title": "Leave a review",
+    "form_subtitle": "Share your experience. The review will be published with your name.",
+    "rating_label": "Rating",
+    "rating_required": "Pick a rating between 1 and 5.",
+    "rating_helper": "1 = very bad, 5 = excellent",
+    "comment_label": "Comment (optional)",
+    "comment_placeholder": "Tell the other party how it went…",
+    "submit": "Publish review",
+    "submitting": "Publishing…",
+    "already_reviewed": "You have already rated this project.",
+    "complete_brief_first": "Mark the project as completed before leaving a review.",
+    "complete_brief_cta": "Mark as completed",
+    "complete_brief_confirm": "Mark this project as completed? This action cannot be undone.",
+    "complete_brief_done": "Project marked as completed.",
+    "complete_brief_error": "Could not mark the project as completed.",
+    "error_load": "Could not load reviews.",
+    "error_save": "Could not save the review.",
+    "empty_for_brief": "This project does not have reviews yet.",
+    "empty_for_user": "This professional has no reviews yet.",
+    "anonymous_reviewer": "Anonymous",
+    "show_all": "See all reviews",
+    "stars_one": "{{n}} star",
+    "stars_other": "{{n}} stars",
+    "anonymous_avatar": "?"
+  },
+  "rating": {
+    "label": "Rating",
+    "summary": "{{average}} out of 5 ({{count}} reviews)",
+    "summary_no_reviews": "No reviews yet",
+    "summary_one": "{{average}} out of 5 (1 review)",
+    "aria_label": "Rating: {{n}} out of 5"
+  },
+  "brief_attachments": {
+    "section_title": "Reference images",
+    "section_help": "Upload up to 10 images to help professionals understand the project.",
+    "add": "Add image",
+    "uploading": "Uploading…",
+    "uploading_one": "Uploading image {{current}} of {{total}}…",
+    "empty": "You haven't added any images yet.",
+    "limit_reached": "You have reached the limit of 10 images.",
+    "error_upload": "Could not upload the image.",
+    "error_save": "Could not save the image on the project.",
+    "error_load": "Could not load the images.",
+    "error_remove": "Could not delete the image.",
+    "error_reorder": "Could not reorder the images.",
+    "error_limit": "You have reached the image limit for this project.",
+    "error_filetype": "File type not allowed.",
+    "error_size": "The image is too large (max 10 MB).",
+    "remove": "Delete",
+    "remove_confirm": "Delete this image?",
+    "reorder_help": "Drag to reorder.",
+    "drag_handle_label": "Reorder image",
+    "title_label": "Title",
+    "title_placeholder": "e.g. Main moodboard",
+    "error_title_required": "Title is required to upload the image.",
+    "image_alt": "Reference image {{n}}",
+    "added_toast": "Image added.",
+    "removed_toast": "Image deleted.",
+    "reordered_toast": "Order updated."
+  },
+  "chat": {
+    "title": "Messages",
+    "list_title": "Conversations",
+    "list_subtitle": "Chats tied to your active projects.",
+    "empty_list": "You have no open conversations yet.",
+    "loading_list": "Loading conversations…",
+    "error_load_list": "Could not load conversations.",
+    "unread_one": "{{n}} unread",
+    "unread_other": "{{n}} unread",
+    "open_chat": "Open conversation",
+    "back_to_list": "← Back to messages",
+    "thread_title": "Project conversation",
+    "no_messages": "No messages yet. Be the first to write!",
+    "loading_messages": "Loading messages…",
+    "error_load_messages": "Could not load messages.",
+    "error_send": "Could not send the message.",
+    "error_network": "Network error. Retrying…",
+    "message_placeholder": "Write a message…",
+    "send": "Send",
+    "sending": "Sending…",
+    "mark_as_read": "Mark as read",
+    "unread_badge": "{{n}}",
+    "you": "You",
+    "load_more": "Load previous messages",
+    "loading_more": "Loading…",
+    "polling_label": "Updating in real time",
+    "last_seen": "Last updated {{time}}",
+    "with_label": "with {{name}}",
+    "context_brief": "About the project: {{title}}",
+    "context_status": "Status: {{status}}",
+    "context_label": "Project",
+    "sender_fallback": "Counterpart",
+    "no_messages_yet_short": "No messages yet"
   },
   "footer": {
     "copyright": "© 2026 FrameMatch · {{tagline}}"
@@ -416,8 +571,10 @@
     "reorder_up": "Move up",
     "reorder_down": "Move down",
     "save_order": "Save order",
-    "view": "View image",
-    "image_alt": "Portfolio item{{title}}"
+    "view": "View image: {{title}}",
+    "image_alt": "Portfolio piece{{title}}",
+    "error_title_required": "Title is required to upload the piece.",
+    "error_description_required": "Description is required to upload the piece."
   },
   "lightbox": {
     "close": "Close",
@@ -425,5 +582,57 @@
     "prev": "Previous",
     "counter": "{{current}} of {{total}}",
     "dialog_label": "Image viewer"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Set up your professional profile",
+      "body": "We will build your showcase in 5 steps. You can always come back and edit anything later.",
+      "cta": "Get started"
+    },
+    "step": {
+      "welcome": {
+        "label": "Welcome"
+      },
+      "datos": {
+        "label": "Basics",
+        "title": "Tell us about yourself",
+        "lead": "These details show on your public profile and in the emails we send you."
+      },
+      "avatar": {
+        "label": "Avatar",
+        "title": "Upload your profile photo",
+        "lead": "A clear, professional image helps clients trust you."
+      },
+      "bio-tarifa": {
+        "label": "Bio & rates",
+        "title": "Define your offering",
+        "lead": "Bio and rates are the first things clients look at when deciding."
+      },
+      "skills": {
+        "label": "Skills",
+        "title": "Pick your skills",
+        "lead": "Choose from the catalog and set your level and years of experience.",
+        "levels_title": "Level and years of experience per skill"
+      },
+      "cover-portfolio": {
+        "label": "Cover",
+        "title": "Cover and portfolio",
+        "lead": "A wide cover image and 3+ work samples make a real difference. You can do this later from your profile.",
+        "manage_portfolio": "Manage portfolio",
+        "optional_hint": "This step is optional. You can skip and come back later."
+      },
+      "done": {
+        "label": "Done",
+        "title": "You are all set!",
+        "body": "Your profile is live. Clients can see you and send you proposals."
+      }
+    },
+    "next": "Continue",
+    "back": "Back",
+    "skip": "Skip this step",
+    "saving": "Saving…",
+    "done": {
+      "cta": "Go to my home"
+    }
   }
 }

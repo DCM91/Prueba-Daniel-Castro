@@ -59,9 +59,9 @@ export class CoverUploaderComponent {
   readonly displayUrl = computed<string | null>(() => {
     const preview = this.previewUrl();
     if (preview !== null) return preview;
-    const urls = this.currentCoverUrls();
-    if (urls?.lg) return urls.lg;
-    return this.currentCoverUrl();
+    const raw = this.currentCoverUrl();
+    if (raw) return raw;
+    return this.currentCoverUrls()?.lg ?? null;
   });
 
   @HostBinding('attr.data-drag-over') get dragOverAttr(): string {

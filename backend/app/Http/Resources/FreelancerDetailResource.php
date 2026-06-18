@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\Review;
 use App\Services\Cloudinary\CloudinaryServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -16,6 +17,18 @@ final class FreelancerDetailResource extends JsonResource
 
         $skills = $this->relationLoaded('skills') ? $this->skills : collect();
         $portfolios = $this->relationLoaded('portfolios') ? $this->portfolios : collect();
+
+        $rating = ['count' => 0, 'average' => null];
+        if ($this->user_id !== null) {
+            $row = Review::query()
+                ->where('reviewee_id', $this->user_id)
+                ->selectRaw('COUNT(*) as count, AVG(rating) as average')
+                ->first();
+            $rating = [
+                'count'   => (int) ($row->count ?? 0),
+                'average' => $row->average !== null ? round((float) $row->average, 2) : null,
+            ];
+        }
 
         return [
             'id'                => $this->id,
@@ -30,6 +43,7 @@ final class FreelancerDetailResource extends JsonResource
             'cover_url'         => $this->cover_url,
             'cover_urls'        => $cloudinary->coverUrls($this->cover_public_id),
             'created_at'        => optional($this->user)->created_at?->toIso8601String(),
+            'rating'            => $rating,
             'skills'            => $skills->map(fn ($s) => [
                 'id'                => $s->id,
                 'name'              => $s->name,

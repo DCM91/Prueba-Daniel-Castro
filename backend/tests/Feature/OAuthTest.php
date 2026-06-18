@@ -8,6 +8,7 @@ use App\Enums\OAuthProvider;
 use App\Enums\UserRole;
 use App\Models\FreelancerProfile;
 use App\Models\User;
+use App\Models\UserOAuthIdentity;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -43,6 +44,7 @@ final class OAuthTest extends TestCase
         $user->email = (string) ($overrides['email'] ?? 'lucia.oauth@example.com');
         $user->avatar = $overrides['avatar'] ?? 'https://lh3.googleusercontent.com/abc/photo.jpg';
         $user->user = array_merge(['email_verified' => true], $overrides['user'] ?? []);
+        $user->token = $overrides['token'] ?? 'fake-access-token';
         return $user;
     }
 
@@ -110,10 +112,12 @@ final class OAuthTest extends TestCase
         $this->assertStringContainsString('new_user=1', $response->headers->get('Location'));
 
         $this->assertDatabaseHas('users', [
-            'email'          => 'lucia.oauth@example.com',
-            'role'           => UserRole::Client->value,
-            'oauth_provider' => OAuthProvider::Google->value,
-            'oauth_id'       => 'google-123',
+            'email' => 'lucia.oauth@example.com',
+            'role'  => UserRole::Client->value,
+        ]);
+        $this->assertDatabaseHas('user_oauth_identities', [
+            'provider'         => OAuthProvider::Google->value,
+            'provider_user_id' => 'google-123',
         ]);
         $user = User::where('email', 'lucia.oauth@example.com')->first();
         $this->assertNotNull($user->email_verified_at);
@@ -146,17 +150,17 @@ final class OAuthTest extends TestCase
 
         $this->assertSame(1, User::where('email', 'lucia.oauth@example.com')->count());
         $existing->refresh();
-        $this->assertSame(OAuthProvider::Google, $existing->oauth_provider);
-        $this->assertSame('google-123', $existing->oauth_id);
         $this->assertNotNull($existing->email_verified_at);
         $this->assertSame('https://lh3.googleusercontent.com/abc/photo.jpg', $existing->avatar_url);
+        $this->assertDatabaseHas('user_oauth_identities', [
+            'user_id'          => $existing->id,
+            'provider'         => OAuthProvider::Google->value,
+            'provider_user_id' => 'google-123',
+        ]);
     }
 
     public function test_callback_rejects_existing_user_when_oauth_email_unverified(): void
     {
-        // Como confiamos en que los providers actuales (Google, Facebook) verifican emails,
-        // este test ahora documenta la decisión y verifica que SI el emailVerified=false
-        // llegase a propagarse en el futuro, el flujo lo rechazaría para un user existente.
         User::create([
             'name'     => 'Existing User',
             'email'    => 'lucia.oauth@example.com',
@@ -169,7 +173,10 @@ final class OAuthTest extends TestCase
         $provider->shouldReceive('user')->andReturn($this->mockSocialiteUser());
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
-        $this->assertDatabaseMissing('users', ['email' => 'lucia.oauth@example.com', 'oauth_provider' => 'google']);
+        $this->assertDatabaseMissing('user_oauth_identities', [
+            'provider' => 'google',
+            'provider_user_id' => 'google-123',
+        ]);
     }
 
     public function test_callback_facebook_creates_user_with_facebook_provider(): void
@@ -191,10 +198,47 @@ final class OAuthTest extends TestCase
 
         $response->assertStatus(302);
         $this->assertDatabaseHas('users', [
-            'email'          => 'diego.fb@example.com',
-            'oauth_provider' => OAuthProvider::Facebook->value,
-            'oauth_id'       => 'fb-456',
+            'email' => 'diego.fb@example.com',
         ]);
+        $this->assertDatabaseHas('user_oauth_identities', [
+            'provider'         => OAuthProvider::Facebook->value,
+            'provider_user_id' => 'fb-456',
+        ]);
+    }
+
+    public function test_callback_returns_existing_identity_for_returning_user(): void
+    {
+        $user = User::create([
+            'name'     => 'Returning User',
+            'email'    => 'returning@example.com',
+            'role'     => UserRole::Client,
+            'password' => null,
+        ]);
+        UserOAuthIdentity::create([
+            'user_id'          => $user->id,
+            'provider'         => OAuthProvider::Google,
+            'provider_user_id' => 'google-existing',
+            'linked_at'        => now(),
+        ]);
+
+        $state = Str::random(40);
+        session()->put('oauth_state.google', $state);
+
+        $provider = Mockery::mock(Provider::class);
+        $provider->shouldReceive('stateless')->andReturnSelf();
+        $provider->shouldReceive('user')->andReturn($this->mockSocialiteUser([
+            'id'    => 'google-existing',
+            'email' => 'returning@example.com',
+        ]));
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $response = $this->get("/api/auth/oauth/google/callback?state={$state}&code=abc");
+
+        $response->assertStatus(302);
+        $this->assertStringContainsString('new_user=0', $response->headers->get('Location'));
+
+        $this->assertSame(1, User::where('email', 'returning@example.com')->count());
+        $this->assertSame(1, UserOAuthIdentity::where('provider_user_id', 'google-existing')->count());
     }
 
     public function test_complete_profile_with_client_role_returns_jwt_without_profile(): void
@@ -204,8 +248,12 @@ final class OAuthTest extends TestCase
             'email'    => 'new.oauth@example.com',
             'role'     => UserRole::Client,
             'password' => null,
-            'oauth_provider' => OAuthProvider::Google,
-            'oauth_id' => 'google-new-1',
+        ]);
+        UserOAuthIdentity::create([
+            'user_id'          => $user->id,
+            'provider'         => OAuthProvider::Google,
+            'provider_user_id' => 'google-new-1',
+            'linked_at'        => now(),
         ]);
         $token = JWTAuth::fromUser($user);
 
@@ -225,8 +273,12 @@ final class OAuthTest extends TestCase
             'email'    => 'new.oauth2@example.com',
             'role'     => UserRole::Client,
             'password' => null,
-            'oauth_provider' => OAuthProvider::Google,
-            'oauth_id' => 'google-new-2',
+        ]);
+        UserOAuthIdentity::create([
+            'user_id'          => $user->id,
+            'provider'         => OAuthProvider::Google,
+            'provider_user_id' => 'google-new-2',
+            'linked_at'        => now(),
         ]);
         $token = JWTAuth::fromUser($user);
 
@@ -251,8 +303,6 @@ final class OAuthTest extends TestCase
             'email'    => 'new.oauth3@example.com',
             'role'     => UserRole::Client,
             'password' => null,
-            'oauth_provider' => OAuthProvider::Google,
-            'oauth_id' => 'google-new-3',
         ]);
         $token = JWTAuth::fromUser($user);
 

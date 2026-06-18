@@ -41,7 +41,7 @@ final class AuthController extends Controller
             return $user;
         });
 
-        $user->load('freelancerProfile.skills');
+        $user->load(['freelancerProfile.skills', 'oauthIdentities']);
 
         $token = JWTAuth::fromUser($user);
 
@@ -71,7 +71,7 @@ final class AuthController extends Controller
     {
         /** @var User $user */
         $user = auth('api')->user();
-        $user->load('freelancerProfile.skills');
+        $user->load(['freelancerProfile.skills', 'oauthIdentities']);
 
         return response()->json([
             'data' => $this->userResource($user),
@@ -105,7 +105,7 @@ final class AuthController extends Controller
 
         /** @var User $user */
         $user = auth('api')->user();
-        $user->load('freelancerProfile.skills');
+        $user->load(['freelancerProfile.skills', 'oauthIdentities']);
 
         return $this->respondWithToken($token, $user);
     }

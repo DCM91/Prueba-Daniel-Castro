@@ -60,6 +60,7 @@
       "new_brief": "+ Nuevo proyecto",
       "profile": "Mi perfil",
       "portfolio": "Portfolio",
+      "messages": "Mensajes",
       "account": "Mi cuenta"
     }
   },
@@ -224,7 +225,8 @@
       "footer_meta": "{{count}} skill{{s}} · {{pct}}% completo",
       "view_profile": "Ver perfil →",
       "aria_view_profile": "Ver perfil de {{name}}",
-      "initials_fallback": "?"
+      "initials_fallback": "?",
+      "rate_per_hour": "{{rate}}€/h"
     },
     "list": {
       "title": "Profesionales disponibles",
@@ -284,12 +286,21 @@
     "submitting": "Guardando…",
     "cancel": "Cancelar",
     "add_skill": "Añadir skill",
-    "remove_skill": "Quitar",
+    "remove_skill": "Quitar skill",
     "selected_count": "{{count}} seleccionada{{s}}",
     "loading_profile": "Cargando perfil…",
     "error_load": "No se pudo cargar el perfil.",
     "error_save": "No se pudo guardar el perfil.",
-    "preview_profile": "Ver mi perfil público"
+    "preview_profile": "Ver mi perfil público",
+    "placeholder_display_name": "Ej. Luis Foto Pro",
+    "placeholder_bio": "Cuéntales tu estilo y tu experiencia.",
+    "placeholder_city": "Ej. Madrid",
+    "placeholder_price": "450",
+    "error_max_display_name": "Máximo 100 caracteres.",
+    "error_max_bio": "Máximo 1000 caracteres.",
+    "error_max_city": "Máximo 80 caracteres.",
+    "error_negative": "No puede ser negativo.",
+    "skills_hint": "Selecciona hasta 20 del catálogo. Indica tu nivel y años de experiencia."
   },
   "account": {
     "title": "Mi cuenta",
@@ -310,7 +321,31 @@
     "submitting": "Guardando…",
     "cancel": "Cancelar",
     "success": "Datos actualizados.",
-    "error_generic": "No se pudieron guardar los cambios."
+    "error_generic": "No se pudieron guardar los cambios.",
+    "placeholder_phone": "+34 600 000 000",
+    "placeholder_city": "Madrid",
+    "error_required": "Este campo es obligatorio.",
+    "error_email": "Introduce un email válido.",
+    "error_minlength": "Mínimo {{n}} caracteres.",
+    "error_maxlength": "Máximo {{n}} caracteres.",
+    "error_phone_format": "Solo dígitos, espacios, paréntesis, guiones y un + inicial.",
+    "section_oauth": "Cuentas conectadas",
+    "section_oauth_hint": "Inicia sesión más rápido con un proveedor externo. Puedes vincular más de uno.",
+    "oauth_link_google": "Conectar con Google",
+    "oauth_link_facebook": "Conectar con Facebook",
+    "oauth_unlink": "Desvincular",
+    "oauth_unlink_confirm": "¿Desvincular {{provider}}? Ya no podrás iniciar sesión con esta cuenta.",
+    "oauth_linked_on": "Vinculada el {{date}}",
+    "oauth_last_used": "Último uso: {{date}}",
+    "oauth_never_used": "Vinculada pero nunca usada",
+    "oauth_provider_email": "Email en {{provider}}: {{email}}",
+    "oauth_no_accounts": "No tienes cuentas externas vinculadas.",
+    "oauth_loading": "Cargando cuentas conectadas…",
+    "oauth_error_load": "No se pudieron cargar las cuentas conectadas.",
+    "oauth_error_unlink": "No se pudo desvincular la cuenta.",
+    "oauth_linked_success": "{{provider}} vinculado correctamente.",
+    "oauth_linked_error": "No se pudo vincular la cuenta: {{reason}}",
+    "oauth_only_warning": "Tu cuenta solo se puede acceder con proveedores externos. Añade una contraseña para no perder el acceso."
   },
   "nav": {
     "categories": "Categorías",
@@ -334,7 +369,10 @@
       "proposal_count_other": "{{n}} propuestas",
       "prev": "← Anterior",
       "next": "Siguiente →",
-      "page_info": "Página {{current}} de {{last}}"
+      "page_info": "Página {{current}} de {{last}}",
+      "budget_range": "{{min}}€ - {{max}}€",
+      "budget_from": "Desde {{amount}}€",
+      "budget_up_to": "Hasta {{amount}}€"
     },
     "detail": {
       "loading": "Cargando proyecto…",
@@ -367,7 +405,124 @@
       "label_deadline": "Fecha límite",
       "submit": "Publicar proyecto",
       "submitting": "Publicando…"
+    },
+    "proposal_form": {
+      "title": "Tu propuesta",
+      "label_message": "Mensaje",
+      "placeholder_message": "Cuéntale al cliente por qué eres la persona ideal para este proyecto...",
+      "label_price": "Precio (€)",
+      "submit": "Enviar propuesta",
+      "submitting": "Enviando…",
+      "error_generic": "No se pudo enviar la propuesta."
+    },
+    "proposals": {
+      "accept": "Aceptar",
+      "reject": "Rechazar",
+      "confirm_accept": "¿Aceptar esta propuesta? El brief pasará a estar asignado.",
+      "confirm_reject": "¿Rechazar esta propuesta?",
+      "status_pending": "Pendiente",
+      "status_accepted": "Aceptada",
+      "status_rejected": "Rechazada",
+      "status_withdrawn": "Retirada"
     }
+  },
+  "reviews": {
+    "title": "Reseñas",
+    "section_title": "Reseñas",
+    "section_help": "Valora el trabajo con tu cliente o profesional.",
+    "form_title": "Deja tu reseña",
+    "form_subtitle": "Comparte tu experiencia. La reseña se publicará con tu nombre.",
+    "rating_label": "Puntuación",
+    "rating_required": "Selecciona una puntuación entre 1 y 5.",
+    "rating_helper": "1 = muy mal, 5 = excelente",
+    "comment_label": "Comentario (opcional)",
+    "comment_placeholder": "Cuéntale al otro qué tal la experiencia…",
+    "submit": "Publicar reseña",
+    "submitting": "Publicando…",
+    "already_reviewed": "Ya has valorado este proyecto.",
+    "complete_brief_first": "Marca el proyecto como completado antes de dejar una reseña.",
+    "complete_brief_cta": "Marcar como completado",
+    "complete_brief_confirm": "¿Marcar este proyecto como completado? Esta acción no se puede deshacer.",
+    "complete_brief_done": "Proyecto marcado como completado.",
+    "complete_brief_error": "No se pudo marcar el proyecto como completado.",
+    "error_load": "No se pudieron cargar las reseñas.",
+    "error_save": "No se pudo guardar la reseña.",
+    "empty_for_brief": "Este proyecto todavía no tiene reseñas.",
+    "empty_for_user": "Este profesional todavía no tiene reseñas.",
+    "anonymous_reviewer": "Anónimo",
+    "show_all": "Ver todas las reseñas",
+    "stars_one": "{{n}} estrella",
+    "stars_other": "{{n}} estrellas",
+    "anonymous_avatar": "?"
+  },
+  "rating": {
+    "label": "Valoración",
+    "summary": "{{average}} sobre 5 ({{count}} reseñas)",
+    "summary_no_reviews": "Sin reseñas todavía",
+    "summary_one": "{{average}} sobre 5 (1 reseña)",
+    "aria_label": "Puntuación: {{n}} de 5"
+  },
+  "brief_attachments": {
+    "section_title": "Imágenes de referencia",
+    "section_help": "Sube hasta 10 imágenes que ayuden a los profesionales a entender el proyecto.",
+    "add": "Añadir imagen",
+    "uploading": "Subiendo…",
+    "uploading_one": "Subiendo imagen {{current}} de {{total}}…",
+    "empty": "Todavía no has añadido imágenes.",
+    "limit_reached": "Has alcanzado el límite de 10 imágenes.",
+    "error_upload": "No se pudo subir la imagen.",
+    "error_save": "No se pudo guardar la imagen en el proyecto.",
+    "error_load": "No se pudieron cargar las imágenes.",
+    "error_remove": "No se pudo eliminar la imagen.",
+    "error_reorder": "No se pudo reordenar las imágenes.",
+    "error_limit": "Has alcanzado el límite de imágenes para este proyecto.",
+    "error_filetype": "Tipo de archivo no permitido.",
+    "error_size": "La imagen es demasiado grande (máx. 10 MB).",
+    "remove": "Eliminar",
+    "remove_confirm": "¿Eliminar esta imagen?",
+    "reorder_help": "Arrastra para reordenar.",
+    "drag_handle_label": "Reordenar imagen",
+    "title_label": "Título",
+    "title_placeholder": "p. ej. Moodboard principal",
+    "error_title_required": "El título es obligatorio para subir la imagen.",
+    "image_alt": "Imagen de referencia {{n}}",
+    "added_toast": "Imagen añadida.",
+    "removed_toast": "Imagen eliminada.",
+    "reordered_toast": "Orden actualizado."
+  },
+  "chat": {
+    "title": "Mensajes",
+    "list_title": "Conversaciones",
+    "list_subtitle": "Chats ligados a tus proyectos activos.",
+    "empty_list": "Todavía no tienes conversaciones abiertas.",
+    "loading_list": "Cargando conversaciones…",
+    "error_load_list": "No se pudieron cargar las conversaciones.",
+    "unread_one": "{{n}} sin leer",
+    "unread_other": "{{n}} sin leer",
+    "open_chat": "Abrir conversación",
+    "back_to_list": "← Volver a mensajes",
+    "thread_title": "Conversación del proyecto",
+    "no_messages": "Todavía no hay mensajes. ¡Escribe el primero!",
+    "loading_messages": "Cargando mensajes…",
+    "error_load_messages": "No se pudieron cargar los mensajes.",
+    "error_send": "No se pudo enviar el mensaje.",
+    "error_network": "Error de red. Reintentando…",
+    "message_placeholder": "Escribe un mensaje…",
+    "send": "Enviar",
+    "sending": "Enviando…",
+    "mark_as_read": "Marcar como leído",
+    "unread_badge": "{{n}}",
+    "you": "Tú",
+    "load_more": "Cargar mensajes anteriores",
+    "loading_more": "Cargando…",
+    "polling_label": "Actualizando en tiempo real",
+    "last_seen": "Última actualización {{time}}",
+    "with_label": "con {{name}}",
+    "context_brief": "Sobre el proyecto: {{title}}",
+    "context_status": "Estado: {{status}}",
+    "context_label": "Proyecto",
+    "sender_fallback": "Interlocutor",
+    "no_messages_yet_short": "Sin mensajes aún"
   },
   "footer": {
     "copyright": "© 2026 FrameMatch · {{tagline}}"
@@ -416,8 +571,10 @@
     "reorder_up": "Subir",
     "reorder_down": "Bajar",
     "save_order": "Guardar orden",
-    "view": "Ver imagen",
-    "image_alt": "Trabajo de portfolio{{title}}"
+    "view": "Ver imagen: {{title}}",
+    "image_alt": "Trabajo de portfolio{{title}}",
+    "error_title_required": "El título es obligatorio para subir el trabajo.",
+    "error_description_required": "La descripción es obligatoria para subir el trabajo."
   },
   "lightbox": {
     "close": "Cerrar",
@@ -425,5 +582,57 @@
     "prev": "Anterior",
     "counter": "{{current}} de {{total}}",
     "dialog_label": "Visor de imágenes"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Configura tu perfil de profesional",
+      "body": "Vamos a crear tu escaparate en 5 pasos. Podrás volver más tarde a editar cualquier cosa.",
+      "cta": "Empezar"
+    },
+    "step": {
+      "welcome": {
+        "label": "Bienvenida"
+      },
+      "datos": {
+        "label": "Datos",
+        "title": "Cuéntanos sobre ti",
+        "lead": "Estos datos aparecen en tu perfil público y en los emails que te enviamos."
+      },
+      "avatar": {
+        "label": "Avatar",
+        "title": "Sube tu foto de perfil",
+        "lead": "Una imagen clara y profesional ayuda a que los clientes confíen en ti."
+      },
+      "bio-tarifa": {
+        "label": "Bio y tarifas",
+        "title": "Define tu propuesta",
+        "lead": "La bio y las tarifas son lo que más miran los clientes para decidirte."
+      },
+      "skills": {
+        "label": "Skills",
+        "title": "Elige tus skills",
+        "lead": "Selecciona del catálogo e indica tu nivel y años de experiencia.",
+        "levels_title": "Nivel y años de experiencia por skill"
+      },
+      "cover-portfolio": {
+        "label": "Portada",
+        "title": "Portada y portfolio",
+        "lead": "Una imagen de portada amplia y 3+ trabajos de muestra marcan la diferencia. Puedes hacerlo más tarde desde tu perfil.",
+        "manage_portfolio": "Gestionar portfolio",
+        "optional_hint": "Este paso es opcional. Puedes saltarlo y volver más tarde."
+      },
+      "done": {
+        "label": "Listo",
+        "title": "¡Listo!",
+        "body": "Tu perfil está activo. Los clientes ya pueden verte y enviarte propuestas."
+      }
+    },
+    "next": "Continuar",
+    "back": "Atrás",
+    "skip": "Saltar este paso",
+    "saving": "Guardando…",
+    "done": {
+      "cta": "Ir a mi home"
+    }
   }
 }

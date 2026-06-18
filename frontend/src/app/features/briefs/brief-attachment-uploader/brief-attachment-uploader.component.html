@@ -1,0 +1,137 @@
+<section class="brief-attachments" data-test="brief-attachments">
+  <header class="brief-attachments__header">
+    <h3 class="brief-attachments__title">{{ 'brief_attachments.section_title' | t }}</h3>
+    <p class="brief-attachments__help">{{ 'brief_attachments.section_help' | t }}</p>
+  </header>
+
+  <div class="brief-attachments__title-field">
+    <label for="brief-attachment-title">
+      <span>{{ 'brief_attachments.title_label' | t }}</span>
+      <input
+        id="brief-attachment-title"
+        type="text"
+        [formControl]="titleControl"
+        [placeholder]="'brief_attachments.title_placeholder' | t"
+        maxlength="120"
+      />
+    </label>
+    @if (titleControl.touched && titleControl.invalid) {
+      <small class="brief-attachments__error" role="alert">{{ 'brief_attachments.error_title_required' | t }}</small>
+    }
+  </div>
+
+  <div
+    class="brief-attachments__dropzone"
+    role="button"
+    tabindex="0"
+    [attr.aria-disabled]="!canAdd() || titleControl.invalid"
+    [attr.data-drag-over]="dragOver()"
+    [attr.aria-label]="'brief_attachments.add' | t"
+    (click)="openPicker()"
+    (keydown)="onKeydown($event)"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <input
+      #fileInput
+      type="file"
+      accept="image/*"
+      multiple
+      hidden
+      (change)="onFileSelected($event)"
+    />
+    <div class="brief-attachments__dropzone-icon" aria-hidden="true">+</div>
+    <div class="brief-attachments__dropzone-label">
+      <strong>{{ 'brief_attachments.add' | t }}</strong>
+      <span class="brief-attachments__counter"> {{ attachments().length }} / {{ maxItems }} </span>
+    </div>
+  </div>
+
+  @if (errorMessage(); as msg) {
+    <p class="brief-attachments__status brief-attachments__status--error" role="alert">
+      {{ msg | t }}
+    </p>
+  }
+
+  @if (isProcessing()) {
+    <p class="brief-attachments__status brief-attachments__status--info" aria-live="polite">
+      {{ 'brief_attachments.uploading' | t }}
+    </p>
+  }
+
+  @if (attachments().length === 0 && !isProcessing()) {
+    <p class="brief-attachments__empty">{{ 'brief_attachments.empty' | t }}</p>
+  }
+
+  <ul class="brief-attachments__list" role="list">
+    @for (item of attachments(); track item.id; let i = $index, last = $last) {
+      <li class="brief-attachments__item" data-test="brief-attachment-item">
+          <img
+            [src]="item.url || item.urls.thumb"
+            [alt]="'brief_attachments.image_alt' | t: { n: i + 1 }"
+            class="brief-attachments__thumb"
+          />
+        <div class="brief-attachments__meta">
+          @if (item.title) {
+            <span class="brief-attachments__caption">{{ item.title }}</span>
+          } @else {
+            <span class="brief-attachments__caption brief-attachments__caption--muted">
+              {{ 'brief_attachments.image_alt' | t: { n: i + 1 } }}
+            </span>
+          }
+          <span class="brief-attachments__hint">{{ 'brief_attachments.reorder_help' | t }}</span>
+        </div>
+        <div class="brief-attachments__actions">
+          <button
+            type="button"
+            class="brief-attachments__btn"
+            [attr.aria-label]="'brief_attachments.drag_handle_label' | t"
+            [disabled]="i === 0"
+            (click)="moveUp(item)"
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            class="brief-attachments__btn"
+            [attr.aria-label]="'brief_attachments.drag_handle_label' | t"
+            [disabled]="last"
+            (click)="moveDown(item)"
+          >
+            ↓
+          </button>
+          <button
+            type="button"
+            class="brief-attachments__btn brief-attachments__btn--danger"
+            [attr.aria-label]="'brief_attachments.remove' | t"
+            (click)="remove(item)"
+          >
+            ×
+          </button>
+        </div>
+      </li>
+    }
+  </ul>
+
+  @if (queue().length > 0) {
+    <ul class="brief-attachments__queue" role="list">
+      @for (task of queue(); track task) {
+        <li class="brief-attachments__queue-item">
+          <img
+            [src]="task.previewUrl"
+            alt=""
+            class="brief-attachments__thumb brief-attachments__thumb--queue"
+          />
+          <span class="brief-attachments__queue-status">
+            @if (task.status === 'uploading') {
+              {{ 'brief_attachments.uploading' | t }}
+            } @else if (task.status === 'error' && task.errorKey) {
+              {{ task.errorKey | t }}
+            }
+          </span>
+        </li>
+      }
+    </ul>
+  }
+</section>

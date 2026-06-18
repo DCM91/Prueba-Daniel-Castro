@@ -19,4 +19,13 @@ export class ProposalsService {
       .post<{ data: Proposal }>(`/api/briefs/${briefId}/proposals`, input)
       .pipe(map((r) => r.data));
   }
+
+  updateStatus(briefId: number, proposalId: number, status: 'accepted' | 'rejected'): Observable<{ proposal: Proposal; brief: { status: string } }> {
+    return this.http
+      .patch<{ data: { proposal: Proposal; brief: { status: string } } }>(
+        `/api/briefs/${briefId}/proposals/${proposalId}`,
+        { status },
+      )
+      .pipe(map((r) => r.data));
+  }
 }

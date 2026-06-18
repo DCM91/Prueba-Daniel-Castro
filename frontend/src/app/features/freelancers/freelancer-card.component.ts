@@ -3,12 +3,13 @@ import { RouterLink } from '@angular/router';
 
 import { LanguageService } from '../../core/services/language.service';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
-import { FreelancerCard, SkillLevel } from '../../core/types/auth.types';
+import { FreelancerCard, ReviewRating, SkillLevel } from '../../core/types/auth.types';
+import { RatingStarsComponent } from '../reviews/rating-stars/rating-stars.component';
 
 @Component({
   selector: 'app-freelancer-card',
   standalone: true,
-  imports: [RouterLink, TranslatePipe],
+  imports: [RouterLink, TranslatePipe, RatingStarsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './freelancer-card.component.html',
   styleUrl: './freelancer-card.component.css',
@@ -38,10 +39,14 @@ export class FreelancerCardComponent {
 
   readonly avatarUrl = computed(() => this._freelancer()?.avatar_url ?? null);
 
+  readonly rating = computed<ReviewRating | null>(() => {
+    return this.freelancer?.rating ?? null;
+  });
+
   readonly hourlyRateLabel = computed(() => {
     const rate = this._freelancer()?.hourly_rate;
     if (rate === null || rate === undefined) return this.lang.t('freelancers.card.rate_consult');
-    return `${rate}€/h`;
+    return this.lang.t('freelancers.card.rate_per_hour', { rate });
   });
 
   readonly isAvailable = computed(() => this._freelancer()?.is_available ?? false);

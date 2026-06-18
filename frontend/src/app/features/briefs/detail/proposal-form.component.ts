@@ -2,25 +2,26 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { ProposalsService } from '../../../core/services/proposals.service';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-proposal-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form class="proposal-form" [formGroup]="form" (ngSubmit)="submit()">
-      <h3>Tu propuesta</h3>
+      <h3>{{ 'briefs.proposal_form.title' | t }}</h3>
       <label class="field">
-        <span>Mensaje</span>
+        <span>{{ 'briefs.proposal_form.label_message' | t }}</span>
         <textarea
           rows="5"
           formControlName="message"
-          placeholder="Cuéntale al cliente por qué eres la persona ideal para este brief..."
+          [attr.placeholder]="'briefs.proposal_form.placeholder_message' | t"
         ></textarea>
       </label>
       <label class="field">
-        <span>Precio (€)</span>
+        <span>{{ 'briefs.proposal_form.label_price' | t }}</span>
         <input type="number" formControlName="price" min="0" />
       </label>
 
@@ -30,7 +31,7 @@ import { ProposalsService } from '../../../core/services/proposals.service';
 
       <div class="actions">
         <button class="btn btn--primary" type="submit" [disabled]="submitting()">
-          {{ submitting() ? 'Enviando…' : 'Enviar propuesta' }}
+          {{ (submitting() ? 'briefs.proposal_form.submitting' : 'briefs.proposal_form.submit') | t }}
         </button>
       </div>
     </form>
@@ -102,9 +103,9 @@ export class ProposalFormComponent {
         this.submitting.set(false);
         if (err.error?.errors) {
           const first = Object.values(err.error.errors)[0]?.[0];
-          this.errorMessage.set(first ?? 'No se pudo enviar la propuesta.');
+          this.errorMessage.set(first ?? 'briefs.proposal_form.error_generic');
         } else {
-          this.errorMessage.set(err.error?.message ?? 'No se pudo enviar la propuesta.');
+          this.errorMessage.set(err.error?.message ?? 'briefs.proposal_form.error_generic');
         }
       },
     });

@@ -1,0 +1,42 @@
+<section class="review-list" data-test="review-list">
+  <header class="review-list__head">
+    <h3 class="review-list__title">{{ sectionTitle() | t }}</h3>
+  </header>
+
+  @if (errorMessage(); as msg) {
+    <p class="review-list__status review-list__status--error" role="alert">{{ msg | t }}</p>
+  }
+
+  @if (loading()) {
+    <p class="review-list__loading">{{ 'chat.loading_messages' | t }}</p>
+  } @else if (items().length === 0) {
+    <p class="review-list__empty">{{ emptyKey() | t }}</p>
+  } @else {
+    <ul class="review-list__items" role="list">
+      @for (review of items(); track review.id) {
+        <li class="review-list__item" [attr.data-test]="'review-item-' + review.id">
+          <div class="review-list__avatar" aria-hidden="true">
+            {{ initials(review.reviewer?.name ?? null) }}
+          </div>
+          <div class="review-list__body">
+            <div class="review-list__row">
+              <strong class="review-list__author">
+                {{ review.reviewer?.name ?? ('reviews.anonymous_reviewer' | t) }}
+              </strong>
+              <span class="review-list__date">{{ review.created_at | date: 'mediumDate' }}</span>
+            </div>
+            <app-rating-stars [value]="review.rating" size="sm" />
+            @if (review.comment) {
+              <p class="review-list__comment">{{ review.comment }}</p>
+            }
+            @if (showBriefContext() && review.brief) {
+              <p class="review-list__context muted">
+                {{ 'briefs.detail.description' | t }}: {{ review.brief.title }}
+              </p>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

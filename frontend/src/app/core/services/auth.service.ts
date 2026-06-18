@@ -9,6 +9,7 @@ import {
   AuthPayload,
   FreelancerProfile,
   LoginPayload,
+  OAuthIdentity,
   OAuthProvider,
   RegisterPayload,
   RegisterableRole,
@@ -51,13 +52,7 @@ export class AuthService {
   }
 
   roleLabel(role: Role): string {
-    switch (role) {
-      case 'client':     return 'Cliente';
-      case 'freelancer': return 'Profesional';
-      case 'agency':     return 'Agencia';
-      case 'company':    return 'Empresa';
-      case 'admin':      return 'Admin';
-    }
+    return `roles.${role}`;
   }
 
   register(payload: RegisterPayload): Observable<AuthPayload> {
@@ -121,8 +116,25 @@ export class AuthService {
     window.location.href = this.buildOAuthRedirectUrl(provider);
   }
 
-  buildOAuthRedirectUrl(provider: OAuthProvider): string {
-    return `${environment.apiBaseUrl}/api/auth/oauth/${provider}/redirect`;
+  buildOAuthRedirectUrl(provider: OAuthProvider, options: { link?: boolean } = {}): string {
+    const base = `${environment.apiBaseUrl}/api/auth/oauth/${provider}/redirect`;
+    return options.link ? `${base}?link=1` : base;
+  }
+
+  linkOAuthProvider(provider: OAuthProvider): void {
+    window.location.href = this.buildOAuthRedirectUrl(provider, { link: true });
+  }
+
+  listOAuthIdentities(): Observable<OAuthIdentity[]> {
+    return this.http
+      .get<{ data: OAuthIdentity[] }>('/api/me/oauth-identities')
+      .pipe(map((r) => r.data));
+  }
+
+  unlinkOAuthProvider(provider: OAuthProvider): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `/api/me/oauth-identities/${provider}`,
+    );
   }
 
   handleOAuthCallback(token: string, expiresIn: number): void {

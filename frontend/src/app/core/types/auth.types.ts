@@ -58,6 +58,7 @@ export interface FreelancerProfile {
   cover_urls?: CoverUrls | null;
   skills: FreelancerProfileSkill[];
   portfolios?: PortfolioItem[];
+  onboarding_completed_at?: string | null;
 }
 
 export interface FreelancerSkillInput {
@@ -82,18 +83,23 @@ export interface FreelancerCard {
   city: string | null;
   hourly_rate: number | null;
   is_available: boolean;
+  rating?: ReviewRating;
   top_skills: FreelancerCardSkill[];
   skills_count: number;
   profile_completion: number;
 }
 
-export interface FreelancerDetail extends Omit<FreelancerCard, 'top_skills' | 'skills_count' | 'profile_completion'> {
+export interface FreelancerDetail extends Omit<
+  FreelancerCard,
+  'top_skills' | 'skills_count' | 'profile_completion'
+> {
   bio: string | null;
   price_per_project: number | null;
   created_at: string | null;
   avatar_url?: string | null;
   cover_url?: string | null;
   cover_urls?: CoverUrls | null;
+  rating?: ReviewRating;
   skills: FreelancerProfileSkill[];
   portfolios?: PortfolioItem[];
 }
@@ -117,8 +123,29 @@ export interface Paginated<T> {
   };
 }
 
-export type BriefStatus = 'draft' | 'published' | 'in_review' | 'assigned' | 'completed' | 'cancelled';
+export type BriefStatus =
+  | 'draft'
+  | 'published'
+  | 'in_review'
+  | 'assigned'
+  | 'completed'
+  | 'cancelled';
 export type ProposalStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+
+export interface BriefAttachment {
+  id: number;
+  brief_id: number;
+  public_id: string;
+  url: string;
+  urls: { thumb: string | null; card: string | null; full: string | null };
+  width: number | null;
+  height: number | null;
+  format: string | null;
+  bytes: number | null;
+  title: string | null;
+  position: number;
+  created_at: string | null;
+}
 
 export interface Brief {
   id: number;
@@ -135,6 +162,17 @@ export interface Brief {
   created_at: string | null;
   proposals_count?: number;
   client?: { id: number; name: string } | null;
+  attachments?: BriefAttachment[];
+}
+
+export interface BriefAttachmentInput {
+  public_id: string;
+  url: string;
+  width?: number | null;
+  height?: number | null;
+  format?: string | null;
+  bytes?: number | null;
+  title: string;
 }
 
 export interface BriefInput {
@@ -179,6 +217,87 @@ export interface AvatarUrls {
   xxl: string | null;
 }
 
+export interface OAuthIdentity {
+  id: number;
+  provider: OAuthProvider;
+  provider_label: string;
+  provider_email: string | null;
+  linked_at: string | null;
+  last_used_at: string | null;
+  token_expires_at: string | null;
+  has_refresh_token: boolean;
+}
+
+export interface ReviewRating {
+  count: number;
+  average: number | null;
+}
+
+export interface Review {
+  id: number;
+  brief_id: number;
+  reviewer_id: number;
+  reviewee_id: number;
+  rating: number;
+  comment: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  reviewer?: {
+    id: number;
+    name: string;
+    avatar_url: string | null;
+  };
+  reviewee?: {
+    id: number;
+    name: string;
+    avatar_url: string | null;
+  };
+  brief?: {
+    id: number;
+    title: string;
+  };
+}
+
+export interface ChatMessage {
+  id: number;
+  conversation_id: number;
+  sender_id: number;
+  body: string;
+  read_at: string | null;
+  created_at: string | null;
+  sender?: {
+    id: number;
+    name: string;
+    avatar_url: string | null;
+  };
+}
+
+export interface Conversation {
+  id: number;
+  brief_id: number;
+  client_id: number;
+  freelancer_id: number;
+  last_message_at: string | null;
+  created_at: string | null;
+  unread_count?: number;
+  brief?: {
+    id: number;
+    title: string;
+    status: BriefStatus;
+  };
+  client?: {
+    id: number;
+    name: string;
+    avatar_url: string | null;
+  };
+  freelancer?: {
+    id: number;
+    name: string;
+    avatar_url: string | null;
+  };
+  latest_message?: ChatMessage | null;
+}
+
 export interface User {
   id: number;
   name: string;
@@ -189,7 +308,9 @@ export interface User {
   created_at: string | null;
   avatar_url?: string | null;
   avatar_urls?: AvatarUrls | null;
-  oauth_provider?: OAuthProvider | null;
+  has_password?: boolean;
+  oauth_only?: boolean;
+  oauth_identities?: OAuthIdentity[];
   freelancer_profile?: FreelancerProfile | null;
 }
 

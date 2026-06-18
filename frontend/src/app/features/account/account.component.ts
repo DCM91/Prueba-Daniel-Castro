@@ -6,6 +6,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { AvatarUploaderComponent } from '../../core/components/avatar-uploader/avatar-uploader.component';
 import { UserService } from '../../core/services/user.service';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
+import { LinkedAccountsComponent } from './linked-accounts/linked-accounts.component';
 
 type AccountForm = FormGroup<{
   name: FormControl<string>;
@@ -17,7 +18,7 @@ type AccountForm = FormGroup<{
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [ReactiveFormsModule, AvatarUploaderComponent, RouterLink, TranslatePipe],
+  imports: [ReactiveFormsModule, AvatarUploaderComponent, RouterLink, TranslatePipe, LinkedAccountsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './account.component.html',
   styleUrl: './account.component.css',
@@ -60,29 +61,29 @@ export class AccountComponent implements OnInit {
     this.loading.set(false);
   }
 
-  errorFor(field: keyof typeof this.form.controls): string | null {
+  errorFor(field: keyof typeof this.form.controls): { key: string; params?: Record<string, string | number> } | null {
     const errors = this.fieldErrors()[field];
     if (errors && errors.length > 0) {
-      return errors[0];
+      return { key: errors[0] };
     }
     const control = this.form.controls[field];
     if (!control.touched) {
       return null;
     }
     if (control.errors?.['required']) {
-      return 'Este campo es obligatorio.';
+      return { key: 'account.error_required' };
     }
     if (control.errors?.['email']) {
-      return 'Introduce un email válido.';
+      return { key: 'account.error_email' };
     }
     if (control.errors?.['minlength']) {
-      return `Mínimo ${control.errors['minlength'].requiredLength} caracteres.`;
+      return { key: 'account.error_minlength', params: { n: control.errors['minlength'].requiredLength } };
     }
     if (control.errors?.['maxlength']) {
-      return `Máximo ${control.errors['maxlength'].requiredLength} caracteres.`;
+      return { key: 'account.error_maxlength', params: { n: control.errors['maxlength'].requiredLength } };
     }
     if (control.errors?.['pattern']) {
-      return 'Solo dígitos, espacios, paréntesis, guiones y un + inicial.';
+      return { key: 'account.error_phone_format' };
     }
     return null;
   }

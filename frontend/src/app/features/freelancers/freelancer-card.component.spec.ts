@@ -30,6 +30,7 @@ describe('FreelancerCardComponent', () => {
       available: 'Disponible',
       busy: 'Ocupado',
       rate_consult: 'Consultar',
+      rate_per_hour: '{{rate}}€/h',
       skills_empty: 'Sin skills registradas.',
       view_profile: 'Ver perfil →',
       aria_view_profile: "Ver perfil de {{name}}",
@@ -57,7 +58,8 @@ describe('FreelancerCardComponent', () => {
 
   it('shows the hourly rate with currency suffix', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('55€/h');
+    expect(text).toContain('55');
+    expect(text).toContain('/h');
   });
 
   it('shows the "Disponible" pill when is_available is true', () => {

@@ -29,6 +29,16 @@
               }
               <div class="hero-text">
                 <h1>{{ f.display_name ?? 'freelancers.card.initials_fallback' | t }}</h1>
+                @if (rating(); as r) {
+                  <div class="hero-rating" data-test="hero-rating">
+                    <app-rating-stars [value]="r.average ?? 0" size="sm" />
+                    @if (ratingSummaryParams(); as p) {
+                      <span class="hero-rating__text muted">{{ ratingSummary() | t : p }}</span>
+                    } @else {
+                      <span class="hero-rating__text muted">{{ ratingSummary() | t }}</span>
+                    }
+                  </div>
+                }
                 <p class="meta-line">
                   @if (f.city) { <span>{{ f.city }}</span> }
                   @if (f.is_available) {
@@ -57,20 +67,17 @@
             @if (portfolios().length) {
               <section class="portfolios" [attr.aria-label]="'portfolio.section_title' | t">
                 <h2>{{ 'portfolio.section_title' | t }}</h2>
-                <ul class="portfolio-grid" role="list">
+                <ul class="portfolio-list" role="list">
                   @for (item of portfolios(); track item.id; let i = $index) {
                     <li>
                       <button
                         type="button"
-                        class="portfolio-thumb"
-                        [attr.aria-label]="'portfolio.view' | t"
+                        class="portfolio-link"
+                        [attr.aria-label]="('portfolio.view' | t : { title: item.title ?? '' })"
                         (click)="openLightbox(i)"
                       >
-                        <img
-                          [src]="item.urls.card ?? item.url"
-                          [alt]="('portfolio.image_alt' | t : { title: item.title ? ': ' + item.title : '' })"
-                          loading="lazy"
-                        />
+                        <span class="portfolio-link__title">{{ item.title }}</span>
+                        <span class="portfolio-link__chevron" aria-hidden="true">›</span>
                       </button>
                     </li>
                   }
@@ -107,6 +114,16 @@
                     </li>
                   }
                 </ul>
+              </section>
+            }
+
+            @if (f.user_id) {
+              <section class="detail-reviews">
+                <app-review-list
+                  [userId]="f.user_id"
+                  [emptyKey]="'reviews.empty_for_user'"
+                  [sectionTitle]="'reviews.title'"
+                />
               </section>
             }
           </article>

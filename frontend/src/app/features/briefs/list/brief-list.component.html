@@ -44,7 +44,7 @@
               </header>
               <p class="brief-body">{{ b.description }}</p>
               <footer class="brief-foot">
-                <span class="meta">{{ formatBudget(b) }}</span>
+                <span class="meta">@if (formatBudget(b); as bgt) { {{ bgt.key | t : bgt.params }} } @else { — }</span>
                 @if (b.city) { <span class="meta">{{ b.city }}</span> }
                 @if (b.deadline) { <span class="meta">{{ 'briefs.list.deadline_label' | t }} {{ b.deadline }}</span> }
                 @if (b.proposals_count !== undefined) {

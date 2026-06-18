@@ -168,6 +168,26 @@ final class CloudinaryServiceFake implements CloudinaryServiceInterface
         ];
     }
 
+    public function briefUrl(?string $publicId, string $variant = 'card'): ?string
+    {
+        return $publicId === null
+            ? null
+            : sprintf('https://fake.cloudinary.com/%s/%s', $variant, $publicId);
+    }
+
+    public function briefUrls(?string $publicId): ?array
+    {
+        if ($publicId === null) {
+            return null;
+        }
+
+        return [
+            'thumb' => $this->briefUrl($publicId, 'thumb'),
+            'card'  => $this->briefUrl($publicId, 'card'),
+            'full'  => $this->briefUrl($publicId, 'full'),
+        ];
+    }
+
     public function presetFor(string $type): string
     {
         return (string) ($this->presets[$type] ?? '');

@@ -508,6 +508,85 @@ Edición y borrado del brief. **Requiere JWT y que el usuario sea el `client_id`
 
 ---
 
+### `POST /api/briefs/{id}/attachments`
+
+Adjunta una imagen de referencia al brief (Cloudinary). **Requiere JWT y que el usuario sea el `client_id` del brief.** Máximo 10 adjuntos por brief.
+
+**Body (JSON):**
+
+| Campo | Tipo | Requerido | Descripción |
+|---|---|---|---|
+| `public_id` | string | sí | `public_id` devuelto por Cloudinary (debe estar en la carpeta `framematch/briefs`). Regex: `^[A-Za-z0-9_\-/]+$`, max 191. |
+| `url` | string (url) | sí | URL segura (`https://...`) del recurso. |
+| `width` | int | no | Ancho en px. |
+| `height` | int | no | Alto en px. |
+| `format` | string | no | Formato (`jpg`, `png`, `webp`, …). |
+| `bytes` | int | no | Tamaño en bytes (max 10 MB). |
+| `title` | string | no | Título opcional (max 120). |
+
+El backend verifica que el `public_id` exista en Cloudinary, pertenezca a la carpeta esperada y sea una imagen.
+
+**Respuesta `201`:**
+
+```json
+{
+  "data": {
+    "id": 12,
+    "brief_id": 5,
+    "public_id": "framematch/briefs/abc123",
+    "url": "https://res.cloudinary.com/.../abc123.jpg",
+    "urls": { "thumb": "...", "card": "...", "full": "..." },
+    "width": 1200,
+    "height": 800,
+    "format": "jpg",
+    "bytes": 120000,
+    "title": "Moodboard principal",
+    "position": 0,
+    "created_at": "2026-06-18T17:00:00+00:00"
+  }
+}
+```
+
+**Códigos de error:**
+
+- `401` — sin token.
+- `403` — no es el autor del brief o el recurso no pertenece a la carpeta `framematch/briefs`.
+- `422` — validaciones (`public_id` regex, url inválida, etc.) o límite de 10 adjuntos alcanzado.
+- `404` — brief no encontrado.
+
+---
+
+### `DELETE /api/briefs/{id}/attachments/{attachmentId}`
+
+Elimina un adjunto del brief. **Requiere JWT y que el usuario sea el `client_id` del brief.** Borra el recurso en Cloudinary (best-effort) y la fila en `brief_attachments`.
+
+**Respuesta `200`:** `{ "message": "Imagen eliminada." }`
+
+---
+
+### `PATCH /api/briefs/{id}/attachments/reorder`
+
+Reordena los adjuntos del brief. **Requiere JWT y que el usuario sea el `client_id` del brief.**
+
+**Body (JSON):**
+
+```json
+{ "ids": [3, 1, 2] }
+```
+
+`ids` debe contener **exactamente** los IDs de todos los adjuntos del brief en el orden deseado. El backend asigna `position = índice` en una transacción.
+
+**Respuesta `200`:** array de `BriefAttachmentResource` ordenados.
+
+**Códigos de error:**
+
+- `401` — sin token.
+- `403` — no es el autor del brief.
+- `404` — brief no encontrado.
+- `422` — validaciones o IDs que no pertenecen al brief / falta alguno.
+
+---
+
 ### `GET /api/briefs/{briefId}/proposals`
 
 Lista de propuestas recibidas en un brief. **Requiere JWT y que el usuario sea el `client_id` del brief.**
@@ -568,6 +647,207 @@ Envía una propuesta a un brief. **Requiere JWT con `role=freelancer`.**
 - `403` — usuario no es `freelancer`.
 - `404` — brief no encontrado.
 - `422` — brief cerrado / propuesta duplicada / validaciones.
+
+---
+
+## Mensajería (chat) — Fase 6
+
+Chat 1:1 entre cliente y freelancer dentro de un **brief con propuesta aceptada** (status `assigned` o `completed`). El chat se crea automáticamente al aceptar la proposal. **Polling cada 5s** mientras hay una conversación abierta (no hay websockets todavía — la migración a realtime queda en el backlog).
+
+### `GET /api/conversations`
+
+Lista las conversaciones del usuario autenticado. **Requiere JWT.** Ordenadas por `last_message_at` desc.
+
+**Response 200**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "brief_id": 5,
+      "client_id": 1,
+      "freelancer_id": 2,
+      "last_message_at": "2026-06-18T18:30:00+00:00",
+      "created_at": "2026-06-18T10:00:00+00:00",
+      "unread_count": 3,
+      "brief":     { "id": 5, "title": "Vídeo boda", "status": "assigned" },
+      "client":    { "id": 1, "name": "Ana",   "avatar_url": null },
+      "freelancer":{ "id": 2, "name": "Lucia", "avatar_url": null },
+      "latest_message": {
+        "id": 12, "conversation_id": 1, "sender_id": 2,
+        "body": "¿Te paso el guion?", "read_at": null,
+        "created_at": "2026-06-18T18:30:00+00:00"
+      }
+    }
+  ]
+}
+```
+
+`unread_count` cuenta mensajes cuyo `read_at` es null y cuyo `sender_id != user_id`. **Errores:** `401` sin token.
+
+---
+
+### `GET /api/conversations/unread-count`
+
+Devuelve el total de mensajes sin leer para el usuario autenticado. **Requiere JWT.** Útil para el badge en el topbar.
+
+**Response 200:** `{ "data": { "unread_count": 5 } }`
+
+---
+
+### `GET /api/conversations/{id}`
+
+Devuelve el detalle de una conversación. **Requiere JWT.** Solo accesible a `client_id` o `freelancer_id` (otro user → 403).
+
+**Response 200:** `ConversationResource` con `brief`, `client`, `freelancer`.
+
+**Errores**
+- `401` sin token.
+- `403` no participante.
+- `404` conversación no encontrada.
+
+---
+
+### `POST /api/briefs/{id}/conversation`
+
+Crea o devuelve la conversación de un brief. **Requiere JWT.** El brief debe tener una proposal aceptada; en caso contrario `409`.
+
+**Response 201:** `ConversationResource`.
+
+**Errores**
+- `401` sin token.
+- `404` brief no encontrado.
+- `409` el brief no tiene proposal aceptada.
+
+> Cuando un cliente acepta una proposal, la conversación se crea automáticamente desde `ProposalController::updateStatus`. Este endpoint está pensado para los casos en los que el cliente quiere abrir el chat "manualmente" sin esperar a la redirección.
+
+---
+
+### `GET /api/conversations/{id}/messages`
+
+Lista los mensajes de una conversación. **Requiere JWT.** Solo participante.
+
+**Query params**
+- `since` (opcional, ISO 8601): devuelve solo mensajes con `created_at > since`. Se usa para polling.
+- `limit` (opcional, default 50, max 100).
+
+**Response 200**
+
+```json
+{
+  "data": [
+    { "id": 1, "conversation_id": 1, "sender_id": 1, "body": "Hola",
+      "read_at": "2026-06-18T10:01:00+00:00", "created_at": "2026-06-18T10:00:00+00:00",
+      "sender": { "id": 1, "name": "Ana", "avatar_url": null } }
+  ],
+  "has_more": false,
+  "earliest_at": "2026-06-18T10:00:00+00:00",
+  "latest_at":   "2026-06-18T10:00:00+00:00"
+}
+```
+
+**Errores:** `401`, `403`, `404`.
+
+---
+
+### `POST /api/conversations/{id}/messages`
+
+Envía un mensaje. **Requiere JWT.** Solo participante.
+
+**Body (JSON):** `{ "body": "Texto del mensaje" }` (1-2000 chars).
+
+**Response 201:** `MessageResource` con `sender` anidado.
+
+**Errores**
+- `401` sin token.
+- `403` no participante.
+- `404` conversación no encontrada.
+- `422` `body` vacío o > 2000 chars.
+
+Tras enviar, el backend actualiza `last_message_at` en la conversación.
+
+---
+
+### `POST /api/conversations/{id}/read`
+
+Marca como leídos todos los mensajes del interlocutor que aún no tenían `read_at`. **Requiere JWT.** Solo participante. Idempotente.
+
+**Response 200:** `{ "data": { "conversation_id": 1, "marked_count": 3 } }`
+
+---
+
+## Reviews y ratings — Fase 7
+
+Sistema de valoración cruzada entre cliente y freelancer tras completar un proyecto. Cada par `(brief, reviewer)` solo puede tener una review (constraint `UNIQUE (brief_id, reviewer_id)`), así que un user solo puede dejar **una review por proyecto**. La puntuación es 1-5 con comentario opcional (max 1000 chars). El rating agregado (`count` + `average`) se expone en `FreelancerCardResource` y `FreelancerDetailResource` para que el catálogo y la ficha muestren la reputación.
+
+### `PATCH /api/briefs/{id}/complete`
+
+Marca el brief como `completed`. **Solo el cliente dueño y solo cuando el brief está en `assigned`.** Útil para iniciar el flujo de reviews.
+
+**Response 200:** `BriefResource`.
+
+**Errores**
+- `401` sin token.
+- `403` no es el dueño.
+- `409` el brief no está en `assigned`.
+- `404` brief no encontrado.
+
+---
+
+### `POST /api/briefs/{id}/reviews`
+
+Crea una review. **Requiere JWT.** El reviewer debe ser participante del brief (`client_id` o `freelancer_id` de la conversación) y el brief debe estar en `completed`. No se puede reseñar dos veces el mismo proyecto.
+
+**Body (JSON):**
+
+```json
+{ "rating": 5, "comment": "Trabajo impecable" }
+```
+
+- `rating` (int, required): 1-5.
+- `comment` (string, optional, max 1000).
+
+**Response 201:** `ReviewResource` con `reviewer`, `reviewee`, `brief` anidados.
+
+**Errores**
+- `401` sin token.
+- `403` no participa en el brief.
+- `404` brief no encontrado.
+- `409` brief no completado / ya reseñado.
+- `422` `rating` fuera de 1-5 o `comment` > 1000 chars.
+
+---
+
+### `GET /api/briefs/{id}/reviews`
+
+Lista las reviews de un brief (las 2 direcciones: cliente→freelancer y freelancer→cliente). **Requiere JWT.** Solo accesible a participantes.
+
+**Response 200:** array de `ReviewResource`.
+
+**Errores:** `401`, `403`, `404`.
+
+---
+
+### `GET /api/users/{id}/reviews`
+
+Lista las reviews recibidas por un user (paginado, default 20, max 100 vía `?limit=N`). **Público.**
+
+**Response 200:** array de `ReviewResource` con `brief` resumido.
+
+---
+
+### `GET /api/users/{id}/rating`
+
+Devuelve el rating agregado de un user. **Público.**
+
+**Response 200:**
+
+```json
+{ "data": { "user_id": 7, "count": 12, "average": 4.75 } }
+```
+
+`average` es `null` si no hay reviews.
 
 ---
 
@@ -831,14 +1111,16 @@ Genera un `state` aleatorio, lo guarda en la sesión, y devuelve `302` a la pant
 Callback del provider. **Público.** Recibe `code` y `state` del provider.
 
 1. Valida que el `state` recibido coincide con el guardado en sesión. Si no → `419 Estado OAuth inválido. Inténtalo de nuevo.`
-2. Intercambia el `code` por un access token del provider.
-3. Obtiene email, nombre, avatar y provider_id del provider.
-4. Delega en `OAuthService::findOrCreateUser()`:
-   - Si no existe user con `(oauth_provider, oauth_id)` ni con `email`: crea uno nuevo con `role=client` y `email_verified_at=now()`.
-   - Si existe user con `email` (sin OAuth): auto-vincula `oauth_provider` + `oauth_id` al user existente (no cambia su `role`).
-   - Si ya existe user con `(oauth_provider, oauth_id)`: lo actualiza (nombre, avatar) y le mantiene el rol.
-5. Emite un JWT vía `Auth::guard('api')->login($user)`.
-6. Redirige `302` a `{FRONTEND_URL}/auth/callback?token={jwt}&expires_in={ttl*60}&new_user={0|1}`.
+2. Si el `redirect` se hizo con `?link=1` y el usuario estaba autenticado, el `user_id` se guarda en sesión como "link intent" y al volver del provider se vincula la identidad al usuario actual (no se crea un nuevo JWT de login).
+3. Intercambia el `code` por un access token del provider.
+4. Obtiene email, nombre, avatar y provider_id del provider.
+5. Delega en `OAuthIdentityService::findOrCreateUserFromSocialite()`:
+   - **Una identidad puede estar en N users distintos no**: el constraint `UNIQUE (provider, provider_user_id)` lo garantiza. Así que:
+   - Si existe identidad `(provider, provider_user_id)`: actualiza tokens y datos del provider.
+   - Si no existe identidad pero el email ya está en `users`: vincula la nueva identidad al user existente (no cambia su `role`).
+   - Si no existe ni identidad ni user: crea un user nuevo (`role=client`, `email_verified_at=now()`) y le vincula la identidad.
+6. Emite un JWT vía `Auth::guard('api')->login($user)`.
+7. Redirige `302` a `{FRONTEND_URL}/auth/callback?token={jwt}&expires_in={ttl*60}&new_user={0|1}` (o `{FRONTEND_URL}/account?token=...&oauth_linked={provider}` en el flujo de linking).
 
 **Errores**
 - `419` — state inválido o ausente.
@@ -868,6 +1150,50 @@ Solo se llama si el `OAuthCallbackComponent` del frontend detecta `new_user=1` y
 **Errores**
 - `401` — sin token o token inválido.
 - `422` — `role` no está en la lista.
+
+---
+
+### `GET /api/me/oauth-identities`
+
+Lista las identidades OAuth vinculadas al usuario autenticado. **Requiere JWT.** (Fase 5.5.F)
+
+**Response 200**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "provider": "google",
+      "provider_label": "Google",
+      "provider_email": "user@gmail.com",
+      "linked_at": "2026-06-18T17:00:00+00:00",
+      "last_used_at": "2026-06-18T18:00:00+00:00",
+      "token_expires_at": null,
+      "has_refresh_token": true
+    }
+  ]
+}
+```
+
+---
+
+### `DELETE /api/me/oauth-identities/{provider}`
+
+Desvincula una identidad OAuth del usuario autenticado. **Requiere JWT.** `provider` ∈ `google` | `facebook`. (Fase 5.5.F)
+
+**Response 200:** `{ "message": "Cuenta desvinculada." }`
+
+**Errores**
+- `401` — sin token.
+- `404` — provider no soportado o el usuario no tiene esa identidad vinculada.
+- `422` — es el único método de login del usuario y no tiene `password` configurada. Debe añadir una contraseña antes de desvincular.
+
+---
+
+### Flujo de linking (vinculación desde un usuario logueado)
+
+Si el usuario ya está autenticado y quiere añadir Google/Facebook a su cuenta, el frontend llama a `GET /api/auth/oauth/{provider}/redirect?link=1`. El backend marca la sesión con un `link_intent` que contiene el `user_id` actual. Al volver del provider, el callback detecta ese intent y, en lugar de crear/recuperar un user, vincula la nueva identidad al usuario actual. Si la operación tiene éxito, redirige a `{FRONTEND_URL}/account?oauth_linked={provider}&token={jwt}`; si falla, redirige a `{FRONTEND_URL}/account?oauth_error={mensaje}&provider={provider}`.
 
 ---
 
@@ -925,21 +1251,27 @@ Por ahora, sin prefijo de versión (v1 implícito). Cuando haya un breaking chan
 
 ## Tests de la API
 
-Cubiertos por 10 Feature suites + 2 Unit suites en `backend/tests/`:
+Cubiertos por 15 Feature suites + 2 Unit suites en `backend/tests/`:
 
 - `AuthTest.php` — 16 tests (register, login, me, logout, refresh, skills, health).
 - `FreelancerProfileTest.php` — 11 tests (edición de perfil + skills + sync).
 - `FreelancerCatalogTest.php` — 17 tests (catálogo público, filtros, paginación, orden).
 - `BriefsAndProposalsTest.php` — 16 tests (CRUD briefs + propuestas).
+- `BriefAttachmentTest.php` — 16 tests (attach/detach/reorder de imágenes de referencia en briefs).
+- `ChatTest.php` — 18 tests (creación de conversación, listado, envío, polling, mark-read, permisos, unread-count, auto-creación al aceptar proposal).
+- `ReviewTest.php` — 19 tests (crear review, validación, anti-duplicados, permisos, aggregate, complete-brief, rating en resource).
 - `AvatarUploadTest.php` — 12 tests (subir/borrar avatar con Cloudinary).
 - `CoverUploadTest.php` — 9 tests (subir/borrar cover con Cloudinary).
 - `PortfolioTest.php` — 13 tests (CRUD portfolio, reorder, endpoint público).
-- `OAuthTest.php` — 12 tests (redirect, callback, complete-profile).
+- `OAuthTest.php` — 13 tests (redirect, callback, complete-profile, identity de un user que vuelve).
+- `OAuthIdentityTest.php` — 11 tests (`GET/DELETE /me/oauth-identities`, multi-provider, restricción "no puedes desvincular tu único método de login").
 - `UserAccountTest.php` — 7 tests (edición de cuenta, validaciones).
+- `OnboardingEndpointTest.php` — 9 tests (endpoint `onboarding-complete`).
+- `ProfileCompletionTest.php` — 11 tests (servicio de progreso + endpoint `/api/me/completion`).
 - `CloudinaryServiceTest.php` (Unit) — 14 tests (Admin API, URLs, transformaciones).
 - `UserTest.php` (Unit) — 5 tests (modelo, JWT claims, relaciones).
 
-**Total: 133 tests, 634 assertions.** Para correrlos:
+**Total: 227 tests, 927 assertions.** Para correrlos:
 
 ```bash
 cd backend
@@ -997,6 +1329,57 @@ Los tests usan `sqlite :memory:` con `RefreshDatabase`, no tocan MySQL. Verifica
 - `POST /api/briefs/{id}/proposals` con freelancer → 201; con cliente → 403
 - Previene duplicados (freelancer no puede enviar 2 al mismo brief)
 - Brief cerrado (status != published) → 422
+
+**BriefAttachmentTest**
+- `POST /api/briefs/{id}/attachments` con cliente dueño → 201 + posición incrementada
+- Solo el dueño puede adjuntar; otros clientes / freelancers → 403
+- `public_id` faltante o con formato inválido → 422
+- Recurso inexistente en Cloudinary → 403
+- `public_id` que pertenece a otra carpeta (`portfolios`) → 403
+- Brief con 10 adjuntos → 422 (límite alcanzado)
+- Sin token → 401
+- `DELETE /api/briefs/{id}/attachments/{attachmentId}` con cliente dueño → 200 + borrado en Cloudinary (best-effort)
+- `DELETE` con no-dueño → 403, no se borra
+- `PATCH /api/briefs/{id}/attachments/reorder` con cliente dueño → 200 + nueva lista ordenada
+- `PATCH reorder` con IDs que no pertenecen al brief → 422
+- `GET /api/briefs/{id}` incluye `attachments` con sus `urls` (thumb/card/full)
+- `GET /api/briefs` (index) incluye los `attachments` de cada brief
+
+**OAuthIdentityTest**
+- `GET /api/me/oauth-identities` sin identidades → 200 con `data: []`
+- `GET /api/me/oauth-identities` con varias identidades → 200 con `data` ordenado por provider
+- `GET /api/me/oauth-identities` sin token → 401
+- `DELETE /api/me/oauth-identities/{provider}` con identidad existente → 200 + fila eliminada
+- `DELETE /api/me/oauth-identities/{provider}` sin tener esa identidad → 404
+- `DELETE /api/me/oauth-identities/twitter` (provider inválido) → 404
+- `DELETE /api/me/oauth-identities/{provider}` con esa identidad como único login y sin password → 422
+- `DELETE /api/me/oauth-identities/{provider}` con varias identidades (OAuth-only) → 200 (puede borrar una)
+- `DELETE` sin token → 401
+- `User::hasPassword()` / `User::isOAuthOnly()` reflejan el estado real del user
+
+**ChatTest**
+- `GET /api/conversations` devuelve solo las del user (no fuga a otros) + `unread_count` correcto
+- `GET /api/conversations/{id}` → 200 con `brief`/`client`/`freelancer`; `404` si no existe; `403` si no participante
+- `POST /api/briefs/{id}/conversation` → 201 cuando hay proposal aceptada; `409` cuando no
+- `POST /api/briefs/{id}/conversation` es idempotente (devuelve la misma conversación si ya existe)
+- Aceptar una proposal crea la conversación automáticamente
+- `GET /api/conversations/{id}/messages` con `limit=3` pagina, con `since` filtra por fecha
+- `POST /api/conversations/{id}/messages` con body vacío / > 2000 chars → 422
+- `POST /api/conversations/{id}/messages` actualiza `last_message_at` de la conversación
+- `POST /api/conversations/{id}/read` marca solo los mensajes del interlocutor, no los propios
+- `GET /api/conversations/unread-count` descuenta los mensajes marcados como leídos
+- `send` y `list` requieren JWT (`401`)
+
+**ReviewTest**
+- Cliente/freelancer pueden crear review cuando el brief está `completed` → 201
+- Mismo user no puede reseñar dos veces el mismo brief → 409
+- Rating fuera de 1-5 o ausente → 422; comment > 1000 → 422
+- No participantes → 403; sin token → 401
+- Brief `assigned` (no completado) → 409
+- `GET /api/users/{id}/reviews` lista las recibidas; `GET /api/users/{id}/rating` devuelve `{ count, average }`
+- `GET /api/briefs/{id}/reviews` solo accesible a participantes (403 a extraños)
+- `PATCH /api/briefs/{id}/complete` (cliente) → status `completed`; freelancer o estado incorrecto → 403/409
+- `FreelancerDetailResource` expone `rating: { count, average }`
 
 ## Smoke test rápido con curl
 

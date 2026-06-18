@@ -5,13 +5,18 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\OAuthProvider;
-use App\Enums\UserRole;
 use App\Models\User;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
+use Laravel\Socialite\Contracts\User as SocialiteUserContract;
 
 final class OAuthService
 {
+    public function __construct(private readonly OAuthIdentityService $identityService)
+    {
+    }
+
+    /**
+     * @return array{0: User, 1: bool}
+     */
     public function findOrCreateUser(
         OAuthProvider $provider,
         string $oauthId,
@@ -20,53 +25,59 @@ final class OAuthService
         string $name,
         ?string $avatarUrl,
     ): array {
-        return DB::transaction(function () use ($provider, $oauthId, $email, $emailVerified, $name, $avatarUrl) {
-            $user = User::query()
-                ->where('oauth_provider', $provider->value)
-                ->where('oauth_id', $oauthId)
-                ->first();
+        $identity = $this->identityService->findByProvider($provider, $oauthId);
+        if ($identity !== null) {
+            $identityRecord = $this->identityService->findIdentityByProvider($provider, $oauthId);
+            if ($identityRecord !== null) {
+                $this->identityService->markUsed($identityRecord);
+            }
+            return [$identity, false];
+        }
 
-            if ($user !== null) {
-                $this->refreshFromProvider($user, $name, $avatarUrl, $emailVerified);
-                return [$user, false];
+        $user = $email !== '' ? User::query()->where('email', $email)->first() : null;
+        if ($user !== null) {
+            if (! $emailVerified) {
+                abort(422, 'El email del proveedor no está verificado.');
+            }
+        }
+
+        $stub = new class($oauthId, $email, $name, $avatarUrl) implements SocialiteUserContract {
+            public function __construct(
+                public string $id,
+                public string $emailValue,
+                public string $nameValue,
+                public ?string $avatarValue,
+            ) {
             }
 
-            $user = User::query()->where('email', $email)->first();
-
-            if ($user !== null) {
-                if (! $emailVerified) {
-                    abort(422, 'El email del proveedor no está verificado.');
-                }
-                $user->oauth_provider = $provider;
-                $user->oauth_id       = $oauthId;
-                $this->refreshFromProvider($user, $name, $avatarUrl, $emailVerified);
-                return [$user, false];
+            public function getId(): mixed
+            {
+                return $this->id;
             }
 
-            $user = User::create([
-                'name'              => $name,
-                'email'             => $email,
-                'role'              => UserRole::Client,
-                'password'          => null,
-                'avatar_url'        => $avatarUrl,
-                'oauth_provider'    => $provider,
-                'oauth_id'          => $oauthId,
-                'email_verified_at' => $emailVerified ? Carbon::now() : null,
-            ]);
+            public function getNickname(): ?string
+            {
+                return null;
+            }
 
-            return [$user, true];
-        });
-    }
+            public function getName(): ?string
+            {
+                return $this->nameValue;
+            }
 
-    private function refreshFromProvider(User $user, string $name, ?string $avatarUrl, bool $emailVerified): void
-    {
-        $user->name = $name;
-        if ($avatarUrl !== null) {
-            $user->avatar_url = $avatarUrl;
-        }
-        if ($emailVerified && $user->email_verified_at === null) {
-            $user->email_verified_at = Carbon::now();
-        }
-        $user->save();
+            public function getEmail(): ?string
+            {
+                return $this->emailValue;
+            }
+
+            public function getAvatar(): ?string
+            {
+                return $this->avatarValue;
+            }
+        };
+        $stub->token = null;
+
+        $result = $this->identityService->findOrCreateUserFromSocialite($stub, $provider);
+        return [$result['user'], $result['isNewUser']];
     }
 }

@@ -97,6 +97,16 @@
     }
   </section>
 
+  <section class="quick-actions">
+    <a routerLink="/messages" class="quick-action-card">
+      <div class="quick-action-icon" aria-hidden="true">💬</div>
+      <div class="quick-action-body">
+        <strong>{{ 'topbar.nav.messages' | t }}</strong>
+        <span class="muted">{{ 'chat.list_subtitle' | t }}</span>
+      </div>
+    </a>
+  </section>
+
   <section id="como-funciona" class="how">
     <div class="section-head">
       <h2>{{ 'home.client.how_title' | t }}</h2>

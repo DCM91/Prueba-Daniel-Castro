@@ -1,0 +1,83 @@
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.review-form__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.review-form__title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+.muted { color: #a1a1aa; margin: 0; }
+
+.review-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.review-form__label {
+  color: #d4d4d8;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.review-form__helper {
+  font-size: 0.75rem;
+}
+
+.review-form__error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #f87171;
+}
+
+.review-form textarea {
+  resize: vertical;
+  padding: 0.625rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.review-form textarea:focus-visible {
+  outline: none;
+  border-color: rgba(124, 58, 237, 0.7);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
+}
+
+.review-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.review-form__submit {
+  padding: 0.625rem 1.5rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+  border: 0;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.review-form__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

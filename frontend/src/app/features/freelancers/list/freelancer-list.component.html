@@ -31,7 +31,7 @@
         >
           @for (opt of categoryOptions; track opt.value) {
             <option [ngValue]="opt.value">
-              {{ opt.value === '' ? ('freelancers.list.category_all' | t) : ('skill_categories.' + opt.value | t) }}
+              {{ opt.labelKey | t }}
             </option>
           }
         </select>

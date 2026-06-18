@@ -38,6 +38,7 @@ describe('AuthService', () => {
     const httpMock = {
       post: jest.fn(),
       get: jest.fn(),
+      delete: jest.fn(),
     } as unknown as jest.Mocked<HttpClient>;
 
     const storageMock = {
@@ -145,24 +146,24 @@ describe('AuthService', () => {
   });
 
   describe('roleLabel', () => {
-    it('returns "Cliente" for client', () => {
-      expect(service.roleLabel('client')).toBe('Cliente');
+    it('returns the i18n key for client', () => {
+      expect(service.roleLabel('client')).toBe('roles.client');
     });
 
-    it('returns "Profesional" for freelancer', () => {
-      expect(service.roleLabel('freelancer')).toBe('Profesional');
+    it('returns the i18n key for freelancer', () => {
+      expect(service.roleLabel('freelancer')).toBe('roles.freelancer');
     });
 
-    it('returns "Agencia" for agency', () => {
-      expect(service.roleLabel('agency')).toBe('Agencia');
+    it('returns the i18n key for agency', () => {
+      expect(service.roleLabel('agency')).toBe('roles.agency');
     });
 
-    it('returns "Empresa" for company', () => {
-      expect(service.roleLabel('company')).toBe('Empresa');
+    it('returns the i18n key for company', () => {
+      expect(service.roleLabel('company')).toBe('roles.company');
     });
 
-    it('returns "Admin" for admin', () => {
-      expect(service.roleLabel('admin')).toBe('Admin');
+    it('returns the i18n key for admin', () => {
+      expect(service.roleLabel('admin')).toBe('roles.admin');
     });
   });
 
@@ -174,6 +175,38 @@ describe('AuthService', () => {
 
     it('loginWithOAuth() does not throw', () => {
       expect(() => service.loginWithOAuth('google')).not.toThrow();
+    });
+
+    it('buildOAuthRedirectUrl() appends link=1 when linking an existing account', () => {
+      expect(service.buildOAuthRedirectUrl('google', { link: true }))
+        .toBe('http://127.0.0.1:8000/api/auth/oauth/google/redirect?link=1');
+    });
+
+    it('linkOAuthProvider() redirects to the link variant of the OAuth URL', () => {
+      // jsdom v26 marks window.location.href as non-configurable, so we cannot
+      // spy on the setter. Instead we verify the URL that the service would
+      // assign (via buildOAuthRedirectUrl, which is tested separately) and that
+      // the call does not throw — same convention as loginWithOAuth() above.
+      expect(service.buildOAuthRedirectUrl('facebook', { link: true }))
+        .toBe('http://127.0.0.1:8000/api/auth/oauth/facebook/redirect?link=1');
+      expect(() => service.linkOAuthProvider('facebook')).not.toThrow();
+    });
+
+    it('listOAuthIdentities() unwraps the data envelope', (done) => {
+      http.get.mockReturnValue(of({ data: [] }) as ReturnType<typeof http.get>);
+      service.listOAuthIdentities().subscribe((list) => {
+        expect(list).toEqual([]);
+        expect(http.get).toHaveBeenCalledWith('/api/me/oauth-identities');
+        done();
+      });
+    });
+
+    it('unlinkOAuthProvider() calls DELETE with the provider in the path', (done) => {
+      http.delete.mockReturnValue(of({ message: 'ok' }) as ReturnType<typeof http.delete>);
+      service.unlinkOAuthProvider('google').subscribe(() => {
+        expect(http.delete).toHaveBeenCalledWith('/api/me/oauth-identities/google');
+        done();
+      });
     });
 
     it('handleOAuthCallback() stores the token and schedules a refresh', () => {

@@ -96,7 +96,11 @@ export class OAuthCompleteProfileComponent implements OnInit {
     this.auth.completeOAuthProfile(role).subscribe({
       next: () => {
         this.submitting.set(false);
-        void this.router.navigate(['/home']);
+        if (role === 'freelancer') {
+          void this.router.navigate(['/onboarding/welcome']);
+        } else {
+          void this.router.navigate(['/home']);
+        }
       },
       error: (err: { error?: { message?: string } }) => {
         this.submitting.set(false);

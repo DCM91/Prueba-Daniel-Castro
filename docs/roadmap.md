@@ -1,16 +1,52 @@
-# Roadmap y fases
+# Roadmap y fases · FrameMatch
 
-> Documento vivo. Se actualiza al cerrar cada fase.
 
-## Fases entregadas
+> **Convenciones:**
+> - Estado vivo. Marca con `[x]` cada tarea al cerrarla.
+> - Prioridad descendente (P0 = más urgente, P6 = sin priorizar).
+> - Las fases se numeran con cronología. Las sub-fases 5.5.x son bloques cortos dentro de "Fase 5.5 · Cloudinary".
+> - Última actualización: **cierre de Fase 7 (2026-06-18)**.
 
-### ✅ Fase 0 · Bootstrap (ya estaba en el repo)
+---
 
-- Backend Laravel 13 + PHP 8.5 + MySQL.
-- Frontend Angular 21 standalone.
-- App original: búsqueda en Wikipedia + historial.
+## TL;DR
 
-> La app de Wikipedia se borró entera en la Fase 1. Solo queda el repo con su estructura monorepo.
+**Métricas al cierre de Fase 7:**
+
+- **Backend:** 227 tests / 927 assertions, 15 feature suites + 2 unit suites, todos en verde.
+- **Frontend:** `npm run build` sin warnings. `npm run validate:i18n` OK. `npx jest` → **36 suites / 249 tests verdes**. Runner (`setupZoneTestEnv()`) y los 5 suites con bugs pre-existentes en specs están resueltos (ver [§ Pendiente de tests frontend](#pendiente-de-tests-frontend)).
+- **Deploy:** producción en Railway (backend) + Vercel (frontend) con CI en GitHub Actions.
+- **Tablas nuevas desde Fase 5:** `brief_attachments` (5.5.C), `conversations` + `messages` (Fase 6), `reviews` (Fase 7), `user_oauth_identities` (5.5.F).
+- **Endpoints nuevos desde Fase 5:** 25+ nuevos entre 5.5.A, 5.5.B, 5.5.C, 5.5.D, 5.5.E, 5.5.F, Fase 6, Fase 7. Ver [docs/api.md](./api.md).
+
+**Estado del backlog inmediato:**
+
+| # | Próxima | Estado |
+|---|---|---|
+| 1 | Aceptar / rechazar propuesta (PATCH status) | 🔵 Sin empezar |
+| 2 | Migrar chat de polling a WebSockets (Laravel Reverb) | 🔵 Sin empezar |
+| 3 | Editar / borrar la propia review | 🔵 Sin empezar |
+| 4 | Responder a reviews, fotos en reviews, denuncias | ⚪ Backlog |
+| 5 | Reset de password + verificación de email | ⚪ Backlog |
+
+---
+
+## Convenciones de uso
+
+- Al **completar** una tarea, sustituye `- [ ]` por `- [x]` y, si quieres, añade `<sub>fecha — commit hash</sub>` al final de la línea.
+- Al **abrir un bloque nuevo** (p.ej. cuando llegue el momento de "Aceptar / rechazar propuesta"), atomízalo siguiendo el mismo formato que los P0/P1/P2.
+- Al **cerrar una fase**, sube el test count en el TL;DR, añade la entrada de fase con la narrativa detallada, y actualiza los links de `docs/api.md` y `docs/database.md`.
+- Si descubres una tarea **fuera de plan**, añádela al bloque P0 si bloquea o al backlog correspondiente.
+
+---
+
+## Fases entregadas (orden cronológico)
+
+> Cada fase tiene: **Objetivo** · **Backend** · **Frontend** · **Documentación** · **Validación** · **Total acumulado**.
+
+### ✅ Fase 0 · Bootstrap
+
+Backend Laravel 13 + PHP 8.5 + MySQL. Frontend Angular 21 standalone.
 
 ### ✅ Fase 1 · Auth con JWT + modelo híbrido
 
@@ -27,7 +63,6 @@
 - `UserResource` que incluye `freelancer_profile` con skills.
 - Guard `api` con driver `jwt`.
 - Bootstrap: JSON 401 limpio en rutas `api/*` (en vez de "Route [login] not defined").
-- **Tests:** 15 tests / 71 assertions. Cubren happy path + 422/401.
 
 **Frontend (Angular 21)**
 - Limpieza total del código de Wikipedia.
@@ -37,10 +72,6 @@
 - `authInterceptor` (HttpInterceptorFn) adjunta `Bearer` token.
 - `authGuard` y `roleGuard(roles[])` parametrizable.
 - Componentes: `LandingComponent` (público), `LoginComponent`, `RegisterComponent` (selector visual cliente/freelancer), `DashboardComponent` (protegido, base).
-- **Tests:** 16 tests / 4 suites.
-
-**Documentación**
-- `README.md` con stack, setup, endpoints, testing.
 
 ### ✅ Fase 2 · Landings diferenciadas por rol
 
@@ -56,16 +87,8 @@
 - `redirectIfAuthenticatedGuard` para que `/login` y `/register` salten a `/home` si ya hay sesión.
 - **Intercepción 401**: si una API devuelve 401 y no es `/auth/login`, limpia sesión y va a `/login`.
 - **Defensiva**: `submit()` con callback `complete` que siempre resetea `submitting` y `console.error` para depurar.
-- **Tests:** 33 tests / 8 suites (login/register actualizados para esperar `/home`).
 
-**Backend**
-- Sin cambios.
-
-**Documentación**
-- Esta `docs/roadmap.md` + `docs/architecture.md` + `docs/design-system.md` + `docs/api.md` + `docs/database.md`.
-- `AGENTS.md` raíz + `backend/AGENTS.md` + `frontend/AGENTS.md` (en esta fase de docs).
-
-### ✅ Fase 2.5 · Documentación (esta fase)
+### ✅ Fase 2.5 · Documentación
 
 - `AGENTS.md` raíz: convenciones del monorepo, navegación, glosario.
 - `docs/architecture.md`: capas, decisiones, flujos end-to-end, glosario técnico.
@@ -73,8 +96,8 @@
 - `docs/api.md`: endpoints, request/response, errores, JWT, tests, smoke test con curl.
 - `docs/database.md`: ER, tablas, índices, patrones de uso, decisiones.
 - `docs/roadmap.md`: este archivo.
-- `backend/AGENTS.md`: convenciones backend (próximo paso).
-- `frontend/AGENTS.md`: convenciones frontend (próximo paso).
+- `backend/AGENTS.md`: convenciones backend.
+- `frontend/AGENTS.md`: convenciones frontend.
 - `README.md`: índice de docs.
 
 ### ✅ Fase 3 · Edición del perfil de freelancer
@@ -87,7 +110,6 @@
 - `PUT /api/freelancer/me` (JWT freelancer) → `UpdateProfileRequest` con validaciones en español. Acepta `PATCH`-semantics (todos los campos opcionales). Convierte strings vacíos a `null` en `display_name`/`bio`/`city`.
 - `PUT /api/freelancer/me/skills` (JWT freelancer) → `SyncSkillsRequest` con `skills.*.skill_id|level|years_experience`. Reemplaza todas las skills anteriores (semántica `sync`).
 - Nuevo middleware `App\Http\Middleware\EnsureUserIsFreelancer` que aborta con 403 si el usuario autenticado no tiene `role=freelancer`.
-- **Tests:** 10 nuevos (120 assertions nuevas). Cubre 422/403/200 y la re-sincronización del pivot.
 
 **Frontend (Angular 21)**
 - Tipos nuevos en `auth.types.ts`: `SkillLevel`, `FreelancerProfileSkill` (extiende `Skill` con `level` y `years_experience`), `FreelancerSkillInput`.
@@ -100,9 +122,6 @@
 - Errores 422: bindean `r.error.errors` a un signal `globalErrors` que la plantilla pinta bajo cada input.
 - Nueva ruta `GET /freelancer/profile/edit` con `authGuard + roleGuard(['freelancer'])`, lazy-loaded.
 - Botón "Completar perfil" de la landing freelancer ahora navega a `/freelancer/profile/edit` (`FreelancerHomeComponent.goToEdit()`).
-- **Tests:** 25 nuevos. `freelancer-profile.service.spec.ts` (4 métodos) + `profile-editor.component.spec.ts` (4 escenarios: carga inicial, form inválido, submit OK con 2 PUT secuenciales, 422 con errores por campo).
-
-**Total acumulado:** backend 25 tests / 190 assertions, frontend 62 tests / 11 suites.
 
 ### ✅ Fase 4 · Catálogo público de freelancers
 
@@ -113,7 +132,6 @@
 - `GET /api/freelancers/{id}` (público): detalle. 404 si no existe o no está disponible. **No** expone `email`/`password` (decisión: el contacto vendrá en Fase 6 vía chat interno).
 - Nuevos: `FreelancerCatalogController`, `SearchFreelancersRequest`, `FreelancerCardResource` (con `top_skills`, `skills_count`, `profile_completion`), `FreelancerDetailResource` (incluye `bio`, `price_per_project`, `created_at` y `skills` completo).
 - `DemoFreelancersSeeder`: 6 perfiles demo (Lucia, Diego, Nuria, Marcos, Aitana, Pablo) en ciudades españolas, con skills reales del seed. Idempotente (`updateOrCreate` por email). No corre en `migrate:fresh --seed` por defecto.
-- **Tests:** 13 nuevos / 90 assertions. Cubre: paginación, filtros individuales, filtros combinados con `q`, empty results, exclusión de no disponibles, 200/404 del detalle, no exposición de email, 422 con `category` inválida.
 
 **Frontend (Angular 21)**
 - Tipos nuevos en `auth.types.ts`: `FreelancerCard`, `FreelancerDetail`, `FreelancerCardSkill`, `FreelancerSearchFilters`, `Paginated<T>`.
@@ -123,11 +141,8 @@
 - `FreelancerDetailComponent` en `features/freelancers/detail/`: header con avatar + status, tarifas (hourly + project), bio truncada a 4 líneas con "Ver más" (signal `bioExpanded`), grid completo de skills con `level` y `years_experience`, estado 404 ("Perfil no disponible") con botón volver.
 - Rutas `/freelancers` y `/freelancers/:id` (públicas, lazy-loaded) en `app.routes.ts`.
 - `ClientHomeComponent` refactor: 3 categorías (Foto/Vídeo/Edición) que enlazan a `/freelancers?category=…`. Buscador del hero navega a `/freelancers?q=…&category=…`. Nueva sección "Profesionales destacados" que carga los 6 primeros del catálogo (oculta si está vacía). Botón "Ver todos los profesionales" al final.
-- **Tests:** 4 suites nuevas (catalog service, card, list, detail) + 1 actualizada (client home) = 27 tests. Total: 84 tests / 15 suites.
 
-**Total acumulado:** backend **38 tests / 280 assertions**, frontend **84 tests / 15 suites**.
-
-### ✅ Fase "Home + i18n + Briefs" (bonus)
+### ✅ Fase 5 · Briefs + propuestas (Home + i18n + Brand)
 
 **Objetivo:** reestructurar la home para que el brand "FrameMatch" sea el protagonista visual, añadir soporte bilingüe (es + en) con un selector de idioma, e implementar briefs + propuestas para conectar clientes y profesionales.
 
@@ -137,7 +152,6 @@
 - Topbars actualizados en TODAS las páginas (landing, login, register, client home, freelancer home, freelancer list, freelancer detail, profile editor) para usar el `BrandLogoComponent`.
 - Hero del landing usa `<h1>` con el wordmark "FrameMatch" en 56-110px con gradiente multicolor.
 - Botón "Ver perfil" del card de freelancer (Fase 4) ahora navega correctamente.
-- **Tests:** 5 nuevos en `landing.component.spec.ts`, 5 en `brand-logo.component.spec.ts`.
 
 #### B · Internacionalización (i18n)
 - Diccionarios JSON en `src/assets/i18n/es.json` y `en.json` cargados por HTTP al arrancar.
@@ -146,9 +160,9 @@
 - `LanguageSelectorComponent` (`core/components/language-selector/`): dropdown en topbar con el código del idioma activo (ES / EN) y menú con los soportados.
 - Todos los componentes visibles (landing, login, register, client home, freelancer home, freelancer card/list/detail, profile editor) usan `| t` en vez de strings hard-coded.
 - `provideLanguageServiceMock()` helper para tests (`core/testing/language-service.mock.ts`).
-- **Tests:** 9 nuevos en `language.service.spec.ts` + 3 en `language-selector.component.spec.ts` + specs actualizados en todos los componentes con i18n.
 
 #### C · Briefs + Propuestas (matching cliente ↔ profesional)
+
 **Backend (Laravel 13)**
 - 2 migraciones nuevas: `briefs` y `proposals`. `proposals` con `UNIQUE(brief_id, freelancer_id)` para prevenir duplicados.
 - 2 enums nuevos: `BriefStatus` (draft/published/in_review/assigned/completed/cancelled) y `ProposalStatus` (pending/accepted/rejected/withdrawn).
@@ -156,7 +170,6 @@
 - 4 FormRequests: `StoreBriefRequest`, `UpdateBriefRequest`, `StoreProposalRequest`, `UpdateBriefRequest` con validaciones en español.
 - 2 Resources: `BriefResource` (incluye `proposals_count` via `whenCounted`) y `ProposalResource` (con `freelancer` anidado via `whenLoaded`).
 - 2 Controllers: `BriefController` (CRUD con `scope=mine`) y `ProposalController` (store + index, solo el cliente del brief ve todas las propuestas).
-- **Tests:** 16 tests / 41 assertions en `BriefsAndProposalsTest.php`. Cubre happy path + 401/403/404/422.
 
 **Frontend (Angular 21)**
 - Tipos nuevos en `auth.types.ts`: `BriefStatus`, `ProposalStatus`, `Brief`, `BriefInput`, `Proposal`, `ProposalInput`, `ProposalFreelancer`.
@@ -164,7 +177,6 @@
 - 3 componentes: `BriefListComponent` (público, con tabs Todos/Mis briefs), `BriefDetailComponent` (público, vista de cliente con propuestas recibidas o form de propuesta para freelancers), `BriefFormComponent` (cliente, con reactive form), `ProposalFormComponent` (freelancer, form embebido en el detalle).
 - 3 rutas nuevas: `/briefs`, `/briefs/new` (authGuard + roleGuard['client']), `/briefs/:id` (público).
 - Link "Briefs" en el topbar del cliente y botón "+ Nuevo brief" cuando aplica.
-- **Tests:** 4 nuevos (brief-list, brief-detail).
 
 **Total acumulado:** backend **62 tests / 343 assertions**, frontend **107 tests / 21 suites**.
 
@@ -182,16 +194,14 @@
 - **Bug fix (landing):** eliminado el bloque `<div class="hero-brand">` con el `app-brand-logo xl` (`hideWordmark`) que quedaba entre el eyebrow y el `<h1>` y se comía el foco visual. Limpiadas las reglas CSS `.hero-brand` y `.eyebrow` asociadas.
 - **Responsive landing:** dos media queries nuevos en `landing.component.css`. `@media (max-width:720px)`: topbar wrap, nav a segunda fila, hero padding 56/18/48, CTAs full-width, secciones compactas, orbes reducidos. `@media (max-width:420px)`: se oculta `.link-login` del topbar y se ajusta el `letter-spacing` de h1. Bajado el `min` del `clamp()` de h1 de 56px a 40px.
 - **Hotfix de ruido en tests:** `setup-jest.ts` movido a `setupFilesAfterEnv` (corre con `beforeEach`/`jest` disponibles) y mockea `console.error`/`console.warn` por test, restaurándolos en `afterEach`. Los specs de path negativo ya no contaminan la salida con stack traces.
-- **Tests:** 1 nuevo en `brief-list.component.spec.ts` (plural `propuesta` vs `propuestas`). Total: **108 tests / 21 suites**.
-
-**Total acumulado:** backend **62 tests / 343 assertions**, frontend **108 tests / 21 suites**.
 
 #### 5.1.1 · Fix de FOUT en i18n + detección de navegador
 
 - **FOUT:** al abrir la app por primera vez se veían las keys literales (`briefs.list.title`, etc.) durante ~100 ms hasta que llegaban los JSON de los diccionarios. Causa: el `LanguageService` disparaba los `HttpClient.get` en el constructor con `void this.loadAll()` fire-and-forget. Fix: `LanguageService` expone `readonly ready: Promise<void>` resuelto al final de `loadAll()`, y `app.config.ts` lo enchufa a `provideAppInitializer(() => inject(LanguageService).ready)`. Angular no arranca el bootstrap hasta que los diccionarios están en memoria → la primera vez que se ve la UI ya viene traducida.
 - **Detección de navegador:** `readStoredLanguage` ya no hardcodea `if (nav.startsWith('en'))`. Ahora itera sobre `this.supported` y matchea la primera coincidencia, con fallback explícito a `DEFAULT_LANGUAGE` (`es`). `navigator.language = 'es-ES'` se detecta como `es`; `'fr-FR'` cae a `es` (antes caía "por suerte" al default).
 - **Mock:** `provideLanguageServiceMock` ahora expone `ready: Promise.resolve()`.
-- **Tests nuevos (3):** `ready` resuelve sólo cuando ambos diccionarios están cargados; `navigator.language = 'es-ES'` → `'es'`; `'fr-FR'` → `'es'` (fallback explícito). Total: **111 tests / 21 suites**.
+
+**Validación 5.1.1:** `npm test` (111/111, 21 suites) + `npm run build` (sin NG8113) + `php artisan test` (62/343) — todo en verde. ✅
 
 **Total acumulado:** backend **62 tests / 343 assertions**, frontend **111 tests / 21 suites**.
 
@@ -218,16 +228,6 @@
 - `brief-list.component.html` y `brief-detail.component.html`: la pill de categoría pasa de `{{ b.category }}` a `{{ ('skill_categories.' + b.category) | t }}` para mostrar el texto traducido en vez del valor crudo del enum.
 - `freelancer-list.component.ts`: 5ª entrada en `categoryOptions` (`{ value: 'content', label: 'Creación de Contenido' }`). El template ya lo pinta vía `| t`, así que este label se podría refactorizar a i18n en una iteración futura.
 - `freelancer-detail.component.css`: nuevo `.skill-cat[data-cat="content"] { background: rgba(245,158,11,0.18); color: #fcd34d; }` (paleta amber consistente).
-- Specs actualizados: `client-home.component.spec.ts` (asserts de 3 → 4 categorías + mock con `content`), `landing.component.spec.ts` (mock con `tagline_disciplines`/`cuatro disciplinas`/`cat_content_*`, renombrado el test a `'shows the categories section with 4 categories'` y añadido test del tagline), `brief-list.component.spec.ts` (mock con `skill_categories`, nuevo test de i18n de la pill), `brief-detail.component.spec.ts` (mock con `skill_categories`).
-
-**Documentación**
-- `docs/database.md`: ER del `category ENUM` actualizado, tabla `skills` con 4 valores, tabla de skills seedeadas con 8/8/8/6, columna `briefs.category` con 4 valores.
-- `docs/api.md`: `category` validations con 4 valores, ejemplo de `/api/skills` con un skill de cada categoría, total a 62/388.
-- `docs/design-system.md`: skill row con 4 colores, iconos incluyendo `megaphone`.
-- `docs/roadmap.md`: esta entrada (Fase 5.2).
-- `CHECKLIST.md`: hotfixes 0.13 (categoría content) y 0.14 (rebalanceo edición), entrada en "Fases entregadas", línea de validación 5.2.
-- `README.md`: ER de skills, total backend a 62/388.
-- `.agents/skills/backend-conventions/SKILL.md`: menciones a "20 skills (foto, vídeo, edición)" → "30 skills (foto, vídeo, edición, contenido)".
 
 **Validación 5.2:** `npm test` (113/113, 21 suites) + `npm run build` (sin NG8113) + `php artisan test` (62/388) — todo en verde. ✅
 
@@ -276,20 +276,7 @@
 - `OAuthCallbackComponent`: lee `token`, `expires_in`, `new_user` de query params, llama a `auth.handleOAuthCallback`, redirige a `/auth/complete-profile` si es nuevo o a `/home` (tras `fetchCurrentUser`) si no. Maneja `?error=access_denied` mostrando mensaje.
 - `OAuthCompleteProfileComponent`: reusa el role selector visual del `RegisterComponent`, `auth.completeOAuthProfile(role)`, redirige a `/home`.
 - `LoginComponent` y `RegisterComponent` añaden divider "o" + 2 botones OAuth (Google con logo 4-colores oficial, Facebook con fondo `#1877F2`) después del form principal. CSS responsive, full-width.
-- i18n ES+EN: namespace `auth.oauth.*` con 11 claves (or, continue_with_google, continue_with_facebook, error_generic, error_provider_denied, error_callback_failed, callback_processing, complete_profile_title, complete_profile_subtitle, submit_role, submitting_role).
-- Specs nuevos: `OAuthCallbackComponent` (4), `OAuthCompleteProfileComponent` (3), `AuthService` (4 nuevos en el `describe('OAuth')`).
-
-**Documentación**
-- `docs/database.md`: tabla `users` con columnas OAuth, sección "OAuth (Google / Facebook)" con la estrategia de auto-vinculación.
-- `docs/api.md`: 3 endpoints nuevos documentados con shape exacta + errores + nota de que OAuth no se prueba con curl.
-- `docs/architecture.md`: diagrama de capas actualizado, ASCII del flujo OAuth end-to-end (10 pasos).
-- `docs/roadmap.md`: esta entrada.
-- `docs/design-system.md`: fila "Botón OAuth" en el catálogo.
-- `CHECKLIST.md`: Fase 5.3, hotfixes 0.15+0.16, línea de validación.
-- `README.md`: sección "Login con Google / Facebook" con link a `docs/roadmap.md` y `docs/api.md` para los pasos detallados.
-- `.agents/skills/backend-conventions/SKILL.md`: sección "OAuth / Socialite" con convenciones (state CSRF, auto-link, transaccionalidad, `email_verified_at`, password nullable, cómo añadir un provider nuevo, .env placeholders, tests con mocks).
-- `.agents/skills/frontend-conventions/SKILL.md`: sección "OAuth frontend" (flujo de redirección, `OAuthCallbackComponent`, `OAuthCompleteProfileComponent`, botones con logos oficiales, i18n).
-- `.env.example`: placeholders para `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI`, `FACEBOOK_CLIENT_ID/SECRET/REDIRECT_URI`, `FRONTEND_URL`.
+- i18n ES+EN: namespace `auth.oauth.*` con 11 claves.
 
 **Validación 5.3:** `npm test` (124/124, 23 suites) + `npm run build` (sin NG8113) + `php artisan test` (74/431) — todo en verde. ✅
 
@@ -319,41 +306,28 @@
   - 1 test en `profile-editor.component.spec.ts` (back-to-home).
 - **Tests actualizados**: `oauth-complete-profile.component.spec.ts` añade mock de `ActivatedRoute` (necesario para `RouterLink` interno del topbar). Los specs existentes de features (login, register, client-home, freelancer-home) siguen pasando sin tocarse porque solo leen `textContent` y siguen encontrando el contenido.
 
-**Documentación**
-- `docs/design-system.md`: nueva fila "CoreTopbar (Fase 5.4)" con todos los tokens, variants, responsive rules y excepciones.
-- `docs/architecture.md`: "Última revisión" actualizada a Fase 5.4. Diagrama de capas añade `core/components/topbar/` en el bloque de core/components. Sección "Lo que NO tenemos" actualiza i18n: "Con i18n (ES + EN)".
-- `docs/roadmap.md`: esta entrada.
-- `CHECKLIST.md`: hotfix 0.17 (Topbar unificado). Entrada en "Fases entregadas" para Fase 5.4. Línea de validación 5.4.
-- `README.md`: sin cambios significativos (la estructura interna cambia pero el comportamiento externo es el mismo).
-- `.agents/skills/frontend-conventions/SKILL.md`: nueva sección "Topbar" dentro de "Capas del frontend" con:
-  - Convención: usar `<app-core-topbar [variant]="…">` SIEMPRE. No inline un `<header class="topbar">` en un feature.
-  - Variants y sus nav links por defecto.
-  - Para detail pages: pasar `[backLink]="{ labelKey, route }"`. NO usar `Location.back()` ni hardcoded.
-  - Excepciones: `LandingComponent` y `BriefListComponent`.
-  - Tests: mockear `AuthService` con `{ currentUser: signal<User | null>(...) }` (forma signal, no función, para que los computeds del topbar reaccionen).
-  - Specs dedicados en `core/components/topbar/topbar.component.spec.ts`. Los specs de features no deben asertar sobre la estructura del topbar — solo sobre el contenido (textContent).
-
 **Validación 5.4:** `npm test` (137/137, 24 suites) + `npm run build` (sin NG8113) + `php artisan test` (74/431) — todo en verde. ✅
 
 **Total acumulado:** backend **74 tests / 431 assertions**, frontend **137 tests / 24 suites**.
 
-### ✅ Fase 5.5.A · Foundations + Avatar (Cloudinary)
+### ✅ Fase 5.5 · Cloudinary (sub-fases A → F)
 
-**Objetivo:** introducir Cloudinary en el stack y habilitar la subida de foto de perfil. Cubre avatares; cover, portfolio y brief attachments vienen en 5.5.B y 5.5.C.
+**Objetivo:** introducir Cloudinary en el stack y cubrir todos los flujos de subida de imágenes de la plataforma: avatar de usuario, cover del freelancer, portfolio, attachments de brief, y desbloquea el patrón para futuras subidas (comprobantes de pago, etc.).
 
-**Estrategia de upload:** *Frontend → Cloudinary directo con unsigned preset*. El browser sube el archivo a `https://api.cloudinary.com/v1_1/{cloud}/image/upload` con `upload_preset=fm_av_upl` y devuelve `{ public_id, secure_url, ... }`. El frontend hace `POST /api/me/avatar` con ese `public_id` y el backend lo **verifica contra la Admin API** antes de persistirlo. Los 4 unsigned presets están configurados en el dashboard con carpeta fija, formatos permitidos, tamaño y dimensiones máximos.
+**Estrategia de upload:** *Frontend → Cloudinary directo con unsigned preset*. El browser sube el archivo a `https://api.cloudinary.com/v1_1/{cloud}/image/upload` con `upload_preset=fm_<tipo>_upl` y devuelve `{ public_id, secure_url, ... }`. El frontend hace `POST /api/<endpoint>` con ese `public_id` y el backend lo **verifica contra la Admin API** antes de persistirlo. Los 4 unsigned presets están configurados en el dashboard con carpeta fija, formatos permitidos, tamaño y dimensiones máximos.
 
 **Carpetas en Cloudinary:**
 ```
 framematch/
-├── avatars/                       ← 1 por user
-├── covers/                        ← 5.5.B
-├── portfolios/                    ← 5.5.B
-└── briefs/                        ← 5.5.C
+├── avatars/                       ← 5.5.A · 1 por user
+├── covers/                        ← 5.5.B · cover del freelancer
+├── portfolios/                    ← 5.5.B · galería del freelancer
+└── briefs/                        ← 5.5.C · imágenes de referencia del brief
 ```
 
-**Backend (Laravel 13)**
-- Dependencia nueva: `cloudinary/cloudinary_php:^3.1`.
+#### 5.5.A · Foundations + Avatar
+
+- Dependencia backend: `cloudinary/cloudinary_php:^3.1`.
 - `App\Services\Cloudinary\CloudinaryServiceInterface` + `CloudinaryService` (concreto, usa `Http` facade de Laravel para Admin API + URL building manual con transformaciones `w_*,h_*,c_fill,g_auto,r_max,q_auto,f_auto`) + `CloudinaryServiceFake` (test double). Tamaño de avatar `xs:40, sm:80, md:200, lg:400, xxl:800`. Bind en `AppServiceProvider::register`.
 - `config/services.php`: bloque `cloudinary` con `cloud_name`, `api_key`, `api_secret`, `presets` y `folders`.
 - `.env` + `.env.example`: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_PRESET_AVATAR/COVER/PORTFOLIO/BRIEF`. La API secret va SOLO en `.env` local (gitignored).
@@ -369,48 +343,35 @@ framematch/
   2. Comprueba que `resource_type === 'image'`.
   3. Comprueba que el `folder` del recurso coincide con `framematch/avatars/...`.
   4. Lanza `CloudinaryVerificationException` (que se convierte en 403) si algo falla.
-- **Tests:** 13 unit (`CloudinaryServiceTest` con `Http::fake()` para Admin API + verificación de URLs y helpers) + 9 feature (`AvatarUploadTest` con `CloudinaryServiceFake`) = 22 nuevos. Cubre happy path 200, 401 sin token, 422 con payload inválido, 403 con `public_id` de otra carpeta, 403 con `public_id` inexistente, delete OK, delete sin avatar, delete sin auth, replace avatar (borra el anterior).
-
-**Frontend (Angular 21)**
-- Sin nuevos paquetes npm. El frontend sube con `HttpClient.post(cloudinaryApi, FormData)` directo. Esto evita arrastrar el paquete `@cloudinary/ng` (Angular 12-era) que no encaja con Angular 21.
-- `core/config/cloudinary.config.ts` con constantes públicas (cloud name, presets, límites de tamaño, formatos aceptados).
-- `core/services/cloudinary.service.ts`: `uploadImage(file, type, options?)` con validación client-side de tamaño/format antes de subir. Retorna `Observable<CloudinaryUploadResult>`.
-- `core/services/user.service.ts`: `setAvatar(payload)` y `removeAvatar()` que envuelven los endpoints del backend.
-- `core/types/auth.types.ts`: nuevo `AvatarUrls` interface y `User.avatar_urls?: AvatarUrls | null`.
-- `core/services/auth.service.ts`: nuevo método `setCurrentUser(user)` para actualizar el signal cuando se sube/borra el avatar.
-- `core/components/avatar-uploader/` (nuevo, standalone, OnPush, signals):
-  - **Cargado con `frontend-design` + `accessibility` skills.**
-  - Drop zone con borde dashed, ícono cloud-arrow-up, texto "Arrastra una imagen aquí o haz clic para seleccionar", hint con tamaño/formatos.
-  - Vista previa circular `128×128` con gradiente morado→índigo de fallback, borde sutil, transiciones suaves. Soporta `<img>` cuando hay avatar real.
-  - Spinner de subida con animación `spin 0.8s linear infinite` (respetando `prefers-reduced-motion`).
-  - Status bar con `role="status"` + `aria-live="polite"` para anunciar success/error a screen readers.
-  - Botón "Eliminar foto" con borde rojo translúcido.
-  - Drag-drop con `dragenter/dragover/dragleave/drop` y `tabindex="0"` para activar con Enter/Space.
-  - Output `avatarUpdated: EventEmitter<User>` que emite el user actualizado.
-  - i18n: 11 claves nuevas en `uploader.*` y `avatar.*` (ES + EN).
-- `core/components/topbar/`: ahora muestra `<img>` con la URL del avatar en vez de iniciales cuando `user.avatar_urls.sm` (o `avatar_url` fallback) está presente. CSS con `.avatar--image` para `object-fit: cover` + borde.
-- `features/freelancer/profile-editor/`: nueva sección "Tu foto de perfil" con `<app-avatar-uploader>` al principio del form, encima de "Datos básicos". Usa `currentUser()` signal directamente.
-- i18n: 11 claves nuevas en `uploader.*` y `avatar.*` (ES + EN): `drop_zone`, `browse`, `uploading`, `upload_progress`, `success`, `error_size`, `error_format`, `error_network`, `error_unknown`, `remove_confirm`, `upload_cta`, `change_cta`, `remove_cta`, `preview_alt`, `fallback_alt`, `section_title`, `section_hint`.
-- **Tests:** 6 nuevos unit (`cloudinary.service.spec.ts` cubre upload, validaciones, formatos) + 3 nuevos (`user.service.spec.ts` cubre setAvatar/removeAvatar) + 10 nuevos (`avatar-uploader.component.spec.ts` cubre render, file selection, success, error, remove, double-call guard, emit). Total: 19 nuevos en frontend.
+- **Frontend (Angular 21)**:
+  - Sin nuevos paquetes npm. El frontend sube con `HttpClient.post(cloudinaryApi, FormData)` directo. Esto evita arrastrar el paquete `@cloudinary/ng` (Angular 12-era) que no encaja con Angular 21.
+  - `core/config/cloudinary.config.ts` con constantes públicas (cloud name, presets, límites de tamaño, formatos aceptados).
+  - `core/services/cloudinary.service.ts`: `uploadImage(file, type, options?)` con validación client-side de tamaño/format antes de subir. Retorna `Observable<CloudinaryUploadResult>`.
+  - `core/services/user.service.ts`: `setAvatar(payload)` y `removeAvatar()` que envuelven los endpoints del backend.
+  - `core/types/auth.types.ts`: nuevo `AvatarUrls` interface y `User.avatar_urls?: AvatarUrls | null`.
+  - `core/services/auth.service.ts`: nuevo método `setCurrentUser(user)` para actualizar el signal cuando se sube/borra el avatar.
+  - `core/components/avatar-uploader/` (nuevo, standalone, OnPush, signals):
+    - **Cargado con `frontend-design` + `accessibility` skills.**
+    - Drop zone con borde dashed, ícono cloud-arrow-up, texto "Arrastra una imagen aquí o haz clic para seleccionar", hint con tamaño/formatos.
+    - Vista previa circular `128×128` con gradiente morado→índigo de fallback, borde sutil, transiciones suaves. Soporta `<img>` cuando hay avatar real.
+    - Spinner de subida con animación `spin 0.8s linear infinite` (respetando `prefers-reduced-motion`).
+    - Status bar con `role="status"` + `aria-live="polite"` para anunciar success/error a screen readers.
+    - Botón "Eliminar foto" con borde rojo translúcido.
+    - Drag-drop con `dragenter/dragover/dragleave/drop` y `tabindex="0"` para activar con Enter/Space.
+    - Output `avatarUpdated: EventEmitter<User>` que emite el user actualizado.
+    - i18n: 11 claves nuevas en `uploader.*` y `avatar.*` (ES + EN).
+  - `core/components/topbar/`: ahora muestra `<img>` con la URL del avatar en vez de iniciales cuando `user.avatar_urls.sm` (o `avatar_url` fallback) está presente. CSS con `.avatar--image` para `object-fit: cover` + borde.
+  - `features/freelancer/profile-editor/`: nueva sección "Tu foto de perfil" con `<app-avatar-uploader>` al principio del form, encima de "Datos básicos". Usa `currentUser()` signal directamente.
+- **Tests:** 13 unit (`CloudinaryServiceTest` con `Http::fake()` para Admin API + verificación de URLs y helpers) + 9 feature (`AvatarUploadTest` con `CloudinaryServiceFake`) = 22 nuevos backend. Frontend: 6 nuevos unit (`cloudinary.service.spec.ts` cubre upload, validaciones, formatos) + 3 nuevos (`user.service.spec.ts` cubre setAvatar/removeAvatar) + 10 nuevos (`avatar-uploader.component.spec.ts` cubre render, file selection, success, error, remove, double-call guard, emit) = 19 nuevos en frontend.
 - **Bug fix encontrado durante implementación:** un signal se actualiza con `.set()`, no llamándolo como función. En Angular 21, `signal<T>(initial)` retorna un `WritableSignal<T>` que es callable para LEER (sin args) y tiene `.set(value)` para escribir. Llamarlo con argumentos (`this.status({...})`) hace un read con un argumento que se ignora. La skill `frontend-conventions` lo aclara pero es fácil de olvidar. Todos los componentes que escriben a signals deben usar `signal.set(value)`.
-
-**Documentación**
-- `docs/api.md`: nuevos endpoints `POST /api/me/avatar` y `DELETE /api/me/avatar` con shape exacta, validaciones, errores 401/403/422, nota sobre idempotencia. `GET /api/auth/me` ahora documenta `avatar_url` y `avatar_urls`.
-- `docs/database.md`: tabla `users` actualizada con la nueva columna `avatar_public_id` y semántica de `avatar_url` extendida a "Cloudinary (5.5.A) o provider OAuth (5.3)".
-- `docs/design-system.md`: nueva fila "AvatarUploader" en el catálogo con todos los tokens, estados y atributos a11y.
-- `docs/roadmap.md`: esta entrada.
-- `.agents/skills/backend-conventions/SKILL.md`: nueva sección "Cloudinary" con convenciones (interface + fake + bind, verifyResource, unsigned preset setup, secrets en .env, tests con `Http::fake()`).
-- `.agents/skills/frontend-conventions/SKILL.md`: nueva sección "Cloudinary" con convenciones (config en `core/config/`, upload directo sin SDK, AvatarUploaderComponent, `signal.set()`).
-- `README.md`: variables de entorno nuevas documentadas en la sección de setup.
-- `backend/.env.example`: bloque Cloudinary con 4 placeholders + comentarios de cada preset.
 
 **Validación 5.5.A:** `npm test` (156/156, 27 suites) + `npm run build` (sin NG8113) + `php artisan test` (96/96, 511 assertions) — todo en verde. ✅
 
 **Total acumulado:** backend **96 tests / 511 assertions**, frontend **156 tests / 27 suites**.
 
-### ✅ Fase 5.5.B · Cover + Portfolio (Cloudinary)
+#### 5.5.B · Cover + Portfolio
 
-**Objetivo:** añadir la imagen de portada del freelancer (visible en su escaparate público) y una galería de portfolio con lightbox accesible. Brief attachments quedan para 5.5.C.
+**Objetivo:** añadir la imagen de portada del freelancer (visible en su escaparate público) y una galería de portfolio con lightbox accesible.
 
 **Misma estrategia de upload que 5.5.A:** browser sube a Cloudinary con `upload_preset=fm_cv_upl` (cover) o `fm_pf_upl` (portfolio), backend verifica con Admin API antes de persistir.
 
@@ -431,10 +392,8 @@ framematch/
 - `FreelancerDetailResource` y `FreelancerProfileResource` extendidos con `cover_url`, `cover_urls` (sm/md/lg/xxl) y la relación `portfolios` (con `urls: { thumb, card, full }`).
 - `FreelancerCatalogController::show` ahora eager-loads `portfolios` para evitar N+1.
 - Rutas organizadas: cover/portfolio protegidas con `auth:api + EnsureUserIsFreelancer` (en `routes/api.php`). Endpoint público de portfolios fuera del grupo JWT.
-- **Tests:** 7 nuevos en `CoverUploadTest` (save, replace, delete, 401/403, folder mismatch) + 11 nuevos en `PortfolioTest` (CRUD completo, position increment, public endpoint, reorder) = 18 nuevos. Total backend: 114/114.
 
 **Frontend (Angular 21)**
-- Sin nuevos paquetes npm. Reuso `HttpClient` + `CloudinaryService` + `cloudinary.config.ts` ya existentes.
 - `core/types/auth.types.ts`: nuevos `CoverUrls`, `PortfolioUrls`, `PortfolioItem`. `FreelancerProfile` y `FreelancerDetail` ahora exponen `cover_url, cover_urls, portfolios?`.
 - `core/services/freelancer-profile.service.ts` extendido con `setCover, removeCover, listMyPortfolios, addPortfolioItem, updatePortfolioItem, deletePortfolioItem, reorderPortfolioItems`. Todos devuelven `Observable` con `.data` desenvuelto.
 - **`core/components/cover-uploader/`** (nuevo, standalone, OnPush, signals):
@@ -468,20 +427,140 @@ framematch/
   - `cover.*` (5 claves) — upload, change, remove, section, preview_alt.
   - `portfolio.*` (10 claves) — add, empty, max_items, title, description, delete_confirm, section, hint, reorder, view, image_alt.
   - `lightbox.*` (4 claves) — close, next, prev, counter, dialog_label.
-- **Tests:** 6 nuevos en `lightbox.component.spec.ts` (dialog ARIA, render, navegación, wrap, close) + 7 nuevos en `freelancer-profile.service.spec.ts` (setCover, removeCover, listMyPortfolios, addPortfolioItem, updatePortfolioItem, deletePortfolioItem, reorderPortfolioItems) = 13 nuevos en spec. Total frontend: 165/165.
+- **Tests:** 6 nuevos en `lightbox.component.spec.ts` (dialog ARIA, render, navegación, wrap, close) + 7 nuevos en `freelancer-profile.service.spec.ts` (setCover, removeCover, listMyPortfolios, addPortfolioItem, updatePortfolioItem, deletePortfolioItem, reorderPortfolioItems) = 13 nuevos en spec.
 - **Bug fix encontrado durante implementación:** un `input.required<T>()` no se puede leer en el constructor del componente porque los inputs se setean DESPUÉS. Mover la inicialización a `ngAfterViewInit` o usar un `effect` reactivo. Aplicado en `LightboxComponent` con `ngAfterViewInit` para setear el `currentIndex` inicial con el `startIndex` válido.
-
-**Documentación**
-- `docs/api.md`: nuevos endpoints `PUT/DELETE /api/freelancer/me/cover` + 5 endpoints de portfolio (CRUD + reorder + public). `GET /api/freelancer/me` y `GET /api/freelancers/{id}` ahora documentan `cover_url/cover_urls` y `portfolios[]`. Sección dedicada "Cover y Portfolio del freelancer (Cloudinary) — Fase 5.5.B".
-- `docs/database.md`: tabla `freelancer_profiles` con `cover_url/cover_public_id`. Nueva tabla `portfolios` con todas las columnas, índices y relaciones documentadas.
-- `docs/design-system.md`: 3 nuevas filas en el catálogo de componentes — `CoverUploader`, `PortfolioEditor`, `Lightbox` — con tokens, estados y atributos a11y detallados.
-- `docs/roadmap.md`: esta entrada.
-- `.agents/skills/frontend-conventions/SKILL.md`: añadir nota sobre inputs requeridos en constructores (mover a `ngAfterViewInit` o usar `effect`).
-- `README.md`: sin cambios (la forma de la API evoluciona pero el setup es el mismo).
 
 **Validación 5.5.B:** `npm test` (165/165, 28 suites) + `npm run build` (sin NG8113) + `php artisan test` (114/114, 579 assertions) — todo en verde. ✅
 
 **Total acumulado:** backend **114 tests / 579 assertions**, frontend **165 tests / 28 suites**.
+
+#### 5.5.C · Brief attachments
+
+**Objetivo:** permitir al cliente subir hasta 10 imágenes de referencia a un brief, para que el freelancer entienda el estilo y la dirección creativa esperada. Mismo patrón Cloudinary que 5.5.A y 5.5.B.
+
+**Backend (Laravel 13)**
+- Migración `2026_06_18_183324_create_brief_attachments_table.php` con `id, brief_id (FK cascade), public_id UNIQUE, url, width, height, format, bytes, title, position, timestamps`. Índice compuesto `(brief_id, position)` para listado ordenado.
+- Modelo `BriefAttachment` (nuevo). `Brief` extendido: `attachments()` hasMany ordenada por `position, id DESC`.
+- `CloudinaryService` extendido: `briefUrl()` y `briefUrls()` con variantes `thumb` (240×180), `card` (600×450), `full` (1600, sin crop). Mismo fake + interface.
+- `config/services.php`: nuevos `presets.brief = 'fm_br_upl'` y `folders.brief = 'framematch/briefs'`.
+- `App\Http\Resources\BriefAttachmentResource` (nuevo) con `urls: { thumb, card, full }` pre-construidas. `BriefResource` ahora carga `attachments` con `whenLoaded`.
+- `BriefController` extendido con 3 métodos: `attachImage`, `detachImage`, `reorderAttachments`.
+  - `POST /api/briefs/{id}/attachments` (auth, owner-only): valida con `AttachBriefImageRequest` (regex `^[A-Za-z0-9_\-/]+$` para `public_id`, max 10 MB, max 1000 chars en title), verifica con `verifyResource` contra la carpeta `framematch/briefs`, asigna `position = max(position) + 1` (con `?? -1`).
+  - Límite duro: 422 si el brief ya tiene 10 adjuntos.
+  - `DELETE /api/briefs/{id}/attachments/{attachmentId}` (auth, owner-only): borra archivo de Cloudinary best-effort y la fila.
+  - `PATCH /api/briefs/{id}/attachments/reorder` (auth, owner-only): valida que `ids` contiene **exactamente** los IDs del brief, reasigna `position = índice` en transacción.
+- `AttachBriefImageRequest` con validaciones en español.
+- **Tests:** 16 nuevos en `BriefAttachmentTest` (CRUD + reorder + permisos + 422 validaciones + folder mismatch + límite 10) = backend 130/130.
+
+**Frontend (Angular 21)**
+- `auth.types.ts`: nuevos `BriefAttachment` interface y `BriefAttachmentInput`. `Brief.attachments?: BriefAttachment[]`.
+- `BriefsService` extendido: `attachImage(briefId, input)`, `detachImage(briefId, attachmentId)`, `reorderAttachments(briefId, ids)`.
+- 1 componente nuevo: `BriefAttachmentUploaderComponent` (standalone, OnPush, signals). Drop-zone con drag/drop, contador "X / 10", botones ↑/↓ (no drag — accesible), botón eliminar, validación de formato (image/*) y tamaño (max 10 MB), error states con i18n. Refresca al subir vía `output(attachmentChange)`.
+- i18n: 26 keys nuevas en `brief_attachments.*` ES + EN.
+- `BriefDetailComponent` integrado: galería visible para todos los participantes (grid `auto-fill minmax(180px, 1fr)`, thumb abre en nueva pestaña a la URL `card`), uploader solo para el owner. Llama `load(b.id)` tras cada acción.
+- **Tests:** 7 nuevos en `brief-attachment-uploader.component.spec.ts`.
+
+**Validación 5.5.C:** `npm run build` (OK, +14 kB) + `php artisan test` (130/130) + `validate:i18n` OK. ✅
+
+#### 5.5.D · Profile completion + Onboarding wizard
+
+**Objetivo:** guiar al freelancer recién registrado por un wizard de 7 pasos para rellenar su perfil profesional (datos básicos, avatar, bio+tarifa, skills, cover+portfolio) hasta el 100% de progreso. El badge de % de la home refleja esto en tiempo real.
+
+**Backend (Laravel 13)**
+- Migración `2026_06_18_145021_add_onboarding_completed_at_to_freelancer_profiles_table.php` añade `onboarding_completed_at TIMESTAMP NULL`.
+- `App\Services\ProfileCompletionService` con `WEIGHTS` (10 campos, 100 pts): `display_name 15, bio 20, city 10, hourly_rate 10, price_per_project 10, is_available 5, skills 10, avatar 10, cover 5, portfolio 5`. Método `calculate(profile)` devuelve `{ pct, missing: string[] }`.
+- `App\Http\Controllers\Api\ProfileCompletionController::show` (nuevo): `GET /api/me/completion` (JWT) → `{ data: { pct, missing } }`. Lee el perfil actual (con relaciones eager-loaded) y devuelve el cálculo.
+- `App\Http\Controllers\Api\OnboardingController` (nuevo):
+  - `complete` (POST `/api/me/onboarding-complete`): setea `onboarding_completed_at = now()` solo si es null, **idempotente** (re-llamar no resetea el timestamp). `403` si el user no es freelancer. Carga `freelancerProfile.skills` y re-emite el `UserResource`.
+- `FreelancerProfileResource` ahora expone `onboarding_completed_at` (ISO 8601 o `null`).
+- **Tests:** 11 nuevos en `ProfileCompletionTest` (6 del servicio, 5 del endpoint) + 9 nuevos en `OnboardingEndpointTest` (3 del endpoint, 6 de idempotencia + permisos). Total backend: 150/150.
+
+**Frontend (Angular 21)**
+- `ProfileCompletionService` con cache por `user_id` (signal interno), `refresh()` que llama al endpoint, `reset()` para invalidar, `isComplete()` que mira `pct === 100`. Caché se invalida al re-fetchar `currentUser`.
+- `OnboardingService` con `steps: ['welcome','datos','avatar','bio-tarifa','skills','cover-portfolio','done']`, persistencia en `localStorage` con clave `framematch_onboarding_step` (para que si el user cierra y vuelve, retome donde lo dejó), `goNext/goPrev/skip/complete`, `setSubmitting/setError` setters públicos.
+- `OnboardingGuard` (nuevo, funcional, **no aplicado aún** — pendiente en backlog P3): pensado para redirigir a `/onboarding/welcome` si el freelancer está autenticado y `onboarding_completed_at` es null y la ruta visitada NO es `/onboarding/*` ni `/home`.
+- `OnboardingWizardComponent` (nuevo, ruta `/onboarding/welcome` con `authGuard`, `@switch (step())`):
+  - Step 1 `DatosForm`: form con `name/email/phone` (PHONE_PATTERN, city).
+  - Step 2: `<app-avatar-uploader>`.
+  - Step 3 `BioForm`: `display_name/bio/hourly_rate/price_per_project` → `PUT /api/freelancer/me` + re-fetch `/api/auth/me`.
+  - Step 4: chips de skills con level/years → `PUT /api/freelancer/me/skills` + re-fetch.
+  - Step 5: `<app-cover-uploader>` + link a portfolio (opcional con "Saltar").
+  - Step 6 "Ir a mi home": `POST /api/me/onboarding-complete` + `profileCompletion.refresh(true)` + `router.navigate(['/home/freelancer'])`.
+- `OAuthCompleteProfileComponent`: cuando role=freelancer → `/onboarding/welcome` (no `/home`).
+- `app-core-topbar`: trata `/onboarding` como variant `auth` (no muestra nav, no muestra user area).
+- `FreelancerHomeComponent`: `goToEdit()` redirige a `/onboarding/welcome` si `onboarding_completed_at == null`.
+- `freelancer-home.component.html`: `profileCompletion() ?? 0` en 3 sitios (círculo de progreso, mensaje de done, y de missing).
+- i18n `onboarding.*` ES + EN (welcome + 5 steps + done + mensajes de error).
+- **Tests:** 9 nuevos en `onboarding.service.spec.ts` (steps, persistencia, goNext/goPrev/skip/complete, idempotencia). Frontend: `npm run build` sin warnings.
+
+**Validación 5.5.D:** `npm run build` (OK) + `php artisan test` (150/150) + `validate:i18n` OK. ✅
+
+#### 5.5.E · User account edit (`PUT /api/me`)
+
+**Objetivo:** permitir al usuario autenticado editar sus datos personales (name, email, phone, city) sin tocar el perfil profesional. Endpoint público + form en `/account`.
+
+**Backend (Laravel 13)**
+- `App\Http\Controllers\Api\UserAccountController` (nuevo) con `update(Request)`.
+- `App\Http\Requests\User\UpdateAccountRequest` con `name/email/phone/city` (todos opcionales, `sometimes`). Valida regex de teléfono `/^[+0-9 ()-]{6,30}$/` (rechaza letras).
+- `App\Services\UserService` (nuevo, pequeño) con `updateAccount(user, payload)`: aplica `fill` + `save`, recarga relaciones (`freelancerProfile.skills`).
+- Endpoint: `PUT /api/me` (JWT) → `UserResource` actualizado.
+- `UserResource` ahora también carga `freelancer_profile.skills` y `oauth_identities` cuando esas relaciones están eager-loaded. Expone `has_password`, `oauth_only`, `oauth_identities[]`.
+- **Tests:** 7 nuevos en `UserAccountTest` (200 OK + cambios, 422 email inválido, 422 phone con letras, 401 sin auth, persistencia en BD, re-fetch con perfil completo, phone formato internacional con `+`).
+
+**Frontend (Angular 21)**
+- `AccountComponent` (nuevo, ruta `/account` con `authGuard`):
+  - Reactive form con `name/email/phone (PHONE_PATTERN) / city`. Muestra `currentUser()` al inicializar.
+  - Submit: `UserService.updateAccount(payload)` → `auth.setCurrentUser(...)` (signal y localStorage).
+  - Validación 422: bindea `err.error.errors` a un `fieldErrors` signal que la plantilla pinta bajo cada input.
+  - Topbar: variant `auth` (con `backLink: '/home'`) para no mostrar nav durante edición.
+  - 3 secciones: datos personales, foto de perfil (reusa `<app-avatar-uploader>`), accesos directos al editor profesional si freelancer.
+- `UserService` con `updateAccount(payload)`.
+- `AuthService.roleLabel(role)` retorna `roles.${role}` (keys i18n, no switch hardcoded).
+- i18n: namespace `account.*` con 24 keys (subtitle, sections, fields, errors, success).
+- **Tests:** 4 nuevos en `account.component.spec.ts`.
+
+**Validación 5.5.E:** `npm run build` (OK) + `php artisan test` (157/157) + `validate:i18n` OK. ✅
+
+#### 5.5.F · OAuth N:M (un usuario puede vincular varios providers)
+
+**Objetivo:** un user puede tener vinculadas varias identidades OAuth a la vez (Google + Facebook). Una identidad solo puede estar en un user. Flujo "linking" desde un user autenticado (sin perder la sesión).
+
+**Backend (Laravel 13)**
+- Migración `2026_06_18_194144_create_user_oauth_identities_table.php` con:
+  - `id, user_id (FK cascade), provider, provider_user_id, access_token, refresh_token, token_expires_at, scopes (JSON), provider_email, linked_at, last_used_at, timestamps`.
+  - `UNIQUE (provider, provider_user_id)` — una identidad solo puede estar en un user.
+  - `INDEX (user_id, provider)`.
+  - La migración copia datos existentes de `users.oauth_provider` + `users.oauth_id` a `user_oauth_identities`, y luego **dropea** las columnas legacy de `users`.
+- Modelo `UserOAuthIdentity` (nuevo) con cast `provider => OAuthProvider::class` y `scopes => 'array'`. Relación `User::oauthIdentities()`.
+- `User` extendido: `hasPassword()`, `isOAuthOnly()` (sin password + al menos una identidad), `hasOAuthProvider(OAuthProvider)`. `oauth_provider` y `oauth_id` **fuera de `$fillable`** (legacy columns eliminadas).
+- `App\Services\OAuthIdentityService` (nuevo):
+  - `findByProvider(provider, providerUserId)`: busca identidad.
+  - `findOrCreateUserFromSocialite(socialite, provider)`: encapsula la lógica de creación/vinculación.
+  - `linkIdentityToUser(user, provider, providerUserId, socialite, email?, avatar?)`: crea o actualiza. Si la identidad ya está en otro user → 422. (Esto es lo que el flujo `?link=1` invoca.)
+  - `unlinkProvider(user, provider)`: borra la identidad. Si es el único método de login del user (sin password + última identidad) → 422.
+  - `markUsed(identity)`: actualiza `last_used_at`.
+- `OAuthController` refactorizado: ahora `linkIdentityToUser` + `findOrCreateUserFromSocialite`. Callback distingue entre:
+  - **Login flow** (sin `?link=1`): `findOrCreateUserFromSocialite` → emite JWT de login.
+  - **Link flow** (con `?link=1` y sesión activa): el `link_intent` (user_id) se guarda en sesión. Al volver, si la sesión tiene un link_intent válido, llama a `linkIdentityToUser` y redirige a `{FRONTEND_URL}/account?oauth_linked={provider}&token=…` (refresca el JWT con el user actualizado) o `?oauth_error=…` si falla.
+- 2 endpoints nuevos:
+  - `GET /api/me/oauth-identities` (auth) → `OAuthIdentityResource[]`.
+  - `DELETE /api/me/oauth-identities/{provider}` (auth, `provider` ∈ `google|facebook`): `204` (en este caso `200` con message, ver test) si la identidad existe, `404` si no, `422` si es el único método de login.
+- `OAuthIdentityResource` con `provider_label` (mapea `google → "Google"`, `facebook → "Facebook"`).
+- `OAuthService` (legacy) refactorizado para delegar en `OAuthIdentityService`. Eliminado código de escribir `last_used_at` en `users` (esa columna ya no existe).
+- **Tests:** 13 actualizados en `OAuthTest` + 11 nuevos en `OAuthIdentityTest` (list, delete OK, delete 404, delete 422 único método, multi-provider, restricción "no puedes desvincular tu único método", `User::hasPassword`/`isOAuthOnly` correctness). Total backend: 178/178.
+
+**Frontend (Angular 21)**
+- `auth.types.ts`: nuevos `OAuthIdentity` interface y `ReviewRating`. `User` extendido con `has_password`, `oauth_only`, `oauth_identities[]`. Eliminado `oauth_provider` legacy.
+- `AuthService` extendido: `linkOAuthProvider(provider)` (redirige con `?link=1`), `listOAuthIdentities()`, `unlinkOAuthProvider(provider)`, `buildOAuthRedirectUrl(provider, { link: true })`.
+- i18n: namespace `account.oauth.*` con 16 keys (link_google/facebook, unlink, unlink_confirm, linked_on, last_used, never_used, provider_email, no_accounts, loading, error_*, linked_success, linked_error, only_warning). 1 key `topbar.nav.messages` (añadida a la nav).
+- 1 componente nuevo: `LinkedAccountsComponent` (standalone, OnPush, signals). Grid con un slot por provider (Google, Facebook), badges "vinculado/no vinculado", `last_used_at` o fallback "nunca usada", botón "Desvincular" con confirm, botón "Conectar con X" que dispara linking, warning persistente para users OAuth-only, lectura de query params `oauth_linked` / `oauth_error` al volver del provider (limpia la URL con `replaceState`).
+- Integrado en `AccountComponent` debajo de la sección profesional.
+- Topbar: añade "Mensajes" en nav (client + freelancer) → `@if (variant === 'client' || variant === 'freelancer')` → muestra el link.
+- **Tests:** 4 nuevos en `account.component.spec.ts` (linked-accounts section) + 6 nuevos en `auth.service.spec.ts` (linkOAuthProvider, list/unlink, buildOAuthRedirectUrl con options).
+
+**Validación 5.5.F:** `npm run build` (OK) + `php artisan test` (178/178) + `validate:i18n` OK. ✅
+
+**Total acumulado:** backend **178 tests / 880 assertions**, frontend **~30 suites** (build OK, tests skipped por [bug pre-existente](#pendiente-de-tests-frontend)).
 
 ### ✅ Fase 5.6 · Deploy a Railway (backend) + Vercel (frontend)
 
@@ -540,19 +619,6 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
 # → 200 con user + access_token (o 401 si password incorrecto)
 ```
 
-**Documentación**
-- `docs/deploy.md` (nuevo): guía completa con la arquitectura, archivos críticos, variables, issues y troubleshooting.
-- `docs/roadmap.md`: esta entrada.
-- `docs/architecture.md`: nueva sección "Deploy" con el diagrama de la comunicación vía rewrites.
-- `README.md`: nueva sección "Deploy" con resumen y link a `docs/deploy.md`.
-- `.agents/skills/backend-conventions/SKILL.md`: nota sobre los archivos de deploy (`railpack.json`, `start-container.sh`) y las particularidades de Railway.
-- `.agents/skills/frontend-conventions/SKILL.md`: nota sobre `vercel.json`, los rewrites y la convención de URLs relativas.
-
-**Pendiente para futuro**
-- **OAuth** (cuando se monte): las redirect URIs en Google/Facebook console deben ser `https://framematch.vercel.app/api/auth/oauth/{provider}/callback`. La razón, en detalle, en `docs/deploy.md` §OAuth.
-- **Cloudinary real**: crear cuenta, 4 unsigned upload presets (`fm_av_upl`, `fm_cv_upl`, `fm_pf_upl`, `fm_br_upl`), pegar las credenciales en Railway → los endpoints de avatar/cover/portfolio pasan de 500 a 200.
-- **Bug pre-existente en `bootstrap/app.php`**: cuando `Authenticate` middleware dispara sin token en una ruta `api/*`, lanza `RouteNotFoundException("Route [login] not defined")` con stack trace 500 en vez de devolver 401 JSON. El handler solo captura `AuthenticationException`, no `RouteNotFoundException`. No es bloqueante para el flujo normal (con token funciona), pero conviene arreglar.
-
 **Total acumulado:** docs `deploy.md` nuevo, `roadmap.md` + Fase 5.6, `architecture.md` + sección Deploy, `README.md` + sección Deploy, 2 skills actualizadas. **Cero tests nuevos** (deploy no introduce funcionalidad; los tests existentes cubren el código que se desplegó).
 
 ### ✅ Fase 5.7 · Limpieza + Branching + CI
@@ -561,7 +627,7 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
 
 **Backend**
 - Migración `2026_06_17_000000_drop_unused_tables` dropea 5 tablas no usadas (`password_reset_tokens`, `sessions`, `jobs`, `job_batches`, `failed_jobs`). Se conservan `cache` y `cache_locks`.
-- Eliminados métodos `briefAttachmentUrl`/`briefAttachmentUrls` de `CloudinaryService`, `CloudinaryServiceFake` y `CloudinaryServiceInterface` (feature de brief attachments no existe aún).
+- Eliminados métodos `briefAttachmentUrl`/`briefAttachmentUrls` de `CloudinaryService`, `CloudinaryServiceFake` y `CloudinaryServiceInterface` (feature de brief attachments no existe aún; re-añadidos como `briefUrl`/`briefUrls` en 5.5.C).
 - Eliminado `routes/web.php` vacío y referencias en `bootstrap/app.php`.
 - `.env` local: `SESSION_DRIVER=array`, `QUEUE_CONNECTION=sync`, `CACHE_STORE=file`.
 - Tests: eliminado test `brief_attachment_url_uses_correct_transformations` por dependencia removida.
@@ -573,38 +639,373 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
 - Estrategia documentada en `AGENTS.md`: `beta` (desarrollo activo) → PR → `main` (producción). Railway + Vercel despliegan desde `main`.
 - `.github/workflows/test.yml`: PHPUnit + Jest en push/PR para `main` y `beta`.
 
-**Documentación**
-- `docs/deploy.md`: actualizados `SESSION_DRIVER`/`QUEUE_CONNECTION`/`CACHE_STORE`.
-- `docs/database.md`: sección de tablas del sistema actualizada.
-- `docs/roadmap.md`: esta entrada.
-- `CHECKLIST.md`: marcados items ya completados (edición cuenta, portfolio, CI/CD, OAuth), añadida Fase 5.7.
-
 **Validación 5.7:** `npm test` (172/172, 29 suites) + `php artisan test` (133/133, 634 assertions) — todo en verde. ✅
 
 **Total acumulado:** backend **133 tests / 634 assertions**, frontend **172 tests / 29 suites**.
 
-## Fases pendientes (backlog priorizado)
+### ✅ Fase 6 · Mensajería (polling primero, websockets después) — cerrada 2026-06-18
 
-### 🔵 Fase 6 · Mensajería (polling primero, websockets después)
+**Objetivo:** chat cliente ↔ freelancer dentro de un brief con proposal aceptada. Polling cada 5s mientras hay una conversación abierta (sin websockets todavía — la migración a realtime queda en el backlog).
 
-Chat cliente ↔ freelancer dentro de un brief aceptado.
+**Backend (Laravel 13)**
+- 2 migraciones nuevas: `conversations` (UNIQUE `brief_id` + índices por client/freelancer+`last_message_at`) y `messages` (índices por `(conversation_id, created_at)` y `(conversation_id, read_at)`).
+- Modelos `Conversation` y `Message` + relaciones en `User` (`clientConversations`, `freelancerConversations`, `sentMessages`) y `Brief::conversation()`.
+- `Proposal::freelancerUser()` (hasOneThrough) para resolver `User::id` desde `Proposal::freelancer_id` (que apunta a `FreelancerProfile`).
+- `ChatService`:
+  - `getOrCreateForBrief` (auto-crea al aceptar proposal, 409 si brief sin proposal aceptada)
+  - `listForUser` (con `unread_count` por user via withCount subquery)
+  - `listMessages` con `?since=<iso8601>` para polling
+  - `sendMessage` (transaccional: crea mensaje + actualiza `last_message_at`)
+  - `markRead` (no cuenta los mensajes propios)
+  - `totalUnread`
+- `ChatController` con 6 endpoints:
+  - `GET /api/conversations` — lista del user
+  - `GET /api/conversations/unread-count` — total para badge
+  - `GET /api/conversations/{id}` — detalle
+  - `POST /api/briefs/{id}/conversation` — crear/devolver (201, 409 si no hay proposal aceptada, idempotente)
+  - `GET /api/conversations/{id}/messages?since=&limit=` — listado paginado con soporte polling
+  - `POST /api/conversations/{id}/messages` — enviar (valida 1-2000 chars, actualiza `last_message_at`)
+  - `POST /api/conversations/{id}/read` — marcar como leído
+- `SendMessageRequest` con validación 1-2000 chars.
+- `ConversationResource` y `MessageResource` con `brief`/`client`/`freelancer`/`sender` anidados (lazy via `whenLoaded`).
+- `ProposalController::updateStatus` ahora crea la conversación automáticamente al aceptar.
+- **Tests:** 18 nuevos en `ChatTest` (creación, listado, mensajes, polling, mark-read, permisos, unread-count, auto-creación al aceptar, validaciones).
 
-### 🔵 Fase 7 · Reviews y ratings
+**Frontend (Angular 21)**
+- Tipos `Conversation` + `ChatMessage` en `auth.types.ts`.
+- `ChatService` con `listConversations`, `getConversation`, `ensureForBrief`, `listMessages({ since?, limit? })`, `sendMessage`, `markRead`, `getUnreadCount`.
+- 3 componentes standalone:
+  - `ChatListComponent` (polling 5s, badges unread, abre con teclado Enter/Space)
+  - `ChatThreadComponent` (burbujas own/alien con `data-own`, scroll-to-bottom via `queueMicrotask`, polling `?since=`, validación de longitud, autosend a `markRead` al abrir)
+  - `ChatPageComponent` (split-view desktop, switch mobile via grid `data-thread=true/false`)
+- Ruta `/messages` con `authGuard`. Topbar añade "Mensajes" en nav (client + freelancer). Home de ambos roles muestra un quick-action card que enlaza a `/messages`.
+- i18n `chat.*` (29 keys ES + 29 EN) + `topbar.nav.messages` (ES + EN).
+- Accesibilidad: `role="list"`/`role="button"`, `tabindex`, `aria-label`, `aria-live="polite"`, focus visible.
+- **Tests:** 6 nuevos en `chat-list.component.spec.ts` + 9 nuevos en `chat-thread.component.spec.ts`.
 
-Tabla `reviews`. Tras completar un encargo, ambas partes se valoran.
+**Validación 6:** `npm run build` (OK, 299.90 kB) + `php artisan test` (208/208, 880 assertions) + `validate:i18n` OK. ✅
 
-### ⚪ Otros (backlog sin priorizar)
+**Total acumulado:** backend **208 tests / 880 assertions**, frontend `npm run build` OK.
 
-- **Verificación de email**: envío de mail con `MAIL_MAILER`, link firmado, `email_verified_at` actualizado.
-- **Reset de password**: crear tabla `password_reset_tokens` (eliminada en Fase 5.7).
-- **Roles `agency` y `company`**: sub-perfil, multi-freelancer.
-- **Admin panel**: para asignar roles elevados, banear, etc.
-- **SSR (Angular Universal)**: para SEO de la landing pública.
-- **WebSockets / realtime**: para mensajes y notificaciones.
-- **Pagos**: Stripe Connect, escrow.
-- **Búsqueda full-text**: Meilisearch o Algolia cuando el catálogo crezca.
-- **E2E tests**: Playwright o Cypress.
-- **Docker**: `docker-compose.yml` con PHP-FPM, nginx, MySQL, node.
+**Pendiente para esta fase (backlog):** migrar de polling a WebSockets (Laravel Reverb) + push notifications cuando llega un mensaje nuevo.
+
+### ✅ Fase 7 · Reviews y ratings — cerrada 2026-06-18
+
+**Objetivo:** valoración cruzada cliente ↔ freelancer tras completar un brief. Un user solo puede reseñar 1 vez cada proyecto (constraint UNIQUE).
+
+**Backend (Laravel 13)**
+- Migración `reviews` con `UNIQUE (brief_id, reviewer_id)` + índice por `(reviewee_id, created_at)`.
+- Modelo `Review` + relaciones en `User` (`reviewsAuthored`, `reviewsReceived`) y `Brief::reviews()`.
+- `ReviewService`:
+  - `completeBrief` (cliente marca `assigned` → `completed`, 403 si no es dueño, 409 si status incorrecto)
+  - `canReview` (brief completed + participante + no duplicado)
+  - `create` (resuelve automáticamente el reviewee: cliente↔freelancer de la conversación)
+  - `listForUser` (paginado), `listForBrief` (solo participantes), `aggregateForUser` (count + average)
+- `StoreReviewRequest` con rating 1-5, comment ≤1000 chars, mensajes i18n.
+- `ReviewController` con 4 endpoints:
+  - `POST /api/briefs/{id}/reviews` (auth, participante, brief completed)
+  - `GET /api/briefs/{id}/reviews` (auth, solo participantes)
+  - `GET /api/users/{id}/reviews` (público, paginado `?limit=N`)
+  - `GET /api/users/{id}/rating` (público, devuelve `{ user_id, count, average }`)
+- `PATCH /api/briefs/{id}/complete` en `BriefController` (auth, solo el dueño del brief cuando está `assigned`).
+- `FreelancerCardResource` y `FreelancerDetailResource` exponen `rating: { count, average }` (on-the-fly con `selectRaw`).
+- **Tests:** 19 nuevos en `ReviewTest` (crear, anti-duplicados, validaciones, permisos, aggregate, complete-brief, rating en resource).
+
+**Frontend (Angular 21)**
+- Tipos `Review`, `ReviewRating`.
+- `ReviewsService` con `create`, `listForUser`, `listForBrief`, `aggregateForUser`, `completeBrief`.
+- 4 componentes standalone:
+  - `RatingStarsComponent` (presentacional + interactivo, accesible con `role="radiogroup"`, output `valueChange`)
+  - `ReviewListComponent` (lista con empty/error states, avatar con iniciales, fecha, `refreshKey` input para re-fetch)
+  - `ReviewFormComponent` (5 estrellas + textarea + contador de chars + validación reactiva, usa `role="group"` para evitar NG8002)
+  - `ReviewsSectionComponent` (orquesta form + list + botón "Marcar como completado" cuando `canComplete()`, detecta si el user ya reseñó)
+- Integración:
+  - `brief-detail` muestra la sección para client y freelancer.
+  - `freelancer-detail` muestra hero con rating + lista de reviews.
+  - `freelancer-card` (catálogo) muestra rating en la cabecera.
+- i18n `reviews.*` (26 keys ES + 26 EN) + `rating.*` (4 keys).
+- **Tests:** 4 nuevos en `review-list.component.spec.ts`.
+
+**Validación 7:** `npm run build` (OK, 299.91 kB) + `php artisan test` (227/227, 927 assertions) + `validate:i18n` OK. ✅
+
+**Total acumulado final:** backend **227 tests / 927 assertions**, frontend `npm run build` OK.
+
+**Pendiente para esta fase (backlog):** permitir editar/borrar la propia review, responder a reviews, fotos adjuntas, denuncias.
+
+---
+
+## 🔴 P0 · Bugs y hotfixes (changelog operativo)
+
+> Historial de hotfixes puntuales. Cerrar todo P0 antes de meter features nuevas.
+
+- [x] **0.1** · `roleGuard` redirige a `/dashboard` inexistente → cambiar a `/home`
+  - Archivo: `frontend/src/app/core/guards/role.guard.ts:20`
+  - Test nuevo: el guard devuelve `UrlTree('/home')` cuando rol no encaja.
+- [x] **0.2** · Pill de rol muestra valor crudo del enum
+  - Añadir `roleLabel(role: Role): string` en `AuthService` con mapping: `client→Cliente`, `freelancer→Profesional`, `agency→Agencia`, `company→Empresa`, `admin→Admin`.
+  - Usarlo en `frontend/src/app/features/home/client/client-home.component.html:12`.
+  - Test: 5 aserciones del mapping.
+- [x] **0.3** · Caracteres chinos "房产" en categoría Drone
+  - Archivo: `frontend/src/app/features/home/client/client-home.component.ts:45`.
+  - Reemplazar por "inmuebles".
+- [x] **0.4** · Import sin usar (`throwError`) en spec
+  - Archivo: `frontend/src/app/core/services/auth.service.spec.ts:4`.
+- [x] **0.5** · Documentar shape `{data:…}` en `docs/api.md`
+  - Añadir nota en la sección de auth explicando el wrapper y cómo lo desempaqueta el frontend.
+- [x] **0.6** · Refresh proactivo del JWT con `effect()`/timer
+  - `AuthService` programa `setTimeout` a `(expires_in − 300) * 1000 ms` tras `persistSession`.
+  - `restoreSession` decodifica `exp` del JWT y reprograma o limpia sesión.
+  - `clearSession` cancela el timer.
+  - Tests con `jest.useFakeTimers()`.
+- [x] **0.7** · `TranslatePipe` importado pero no usado en componentes de briefs (NG8113)
+  - Archivos: `brief-detail.component.ts:16`, `brief-form.component.ts:14`, `brief-list.component.ts:14`.
+  - Cubrir todos los strings visibles con `| t` (no eliminar el import).
+  - Nuevo namespace `briefs.{list,detail,form}` en `src/assets/i18n/{es,en}.json`.
+  - `@let` en template para que las props nullable (`budget_min`/`budget_max`/`proposals_count`) encajen en `Record<string, string|number>` de la pipe.
+  - Mock de `provideLanguageServiceMock` actualizado en `brief-list.component.spec.ts` y `brief-detail.component.spec.ts`.
+  - Test nuevo: plural `propuesta` vs `propuestas` en `brief-list.component.spec.ts`.
+  - Build sin warnings NG8113.
+- [x] **0.8** · Bug en `ProfileEditorComponent`: `formArrayName="skills"` no se bindea
+  - Archivo: `frontend/src/app/features/freelancer/profile-editor/profile-editor.component.ts:44-53`.
+  - Causa: `skillsForm` era un `FormArray` independiente, no estaba dentro del `basicForm` que el `<form [formGroup]="basicForm">` exponía al template, así que el `formArrayName="skills"` no resolvía y los `<select>`/`<input>` de "Nivel" y "Años" no se bindeaban al añadir skills. El spec no lo detectaba porque accedía al array directamente.
+  - Fix: declarar `skillsForm` antes de `basicForm` y añadirlo como control `skills: this.skillsForm` del `FormGroup` raíz.
+- [x] **0.9** · Badge SVG grande en el hero del landing rompe el foco visual del título
+  - Archivo: `frontend/src/app/features/landing/landing.component.html:23-25`.
+  - Eliminar el bloque `<div class="hero-brand"><app-brand-logo [brandSize]="'xl'" [hideWordmark]="true" /></div>`.
+  - Limpiar reglas CSS `.hero-brand` y `.eyebrow` asociadas (eyebrow pill se eliminó también).
+- [x] **0.10** · Responsive del landing roto en mobile
+  - Archivo: `frontend/src/app/features/landing/landing.component.css`.
+  - Topbar con `flex-wrap: wrap`, nav a segunda fila (`order:3; flex:1 1 100%`), padding 14/18.
+  - Hero padding `56/18/48` (antes `96/24/72`).
+  - `h1` `clamp(40px, 10vw, 110px)` (antes `min 56px`).
+  - Secciones con padding lateral `18px`, headings `26px`.
+  - Orbes reducidos a `280px` con `blur(80px)`.
+  - `@media (max-width:420px)` oculta `.link-login` del topbar.
+- [x] **0.11** · `console.error` masivo en tests de path negativo
+  - Archivos: `frontend/jest.config.js`, `frontend/setup-jest.ts`.
+  - Mover `setup-jest.ts` de `setupFiles` a `setupFilesAfterEnv` (corre con `beforeEach`/`jest` disponibles).
+  - En `setup-jest.ts`: mockear `console.error` y `console.warn` por test con `jest.fn()`, restaurándolos en `afterEach`. Los specs de login/register/profile-editor con path 401/422 ya no imprimen stack traces en la salida.
+- [x] **0.12** · FOUT (Flash of Untranslated Text) en primera carga + detección de navegador explícita
+  - Archivos: `frontend/src/app/core/services/language.service.ts`, `frontend/src/app/app.config.ts`, `frontend/src/app/core/testing/language-service.mock.ts`, `frontend/src/app/core/services/language.service.spec.ts`.
+  - **Síntoma:** al abrir la app por primera vez (sin `localStorage`), durante ~100 ms la UI pintaba las keys literales (`briefs.list.title`, etc.) y luego se "rellenaba" con las traducciones una vez que llegaban los JSON.
+  - **Causa:** el `LanguageService` disparaba los `HttpClient.get` en el constructor con `void this.loadAll()` fire-and-forget, y la app renderizaba antes de que los diccionarios estuvieran cargados.
+  - **Fix 1 (FOUT):** `LanguageService` expone `readonly ready: Promise<void>` resuelto al final de `loadAll()`. En `app.config.ts` se añade `provideAppInitializer(() => inject(LanguageService).ready)` para que Angular no arranque el bootstrap hasta que los diccionarios estén en memoria. La app se queda en blanco un instante y aparece ya traducida.
+  - **Fix 2 (detección de navegador):** `readStoredLanguage` ya no hardcodea `if (nav.startsWith('en'))`. Ahora itera sobre `this.supported` y matchea la primera coincidencia, con fallback explícito a `DEFAULT_LANGUAGE` (`es`). Un navegador en `es-ES` se detecta como `es` (antes caía al default "por suerte"); un navegador en `fr-FR` también cae a `es`.
+  - **Mock:** `provideLanguageServiceMock` ahora expone `ready: Promise.resolve()` para que `provideAppInitializer` no rompa los specs que mockean el servicio.
+- [x] **0.13** · Nueva disciplina `content` (Creación de Contenido)
+  - Backend: enum `SkillCategory::Content` + migración `2026_06_12_140000_add_content_to_skills_category_enum.php` (MySQL `ALTER ENUM`, SQLite drop+recreate por CHECK constraint). `SkillSeeder` añade 6 skills a `content` + 4 nuevas a `edit`. 3 FormRequests aceptan `content`.
+  - Frontend: `SkillCategory` union con `'content'`. i18n ES/EN: `skill_categories.content`, `landing.tagline_disciplines` (renombrado), 4ª `cat-card` (amber + SVG megáfono) en landing, 4ª categoría en client home, 4ª `<option>` en brief form. Pill de categoría en brief list/detail ahora `('skill_categories.' + b.category) | t`. `freelancer-list` añade la 5ª option de filtro. `freelancer-detail` añade override `[data-cat="content"]` en amber.
+- [x] **0.14** · Rebalanceo de `edit` (de 4 a 8 skills)
+  - 4 skills nuevas: Subtitulado, VFX y efectos visuales, Edición de audio, Retoque fotográfico.
+  - Justificación: las otras 3 categorías tienen 8 skills; `edit` se quedaba corta. Ahora todas las categorías tienen ≥6 skills (foto 8 / vídeo 8 / edición 8 / contenido 6).
+- [x] **0.15** · OAuth backend (Socialite + Google + Facebook)
+  - Archivos: `composer.json` (+`laravel/socialite`, `socialiteproviders/{google,facebook}`), `app/Enums/OAuthProvider.php`, `database/migrations/2026_06_12_150000_add_oauth_columns_to_users_table.php`, `app/Models/User.php` (fillable + cast + `isOAuthUser()`), `config/services.php`, `app/Providers/AppServiceProvider.php` (listeners Socialite), `app/Services/OAuthService.php`, `app/Http/Controllers/Api/OAuthController.php`, `app/Http/Requests/Auth/CompleteOAuthProfileRequest.php`, `routes/api.php`, `tests/Feature/OAuthTest.php`, `.env.example`.
+  - Flujo Authorization Code con `state` CSRF en sesión. `web` middleware en `/oauth/{provider}/redirect` y `/callback` (para sesiones). `auth:api` middleware en `/oauth/complete-profile`.
+  - Auto-vinculación por email: si el email ya existe en la BD y el provider lo confirma verificado, se vincula `oauth_provider` + `oauth_id` al user existente (sin cambiar su rol). Si el user es nuevo, se crea con `role=client` (default) y `email_verified_at=now()`.
+  - `password` ahora nullable (usuarios OAuth-only).
+  - UNIQUE(`oauth_provider`, `oauth_id`) para evitar colisiones.
+  - Avatar se guarda del provider (columna `avatar_url`).
+  - 12 tests nuevos cubriendo: redirects con state, callback OK (new user + link existing + Facebook), state inválido (419), complete-profile con client/freelancer, 401 sin auth, 422 con role inválido.
+- [x] **0.16** · OAuth frontend (página callback + complete-profile + botones)
+  - Archivos: `core/types/auth.types.ts` (+`OAuthProvider`, `User.avatar_url?`), `core/services/auth.service.ts` (+`loginWithOAuth`, `handleOAuthCallback`, `completeOAuthProfile`, `fetchCurrentUser`), `app.routes.ts` (2 rutas nuevas), `features/auth/oauth-callback/`, `features/auth/oauth-complete-profile/`, `features/auth/login/login.component.{ts,html,css}` (botones OAuth), `features/auth/register/register.component.{ts,html}` (botones OAuth), `src/assets/i18n/{es,en}.json` (namespace `auth.oauth.*` con 11 claves), 3 specs nuevos.
+  - Flujo: clic "Continuar con Google" → redirección completa al backend → callback redirige al frontend con `?token=…&new_user=…` → `OAuthCallbackComponent` persiste token y decide ruta → si `new_user=1` redirige a `/auth/complete-profile` (selector visual de rol) → POST `/auth/oauth/complete-profile` → home.
+  - Botones OAuth con logos SVG inline oficiales (Google 4 colores, Facebook blanco sobre `#1877F2`).
+- [x] **0.17** · Topbar unificado (CoreTopbarComponent)
+  - 4 variants: `public` (sticky, brand + lang, sin user), `auth` (no-sticky, brand + lang, sin user, sin nav), `client` (sticky, nav [Inicio, Profesionales, Briefs] + name + role-pill + logout), `freelancer` (sticky, nav [Inicio, Mi perfil] + name + avatar con iniciales + logout).
+  - Refactors en 11 features. Excepciones: `LandingComponent` (anchors in-page) y `BriefListComponent` (scope tabs + CTA condicional).
+  - Fixes de `OAuthCompleteProfileComponent`: brand-logo raw → `<app-brand-logo>`, lang-slot vacío → language-selector real, aria-label hardcoded → key i18n, error hardcoded → key i18n.
+  - Fixes de `FreelancerDetailComponent` / `BriefDetailComponent` / `BriefFormComponent` / `ProfileEditorComponent`: back era `<a>← …</a>` hardcoded → key i18n.
+  - 10 nuevos en `topbar.component.spec.ts` + 3 nuevos en specs de features. Total: 137/24 suites.
+- [x] **0.18** · Setup de tests frontend + seeder roto (P0 batch)
+  - **Bug 1 — `php artisan migrate:fresh --seed` fallaba** con `Column not found: 1054 Unknown column 'city' in 'field list'` en `freelancer_profiles`. Causa: la migración `2026_06_18_134617_drop_city_from_freelancer_profiles` (Fase 5.5.D) eliminó la columna `city` pero `DemoFreelancersSeeder` (de la fase inicial) seguía insertándola en las 6 entradas de `$demo` y en el `updateOrCreate`. Fix: borradas las 6 entradas `city` del array y la asignación. Seed verificado: 6 freelancers seeded.
+  - **Bug 2 — runner de Jest roto** (pre-existente desde la migración a Angular 21). `setup-jest.ts` no llamaba `setupZoneTestEnv()` de `jest-preset-angular/setup-env/zone`, así que `TestBed.createComponent` reventaba con `Cannot read properties of null (reading 'ngModule')` en cualquier suite que renderizase componentes. Fix en 3 archivos: `setup-jest.ts` (import + call), `package.json` (`zone.js: ~0.16.1` como dep), `tsconfig.spec.json` (eliminado `emitDecoratorMetadata` que generaba warnings ruidosos).
+  - **Bug 3 — 5 specs con 16 tests fallando** (distintos del runner, acumulados desde las fases 5.5.C-7). Causas heterogéneas: aserción sobre signal en vez de `textContent` traducido, `mockAuth` incompleto en `AccountComponent` (faltaban métodos OAuth que `LinkedAccountsComponent` hijo necesita), `Object.defineProperty(window, 'location', ...)` no permitido en jsdom v26, parens faltantes en `renderWith(makeConversation)`, test que combinaba 2 escenarios en uno cuando el `ngOnChanges` solo sincroniza desde empty. Detalle por suite en [§ Pendiente de tests frontend](#pendiente-de-tests-frontend).
+  - **Resultado:** `php artisan migrate:fresh --seed` ✅. `npx jest` → **36 suites / 249 tests verdes** ✅. `npm run build` ✅. `npm run validate:i18n` ✅. `php artisan test` → 227/927 ✅.
+
+**Validaciones P0-P2-Bonus-5.x:**
+- **P0:** `npm test` (54/54) + `npm run build` (OK) + `php artisan test` (15/71) ✅
+- **P1:** `npm test` (62/62, 11 suites) + `npm run build` (OK) + `php artisan test` (25/190) ✅
+- **P2:** `npm test` (84/84, 15 suites) + `npm run build` (OK) + `php artisan test` (38/280) ✅
+- **Bonus (Home + i18n + Briefs):** `npm test` (107/107, 21 suites) + `npm run build` (OK) + `php artisan test` (62/343) ✅
+- **5.1 (i18n briefs + hotfixes UI):** `npm test` (108/108, 21 suites) + `npm run build` (sin NG8113) + `php artisan test` (62/343) ✅
+- **5.1.1 (FOUT + browser detection):** `npm test` (111/111, 21 suites) + `npm run build` (sin NG8113) + `php artisan test` (62/343) ✅
+- **5.2 (disciplina Content + rebalanceo):** `npm test` (113/113, 21 suites) + `npm run build` (sin NG8113) + `php artisan test` (62/388) ✅
+- **5.3 (OAuth Google + Facebook):** `npm test` (124/124, 23 suites) + `npm run build` (sin NG8113) + `php artisan test` (74/431) ✅
+- **5.4 (Topbar unificado):** `npm test` (137/137, 24 suites) + `npm run build` (sin NG8113) + `php artisan test` (74/431) ✅
+- **5.7 (Limpieza + Branching + CI):** `npm test` (172/172, 29 suites) + `npm run build` (sin NG8113) + `php artisan test` (133/133, 634 assertions) ✅
+
+---
+
+## 🟠 P1 · Fase 3 (Edición de perfil de freelancer)
+
+> Portfolio de imágenes queda para Fase 3.5 (futura, ahora en 5.5.B).
+
+### Backend
+- [x] **1.B1** · Endpoint `GET /api/skills` (público) + `SkillController::index` + `SkillResource`.
+- [x] **1.B2** · Endpoint `GET /api/freelancer/me` (JWT freelancer) + `FreelancerProfileController::show` + `FreelancerProfileResource`.
+- [x] **1.B3** · Endpoint `PUT /api/freelancer/me` + `UpdateProfileRequest`
+  - Reglas: `display_name` ≤100, `bio` ≤1000, `city` ≤80, `hourly_rate`/`price_per_project` numéricos ≥0, `is_available` bool.
+- [x] **1.B4** · Endpoint `PUT /api/freelancer/me/skills` + `SyncSkillsRequest`
+  - Reglas: array ≤20 skills, cada una con `skill_id` válido, `level` en `junior|mid|senior`, `years_experience` 0–50.
+- [x] **1.B5** · `abort_if($user->role !== 'freelancer', 403)` en los endpoints `/freelancer/me*`.
+- [x] **1.B6** · Tests Feature (`FreelancerProfileTest.php`):
+  - [x] GET skills devuelve 20.
+  - [x] GET me con freelancer → 200.
+  - [x] GET me con cliente → 403.
+  - [x] PUT me datos válidos → 200 + cambios en BD.
+  - [x] PUT me bio > 1000 → 422.
+  - [x] PUT skills con 3 skills → 200 + filas en pivot.
+  - [x] PUT skills con skill_id inexistente → 422.
+  - [x] PUT skills re-sincroniza (borra anteriores).
+
+### Frontend
+- [x] **1.F1** · Tipos nuevos en `auth.types.ts`: `SkillLevel`, `FreelancerSkillInput`.
+- [x] **1.F2** · `FreelancerProfileService` con `getSkills`, `getMyProfile`, `updateMyProfile`, `syncMySkills` (todos desempacando `r.data`).
+- [x] **1.F3** · Setter público `setFreelancerProfile(profile)` en `AuthService` para actualizar el signal tras guardar.
+- [x] **1.F4** · `ProfileEditorComponent` standalone en `features/freelancer/profile-editor/`
+  - Reactive Form con todos los campos.
+  - Selector de skills con chips + nivel + años.
+  - Validación client-side espejo de las reglas backend.
+  - Botón "Guardar" y "Cancelar".
+- [x] **1.F5** · Ruta `/freelancer/profile/edit` con `authGuard + roleGuard(['freelancer'])` en `app.routes.ts`.
+- [x] **1.F6** · Conectar botón "Completar perfil" de `freelancer-home.component.html:53` a la nueva ruta.
+- [x] **1.F7** · Tests:
+  - [x] `freelancer-profile.service.spec.ts` (4 métodos × happy path).
+  - [x] `profile-editor.component.spec.ts` (form válido, inválido, submit OK, error 422).
+
+### Documentación
+- [x] **1.D1** · `docs/api.md`: añadir los 4 endpoints nuevos.
+- [x] **1.D2** · `docs/roadmap.md`: marcar Fase 3 como ✅.
+- [x] **1.D3** · `README.md`: actualizar tabla de endpoints y conteo de tests.
+- [x] **1.D4** · Marcar todas las casillas de P1 en este CHECKLIST.
+
+**Criterio de cierre:** un freelancer recién registrado puede ir al editor, rellenar perfil + skills, guardar, y ver el % de progreso de la home subir al 100%. ✅
+
+---
+
+## 🟡 P2 · Fase 4 (Catálogo público de freelancers)
+
+### Backend
+- [x] **2.B1** · Endpoint `GET /api/freelancers?category=&city=&max_rate=&q=&page=` (público)
+  - Base query: `FreelancerProfile::with(['user','skills'])->where('is_available', true)`.
+  - Filtros combinables.
+  - `paginate(12)`.
+- [x] **2.B2** · Endpoint `GET /api/freelancers/{id}` (público).
+- [x] **2.B3** · `FreelancerCatalogController` + `SearchFreelancersRequest` + `FreelancerCardResource` + `FreelancerDetailResource`.
+- [x] **2.B4** · Tests Feature (`FreelancerCatalogTest.php`):
+  - [x] Lista sin filtros (1ª página).
+  - [x] Filtro categoría, ciudad, max_rate, q, combinados.
+  - [x] Paginación `?page=2`.
+  - [x] Empty results.
+  - [x] Detalle por id → 200.
+  - [x] Detalle id inexistente → 404.
+  - [x] Detalle de freelancer no disponible → 404.
+  - [x] (extra) No exposición de email en el detalle.
+  - [x] (extra) `category` inválido → 422.
+
+### Frontend
+- [x] **2.F1** · `FreelancerCatalogService` con `search(filters)` y `getById(id)`.
+- [x] **2.F2** · `FreelancerListComponent` en `features/freelancers/list/`
+  - Grid + paginación + chips de filtros activos + estado vacío.
+- [x] **2.F3** · `FreelancerDetailComponent` en `features/freelancers/detail/`
+  - Vista pública (similar al "escaparate" pero solo lectura).
+- [x] **2.F4** · Refactor `client-home.component.ts`
+  - 3 categorías (Foto/Vídeo/Edición) que enlazan a `/freelancers?category=…`.
+  - Buscador `(ngSubmit)` navega a `/freelancers?q=…&category=…`.
+  - Sección "Profesionales destacados" con los 6 primeros del catálogo.
+  - 6 perfiles demo registrados con `DemoFreelancersSeeder` para validar con datos reales.
+- [x] **2.F5** · Rutas `/freelancers` y `/freelancers/:id` (sin guards, públicas).
+- [x] **2.F6** · Tests:
+  - [x] `freelancer-catalog.service.spec.ts` (4 tests).
+  - [x] `freelancer-card.component.spec.ts` (7 tests, compartido).
+  - [x] `freelancer-list.component.spec.ts` (4 tests).
+  - [x] `freelancer-detail.component.spec.ts` (5 tests).
+  - [x] `client-home.component.spec.ts` actualizado (3 categorías, 6 destacados).
+
+### Documentación
+- [x] **2.D1** · `docs/api.md`: 2 endpoints nuevos.
+- [x] **2.D2** · `docs/roadmap.md`: Fase 4 ✅.
+- [x] **2.D3** · `README.md`: endpoints + tests count.
+- [x] **2.D4** · Marcar P2 en este CHECKLIST.
+
+**Criterio de cierre:** un visitante anónimo entra en `/freelancers`, filtra por categoría y ciudad, abre el detalle de uno y ve toda la info pública (sin email, contacto vendrá en Fase 6 vía chat). ✅
+
+---
+
+## 🟢 Backlog priorizado
+
+### P3 · Capacidades transversales (orden sugerido)
+
+- [ ] **Aceptar / rechazar propuesta** (`PATCH /api/briefs/{id}/proposals/{pid}/status`).
+  - Ya existe el endpoint (usado internamente por `ProposalController::updateStatus`). Falta exponerlo y darle UI en `brief-detail` (botones Aceptar/Rechazar para el cliente). Estado del brief pasa a `assigned` al aceptar. 5 tests nuevos.
+- [ ] **Editar / borrar la propia review** (`PUT /api/reviews/{id}` + `DELETE /api/reviews/{id}`).
+  - 1 tests × 2 (auth, owner, validación, anti-duplicado por brief).
+- [ ] **Migrar chat de polling a WebSockets** (Laravel Reverb + push notifications).
+  - Frontend cambia `interval(POLL_INTERVAL_MS)` por un `WebSocket` que escucha `MessageSent`. Backend emite evento en `ChatController::send`. Estimación: 12 tests (eventos, reconnection, ack).
+- [ ] **Reset de password** (requiere crear tabla `password_reset_tokens` — se eliminó en Fase 5.7 por no usarse). Link firmado con TTL 30 min, email transaccional, `MAIL_MAILER` configurado.
+- [ ] **Verificación de email** (campo `email_verified_at` ya existe).
+  - Link firmado de un solo uso, reenvío, UI banner persistente si no verificado.
+- [x] **Edición de cuenta** (`PUT /api/me`) — ✅ Fase 5.5.E (UserAccountController + UpdateAccountRequest + tests).
+- [ ] **Notificaciones in-app** (campana con lista de eventos, persistencia en BD opcional, badge en topbar).
+
+### P4 · Fases del producto
+- [x] **Fase 3.5** · Portfolio de imágenes para freelancers — ✅ Fase 5.5.B (tabla `portfolios` + `PortfolioEditorComponent` + `LightboxComponent`).
+- [x] **Fase 5.5.A-F** · Cloudinary (avatar + cover + portfolio + brief attachments + OAuth N:M) — ✅ cerrado.
+- [x] **Fase 6** · Mensajería (polling primero, websockets después) — ✅ cerrado.
+- [x] **Fase 7** · Reviews y ratings — ✅ cerrado.
+
+### P5 · Calidad de plataforma / DevEx
+- [ ] E2E con Playwright.
+- [x] CI/CD con GitHub Actions — ✅ Fase 5.7 (`.github/workflows/test.yml` con PHPUnit + Jest en push/PR a `main` y `beta`).
+- [ ] Pipeline de lint (ESLint + Pint) — parcialmente hecho: hay configs y npm scripts, falta integrar como job obligatorio en CI.
+- [ ] Docker compose dev (php-fpm + nginx + mysql + node).
+- [ ] Búsqueda full-text (Meilisearch) — solo si el catálogo crece.
+- [ ] SSR (Angular Universal) para SEO de la landing pública.
+- [ ] Logo / favicon / OG image.
+- [ ] Auditar accesibilidad con `axe`/Lighthouse.
+
+### P6 · Roles extendidos
+- [ ] Sub-perfiles `agency` y `company`.
+- [ ] Admin panel.
+- [x] OAuth — ✅ Fase 5.3 (Google + Facebook vía Socialite, auto-vincular por email, complete-profile) + ✅ Fase 5.5.F (N:M con `user_oauth_identities` + `?link=1`).
+
+---
+
+## Pendiente de tests frontend
+
+### ✅ Bug del runner — RESUELTO
+
+Había un **bug pre-existente** en `frontend/setup-jest.ts` para Angular 21 + `jest-preset-angular@16`: el `setupZoneTestEnv()` de `jest-preset-angular/setup-env/zone` no se importaba, lo que provocaba que `TestBed.createComponent` fallase con `Cannot read properties of null (reading 'ngModule')` en todas las suites que renderizan componentes. Este bug ya existía en el repo antes de las fases 5.5.C-7.
+
+**Fix aplicado** (en `docs/roadmap.md` revisable en git):
+- `frontend/setup-jest.ts` — añadidos `import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';` y llamada antes del mock de `console.error/warn`. El `setupZoneTestEnv()` importa `zone.js` y `zone.js/testing`, registra `BrowserTestingModule` y `provideZoneChangeDetection()` (rama Angular 21), e inicializa el `TestBed` global.
+- `frontend/package.json` — añadido `zone.js: ~0.16.1` como dependencia. Era necesario porque el preset lo requiere en runtime, y aunque Angular 21 lo auto-incluye en el bundle de producción, no estaba en `node_modules` para los tests.
+- `frontend/tsconfig.spec.json` — eliminado `emitDecoratorMetadata: true` (no necesario para Angular 21 con `isolatedModules: true`; el flag generaba warnings ruidosos en cada compilación de `ts-jest`).
+
+**Resultado:**
+- `npx jest` → **31 suites pasan (232 tests)**, 5 suites con fallos (16 tests). Los 16 tests que fallan son bugs en los specs (ver siguiente sección), NO en el runner.
+- `npm run build` → OK, 299.91 kB / 82.67 kB transferidos.
+
+### ✅ Specs con bugs pre-existentes (no del runner) — RESUELTO
+
+5 suites con 16 tests fallando. Se han corregido. Resumen por suite:
+
+- `src/app/core/services/auth.service.spec.ts` (2 tests) — el `httpMock` no tenía `delete`; el test de `linkOAuthProvider` usaba `Object.defineProperty(window, 'location', ...)` que jsdom v26 no permite (no-configurable). Reemplazado por el patrón "no throw" + verificación de `buildOAuthRedirectUrl`, igual que `loginWithOAuth() does not throw`.
+- `src/app/features/account/account.component.spec.ts` (8 tests) — el `mockAuth` no incluía `listOAuthIdentities` ni el resto de métodos OAuth que `LinkedAccountsComponent` (renderizado dentro de `AccountComponent`) necesita. Añadidos: `listOAuthIdentities`, `unlinkOAuthProvider`, `linkOAuthProvider`, `me` (en los 2 sitios donde se redefine el mock).
+- `src/app/features/briefs/brief-attachment-uploader/brief-attachment-uploader.component.spec.ts` (3 tests):
+  - `moves attachment down`: el test llamaba `moveUp(list[1])` pero esperaba el orden original `[1, 2]`. Reemplazado por `moveDown(list[0])` con la expectativa correcta `[2, 1]`.
+  - `surfaces error when remove fails`: el spec esperaba el texto traducido en la signal, pero la signal guarda la clave i18n (decisión correcta, ver más abajo). Cambiado a `textContent` + `detectChanges()` extra.
+  - `exposes canAdd and remainingSlots`: el test combinaba 2 escenarios en uno, pero el `ngOnChanges` del componente solo sincroniza cuando `attachments().length === 0`. Dividido en 2 tests separados (uno por escenario).
+- `src/app/features/account/linked-accounts/linked-accounts.component.spec.ts` (1 test) — `surfaces error when unlink fails`: el error se setea dentro del subscribe, pero faltaba `fixture.detectChanges()` para re-renderizar. Añadido.
+- `src/app/features/chat/chat-thread/chat-thread.component.spec.ts` (2 tests):
+  - `surfaces error when sending fails`: mismo patrón que linked-accounts. Añadido `detectChanges()`.
+  - `appends incoming messages from polling`: el spec pasaba `makeConversation` sin `()` (referencia a la función, no llamada). Cambiado a `makeConversation()` + `detectChanges()` para refrescar el DOM tras la poll.
+
+**Decisión de diseño correcta (preservada):** el componente guarda la **clave** (`'brief_attachments.error_remove'`) en el signal `errorMessage`, y el template la resuelve con `{{ msg | t }}` en `brief-attachment-uploader.component.html:37`. Esto evita acoplar el componente a `LanguageService` y permite cambiar el idioma en runtime sin reemitir el error. El test debe comprobar el `textContent` del DOM (ya traducido), no el valor de la signal.
+
+**Resultado final:** `npx jest` → **36 suites / 249 tests verdes** ✅.
+
+---
 
 ## Criterios para cerrar una fase
 
@@ -616,10 +1017,13 @@ Tabla `reviews`. Tras completar un encargo, ambas partes se valoran.
 6. ✅ Cambios en API documentados en `docs/api.md`.
 7. ✅ Cambios en UI alineados con `docs/design-system.md`.
 
+---
+
 ## Cómo proponer una nueva fase
 
 Abre un PR con:
 - Descripción de 1-2 frases del valor que aporta.
 - Lista de endpoints / componentes / migraciones que introduce.
 - Estimación de tests nuevos.
-- Marcar en este `roadmap.md` como "🔵 En planificación" hasta que se apruebe.
+- Marcar en este roadmap como "🔵 En planificación" hasta que se apruebe.
+- Al aprobar, mover a "Fases entregadas" y crear su bloque en P0/P1/P2/Backlog con la atomización de tareas (estilo § Fase 3 / § Fase 4 de este archivo).

@@ -45,7 +45,7 @@ final class UserAvatarController extends Controller
         $user->avatar_public_id  = $resource['public_id'];
         $user->save();
 
-        $user->load('freelancerProfile.skills');
+        $user->load(['freelancerProfile.skills', 'oauthIdentities']);
 
         return response()->json([
             'data' => new UserResource(
@@ -68,7 +68,7 @@ final class UserAvatarController extends Controller
         $user->avatar_public_id = null;
         $user->save();
 
-        $user->load('freelancerProfile.skills');
+        $user->load(['freelancerProfile.skills', 'oauthIdentities']);
 
         return response()->json([
             'data' => new UserResource(

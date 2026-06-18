@@ -47,8 +47,8 @@ export class PortfolioEditorComponent implements OnInit {
   readonly lightboxIndex = signal<number | null>(null);
 
   readonly form: FormGroup<PortfolioFormGroup> = this.fb.group({
-    title: this.fb.control('', [Validators.maxLength(120)]),
-    description: this.fb.control('', [Validators.maxLength(500)]),
+    title: this.fb.control('', [Validators.required, Validators.minLength(1), Validators.maxLength(120)]),
+    description: this.fb.control('', [Validators.required, Validators.minLength(1), Validators.maxLength(500)]),
   });
 
   readonly canAdd = computed<boolean>(() => this.items().length < this.maxItems && !this.uploading());

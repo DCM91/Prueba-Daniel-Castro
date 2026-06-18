@@ -26,7 +26,7 @@
         <button
           type="button"
           class="primary-btn"
-          [disabled]="!canAdd()"
+          [disabled]="!canAdd() || form.invalid"
           (click)="fileInput.click()"
         >
           {{ uploading() ? ('uploader.uploading' | t) : ('portfolio.add_cta' | t) }}
@@ -41,6 +41,9 @@
               [placeholder]="'portfolio.title_placeholder' | t"
               maxlength="120"
             />
+            @if (form.controls.title.touched && form.controls.title.invalid) {
+              <small class="error">{{ 'portfolio.error_title_required' | t }}</small>
+            }
           </label>
           <label class="field">
             <span>{{ 'portfolio.description_label' | t }}</span>
@@ -50,6 +53,9 @@
               rows="2"
               maxlength="500"
             ></textarea>
+            @if (form.controls.description.touched && form.controls.description.invalid) {
+              <small class="error">{{ 'portfolio.error_description_required' | t }}</small>
+            }
           </label>
         </div>
 
@@ -84,7 +90,7 @@
                 (click)="openLightbox(i)"
               >
                 <img
-                  [src]="item.urls.card ?? item.url"
+                  [src]="item.url || item.urls.card"
                   [alt]="('portfolio.image_alt' | t : { title: item.title ? ': ' + item.title : '' })"
                   loading="lazy"
                 />

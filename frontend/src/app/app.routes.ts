@@ -56,6 +56,16 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'onboarding',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'welcome',
+        loadComponent: () => import('./features/onboarding/wizard/onboarding-wizard.component').then((m) => m.OnboardingWizardComponent),
+      },
+    ],
+  },
+  {
     path: 'freelancer/profile/edit',
     canActivate: [authGuard, roleGuard(['freelancer'])],
     data: { backLink: '/home' },
@@ -90,6 +100,11 @@ export const routes: Routes = [
     path: 'briefs/:id',
     data: { backLink: '/briefs' },
     loadComponent: () => import('./features/briefs/detail/brief-detail.component').then((m) => m.BriefDetailComponent),
+  },
+  {
+    path: 'messages',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/chat/chat-page/chat-page.component').then((m) => m.ChatPageComponent),
   },
   { path: '**', redirectTo: '' },
 ];

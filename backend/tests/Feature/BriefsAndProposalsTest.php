@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\Brief;
 use App\Models\FreelancerProfile;
+use App\Models\Proposal;
 use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -332,5 +333,174 @@ final class BriefsAndProposalsTest extends TestCase
             ]);
 
         $response->assertStatus(422)->assertJsonValidationErrors(['message']);
+    }
+
+    private function makePublishedBrief(User $client): Brief
+    {
+        return Brief::create([
+            'client_id'   => $client->id,
+            'title'       => 'Brief',
+            'description' => 'X'.str_repeat('y', 30),
+            'category'    => 'photo',
+            'status'      => 'published',
+            'published_at' => now(),
+        ]);
+    }
+
+    private function makePendingProposal(Brief $brief, User $freelancer): Proposal
+    {
+        $profile = FreelancerProfile::where('user_id', $freelancer->id)->first()
+            ?? FreelancerProfile::create(['user_id' => $freelancer->id, 'display_name' => 'Pro']);
+
+        return Proposal::create([
+            'brief_id'      => $brief->id,
+            'freelancer_id' => $profile->id,
+            'message'       => 'Propuesta detallada para el brief con suficiente texto',
+            'price'         => 450,
+            'status'        => 'pending',
+        ]);
+    }
+
+    public function test_proposal_update_unauthenticated_returns_401(): void
+    {
+        $client = User::factory()->create(['role' => 'client']);
+        $brief = $this->makePublishedBrief($client);
+        [$freelancer, ] = $this->makeFreelancer();
+        $proposal = $this->makePendingProposal($brief, $freelancer);
+
+        auth('api')->logout();
+        auth()->logout();
+
+        $response = $this->patchJson("/api/briefs/{$brief->id}/proposals/{$proposal->id}", [
+            'status' => 'accepted',
+        ]);
+
+        $response->assertStatus(401);
+    }
+
+    public function test_proposal_update_rejects_non_owner_client(): void
+    {
+        $owner   = User::factory()->create(['role' => 'client']);
+        $stranger = User::factory()->create(['role' => 'client']);
+        $brief = $this->makePublishedBrief($owner);
+        [$freelancer, ] = $this->makeFreelancer();
+        $proposal = $this->makePendingProposal($brief, $freelancer);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.auth('api')->login($stranger))
+            ->patchJson("/api/briefs/{$brief->id}/proposals/{$proposal->id}", [
+                'status' => 'accepted',
+            ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_proposal_update_rejects_freelancer(): void
+    {
+        $client = User::factory()->create(['role' => 'client']);
+        $brief = $this->makePublishedBrief($client);
+        [$freelancer, ] = $this->makeFreelancer();
+        $proposal = $this->makePendingProposal($brief, $freelancer);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.auth('api')->login($freelancer))
+            ->patchJson("/api/briefs/{$brief->id}/proposals/{$proposal->id}", [
+                'status' => 'accepted',
+            ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_proposal_update_validates_status_value(): void
+    {
+        $client = User::factory()->create(['role' => 'client']);
+        $brief = $this->makePublishedBrief($client);
+        [$freelancer, ] = $this->makeFreelancer();
+        $proposal = $this->makePendingProposal($brief, $freelancer);
+        $token = auth('api')->login($client);
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->patchJson("/api/briefs/{$brief->id}/proposals/{$proposal->id}", [
+                'status' => 'withdrawn',
+            ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['status']);
+    }
+
+    public function test_proposal_update_accepts_assigns_brief_and_rejects_others(): void
+    {
+        $client = User::factory()->create(['role' => 'client']);
+        $brief = $this->makePublishedBrief($client);
+        [$winnerFreelancer, ] = $this->makeFreelancer();
+        [$loserFreelancer, ] = $this->makeFreelancer();
+        $winnerProposal = $this->makePendingProposal($brief, $winnerFreelancer);
+        $loserProposal  = $this->makePendingProposal($brief, $loserFreelancer);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.auth('api')->login($client))
+            ->patchJson("/api/briefs/{$brief->id}/proposals/{$winnerProposal->id}", [
+                'status' => 'accepted',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.proposal.status', 'accepted')
+            ->assertJsonPath('data.brief.status', 'assigned');
+
+        $this->assertDatabaseHas('proposals', ['id' => $winnerProposal->id, 'status' => 'accepted']);
+        $this->assertDatabaseHas('proposals', ['id' => $loserProposal->id,  'status' => 'rejected']);
+        $this->assertDatabaseHas('briefs',    ['id' => $brief->id,         'status' => 'assigned']);
+    }
+
+    public function test_proposal_update_rejects_with_side_effects(): void
+    {
+        $client = User::factory()->create(['role' => 'client']);
+        $brief = $this->makePublishedBrief($client);
+        [$freelancer, ] = $this->makeFreelancer();
+        [$otherFreelancer, ] = $this->makeFreelancer();
+        $proposal = $this->makePendingProposal($brief, $freelancer);
+        $otherProposal = $this->makePendingProposal($brief, $otherFreelancer);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.auth('api')->login($client))
+            ->patchJson("/api/briefs/{$brief->id}/proposals/{$proposal->id}", [
+                'status' => 'rejected',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.proposal.status', 'rejected')
+            ->assertJsonPath('data.brief.status', 'published');
+
+        $this->assertDatabaseHas('briefs', ['id' => $brief->id, 'status' => 'published']);
+        $this->assertDatabaseHas('proposals', ['id' => $otherProposal->id, 'status' => 'pending']);
+    }
+
+    public function test_proposal_update_idempotency_rejects_already_processed(): void
+    {
+        $client = User::factory()->create(['role' => 'client']);
+        $brief = $this->makePublishedBrief($client);
+        [$freelancer, ] = $this->makeFreelancer();
+        $proposal = $this->makePendingProposal($brief, $freelancer);
+        $token = auth('api')->login($client);
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->patchJson("/api/briefs/{$brief->id}/proposals/{$proposal->id}", [
+                'status' => 'accepted',
+            ])->assertStatus(200);
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->patchJson("/api/briefs/{$brief->id}/proposals/{$proposal->id}", [
+                'status' => 'rejected',
+            ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_proposal_update_404_for_unknown_proposal(): void
+    {
+        $client = User::factory()->create(['role' => 'client']);
+        $brief = $this->makePublishedBrief($client);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.auth('api')->login($client))
+            ->patchJson("/api/briefs/{$brief->id}/proposals/9999", [
+                'status' => 'accepted',
+            ]);
+
+        $response->assertStatus(404);
     }
 }

@@ -5,22 +5,34 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Enums\UserRole;
+use App\Exceptions\CloudinaryVerificationException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Brief\AttachBriefImageRequest;
+use App\Http\Requests\Brief\ReorderBriefAttachmentsRequest;
 use App\Http\Requests\Brief\StoreBriefRequest;
 use App\Http\Requests\Brief\UpdateBriefRequest;
+use App\Http\Resources\BriefAttachmentResource;
 use App\Http\Resources\BriefResource;
 use App\Models\Brief;
+use App\Models\BriefAttachment;
+use App\Services\Cloudinary\CloudinaryServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Support\Facades\DB;
 
 final class BriefController extends Controller
 {
+    private const MAX_ATTACHMENTS_PER_BRIEF = 10;
+
+    public function __construct(private readonly CloudinaryServiceInterface $cloudinary)
+    {
+    }
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
         $query = Brief::query()
-            ->with('client')
+            ->with(['client', 'attachments'])
             ->withCount('proposals')
             ->orderByDesc('published_at')
             ->orderByDesc('id');
@@ -47,7 +59,7 @@ final class BriefController extends Controller
 
     public function show(Request $request, int $id): JsonResponse
     {
-        $brief = Brief::with(['client'])->withCount('proposals')->find($id);
+        $brief = Brief::with(['client', 'attachments'])->withCount('proposals')->find($id);
         abort_if($brief === null, 404, 'Brief no encontrado.');
 
         return response()->json([
@@ -73,7 +85,7 @@ final class BriefController extends Controller
             'published_at' => now(),
         ]);
 
-        $brief->load('client')->loadCount('proposals');
+        $brief->load(['client', 'attachments'])->loadCount('proposals');
 
         return response()->json([
             'data' => (new BriefResource($brief))->resolve(),
@@ -88,7 +100,7 @@ final class BriefController extends Controller
         abort_unless($user?->id === $brief->client_id, 403, 'Solo el autor puede editar el brief.');
 
         $brief->update($request->validated());
-        $brief->load('client')->loadCount('proposals');
+        $brief->load(['client', 'attachments'])->loadCount('proposals');
 
         return response()->json([
             'data' => (new BriefResource($brief))->resolve(),
@@ -105,5 +117,110 @@ final class BriefController extends Controller
         $brief->delete();
 
         return response()->json(['message' => 'Brief eliminado correctamente.']);
+    }
+
+    public function complete(Request $request, int $id, \App\Services\ReviewService $reviews): JsonResponse
+    {
+        $user = $request->user();
+        $brief = Brief::find($id);
+        abort_if($brief === null, 404, 'Brief no encontrado.');
+
+        $completed = $reviews->completeBrief($brief, $user);
+        $completed->load(['client', 'attachments'])->loadCount('proposals');
+
+        return response()->json([
+            'data' => (new \App\Http\Resources\BriefResource($completed))->resolve(),
+        ]);
+    }
+
+    public function attachImage(AttachBriefImageRequest $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        $brief = Brief::find($id);
+        abort_if($brief === null, 404, 'Brief no encontrado.');
+        abort_unless($user?->id === $brief->client_id, 403, 'Solo el autor puede añadir imágenes al brief.');
+
+        if ($brief->attachments()->count() >= self::MAX_ATTACHMENTS_PER_BRIEF) {
+            return response()->json([
+                'message' => 'Has alcanzado el límite de imágenes para este proyecto.',
+            ], 422);
+        }
+
+        try {
+            $resource = $this->cloudinary->verifyResource(
+                $request->string('public_id')->toString(),
+                $this->cloudinary->folderFor('brief'),
+            );
+        } catch (CloudinaryVerificationException $e) {
+            return response()->json(['message' => $e->getMessage()], 403);
+        }
+
+        $attachment = DB::transaction(function () use ($brief, $request, $resource) {
+            $nextPosition = (int) ($brief->attachments()->max('position') ?? -1) + 1;
+
+            return $brief->attachments()->create([
+                'public_id' => $resource['public_id'],
+                'url'       => $request->string('url')->toString(),
+                'width'     => $resource['width'],
+                'height'    => $resource['height'],
+                'format'    => $resource['format'],
+                'bytes'     => $resource['bytes'],
+                'title'     => $request->input('title'),
+                'position'  => $nextPosition,
+            ]);
+        });
+
+        return response()->json([
+            'data' => (new BriefAttachmentResource($attachment))->resolve(),
+        ], 201);
+    }
+
+    public function detachImage(Request $request, int $id, int $attachmentId): JsonResponse
+    {
+        $user = $request->user();
+        $brief = Brief::find($id);
+        abort_if($brief === null, 404, 'Brief no encontrado.');
+        abort_unless($user?->id === $brief->client_id, 403, 'Solo el autor puede eliminar imágenes del brief.');
+
+        $attachment = $brief->attachments()->find($attachmentId);
+        abort_if($attachment === null, 404, 'Imagen no encontrada.');
+
+        $this->cloudinary->deleteResource($attachment->public_id);
+        $attachment->delete();
+
+        return response()->json(['message' => 'Imagen eliminada.']);
+    }
+
+    public function reorderAttachments(ReorderBriefAttachmentsRequest $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        $brief = Brief::find($id);
+        abort_if($brief === null, 404, 'Brief no encontrado.');
+        abort_unless($user?->id === $brief->client_id, 403, 'Solo el autor puede reordenar las imágenes del brief.');
+
+        $ids = $request->input('ids');
+
+        $ownedIds = $brief->attachments()->pluck('id')->all();
+        $submittedIds = array_map('intval', $ids);
+
+        if (array_diff($submittedIds, $ownedIds) !== [] || count($submittedIds) !== count($ownedIds)) {
+            return response()->json([
+                'message' => 'La lista de IDs no coincide con las imágenes del proyecto.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($brief, $ids) {
+            foreach (array_values($ids) as $position => $attachmentId) {
+                $brief->attachments()
+                    ->where('id', $attachmentId)
+                    ->update(['position' => $position]);
+            }
+        });
+
+        $attachments = $brief->attachments()->orderBy('position')->orderByDesc('id')->get();
+
+        return response()->json([
+            'data' => BriefAttachmentResource::collection($attachments)->resolve(),
+        ]);
     }
 }

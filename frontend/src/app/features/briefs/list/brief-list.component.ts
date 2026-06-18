@@ -69,10 +69,14 @@ export class BriefListComponent implements OnInit {
     if (this.currentPage() > 1) this.goToPage(this.currentPage() - 1);
   }
 
-  formatBudget(b: Brief): string {
-    if (b.budget_min === null && b.budget_max === null) return '—';
-    if (b.budget_min !== null && b.budget_max !== null) return `${b.budget_min}€ - ${b.budget_max}€`;
-    if (b.budget_min !== null) return `Desde ${b.budget_min}€`;
-    return `Hasta ${b.budget_max}€`;
+  formatBudget(b: Brief): { key: string; params: Record<string, string | number> } | null {
+    if (b.budget_min === null && b.budget_max === null) return null;
+    if (b.budget_min !== null && b.budget_max !== null) {
+      return { key: 'briefs.list.budget_range', params: { min: b.budget_min, max: b.budget_max } };
+    }
+    if (b.budget_min !== null) {
+      return { key: 'briefs.list.budget_from', params: { amount: b.budget_min } };
+    }
+    return { key: 'briefs.list.budget_up_to', params: { amount: b.budget_max! } };
   }
 }

@@ -15,7 +15,7 @@ import {
 
 interface CategoryOption {
   value: SkillCategory | '';
-  label: string;
+  labelKey: string;
 }
 
 @Component({
@@ -42,11 +42,11 @@ export class FreelancerListComponent implements OnInit {
   readonly maxRate = signal<number | null>(null);
 
   readonly categoryOptions: CategoryOption[] = [
-    { value: '',         label: 'Todas' },
-    { value: 'photo',    label: 'Fotografía' },
-    { value: 'video',    label: 'Vídeo' },
-    { value: 'edit',     label: 'Edición' },
-    { value: 'content',  label: 'Creación de Contenido' },
+    { value: '',         labelKey: 'freelancers.list.category_all' },
+    { value: 'photo',    labelKey: 'skill_categories.photo' },
+    { value: 'video',    labelKey: 'skill_categories.video' },
+    { value: 'edit',     labelKey: 'skill_categories.edit' },
+    { value: 'content',  labelKey: 'skill_categories.content' },
   ];
 
   readonly hasActiveFilters = computed(() =>

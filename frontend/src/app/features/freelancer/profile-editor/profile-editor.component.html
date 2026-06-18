@@ -33,31 +33,31 @@
 
           <label class="field">
             <span>{{ 'profile_editor.label_display_name' | t }}</span>
-            <input type="text" formControlName="display_name" maxlength="100" placeholder="Ej. Luis Foto Pro" />
+            <input type="text" formControlName="display_name" maxlength="100" [attr.placeholder]="'profile_editor.placeholder_display_name' | t" />
             @if (errorFor('display_name'); as msg) {
               <small class="error">{{ msg }}</small>
             } @else if (basicForm.controls.display_name.touched && basicForm.controls.display_name.errors?.['maxlength']) {
-              <small class="error">Máximo 100 caracteres.</small>
+              <small class="error">{{ 'profile_editor.error_max_display_name' | t }}</small>
             }
           </label>
 
           <label class="field">
             <span>{{ 'profile_editor.label_bio' | t }}</span>
-            <textarea formControlName="bio" rows="4" maxlength="1000" placeholder="Cuéntales tu estilo y tu experiencia."></textarea>
+            <textarea formControlName="bio" rows="4" maxlength="1000" [attr.placeholder]="'profile_editor.placeholder_bio' | t"></textarea>
             @if (errorFor('bio'); as msg) {
               <small class="error">{{ msg }}</small>
             } @else if (basicForm.controls.bio.touched && basicForm.controls.bio.errors?.['maxlength']) {
-              <small class="error">Máximo 1000 caracteres.</small>
+              <small class="error">{{ 'profile_editor.error_max_bio' | t }}</small>
             }
           </label>
 
           <label class="field">
             <span>{{ 'profile_editor.label_city' | t }}</span>
-            <input type="text" formControlName="city" maxlength="80" placeholder="Ej. Madrid" />
+            <input type="text" formControlName="city" maxlength="80" [attr.placeholder]="'profile_editor.placeholder_city' | t" />
             @if (errorFor('city'); as msg) {
               <small class="error">{{ msg }}</small>
             } @else if (basicForm.controls.city.touched && basicForm.controls.city.errors?.['maxlength']) {
-              <small class="error">Máximo 80 caracteres.</small>
+              <small class="error">{{ 'profile_editor.error_max_city' | t }}</small>
             }
           </label>
 
@@ -68,17 +68,17 @@
               @if (errorFor('hourly_rate'); as msg) {
                 <small class="error">{{ msg }}</small>
               } @else if (basicForm.controls.hourly_rate.touched && basicForm.controls.hourly_rate.errors?.['min']) {
-                <small class="error">No puede ser negativo.</small>
+                <small class="error">{{ 'profile_editor.error_negative' | t }}</small>
               }
             </label>
 
             <label class="field">
               <span>{{ 'profile_editor.label_price_per_project' | t }}</span>
-              <input type="number" formControlName="price_per_project" min="0" step="0.01" placeholder="450" />
+              <input type="number" formControlName="price_per_project" min="0" step="0.01" [attr.placeholder]="'profile_editor.placeholder_price' | t" />
               @if (errorFor('price_per_project'); as msg) {
                 <small class="error">{{ msg }}</small>
               } @else if (basicForm.controls.price_per_project.touched && basicForm.controls.price_per_project.errors?.['min']) {
-                <small class="error">No puede ser negativo.</small>
+                <small class="error">{{ 'profile_editor.error_negative' | t }}</small>
               }
             </label>
           </div>
@@ -109,7 +109,7 @@
 
         <section class="card">
           <h2>{{ 'profile_editor.section_skills' | t }}</h2>
-          <p class="muted">Selecciona hasta 20 del catálogo. Indica tu nivel y años de experiencia.</p>
+          <p class="muted">{{ 'profile_editor.skills_hint' | t }}</p>
 
           <div class="chip-grid">
             @for (skill of availableSkills(); track skill.id) {
@@ -131,15 +131,15 @@
                 <li class="selected-item" [formGroupName]="i">
                   <div class="selected-head">
                     <span class="selected-name">{{ skillNameFor(group.controls.skill_id.value) }}</span>
-                    <button type="button" class="remove-btn" (click)="removeSkillAt(i)" aria-label="Quitar skill">×</button>
+                    <button type="button" class="remove-btn" (click)="removeSkillAt(i)" [attr.aria-label]="'profile_editor.remove_skill' | t">×</button>
                   </div>
                   <div class="row">
                     <label class="field">
                       <span>{{ 'profile_editor.label_skill_level' | t }}</span>
                       <select formControlName="level">
-                        <option value="junior">Junior</option>
-                        <option value="mid">Mid</option>
-                        <option value="senior">Senior</option>
+                        <option value="junior">{{ 'skill_levels.junior' | t }}</option>
+                        <option value="mid">{{ 'skill_levels.mid' | t }}</option>
+                        <option value="senior">{{ 'skill_levels.senior' | t }}</option>
                       </select>
                     </label>
                     <label class="field">

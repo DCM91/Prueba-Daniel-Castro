@@ -1,0 +1,24 @@
+<div class="chat-page" data-test="chat-page">
+  <header class="chat-page__head">
+    <h1 class="chat-page__title">{{ 'chat.title' | t }}</h1>
+  </header>
+
+  <div class="chat-page__body" [attr.data-thread]="showThread()">
+    <aside class="chat-page__list">
+      <app-chat-list
+        [briefId]="initialBriefId()"
+        (open)="openFromList($event)"
+      />
+    </aside>
+
+    <section class="chat-page__thread">
+      @if (selected(); as conv) {
+        <app-chat-thread [conversation]="conv" (back)="backToList()" />
+      } @else {
+        <div class="chat-page__placeholder">
+          <p>{{ 'chat.empty_list' | t }}</p>
+        </div>
+      }
+    </section>
+  </div>
+</div>

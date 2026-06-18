@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\Review;
 use App\Services\ProfileCompletionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -28,6 +29,18 @@ final class FreelancerCardResource extends JsonResource
         }
         $pct = app(ProfileCompletionService::class)->calculate($resource)['pct'];
 
+        $rating = ['count' => 0, 'average' => null];
+        if ($this->user_id !== null) {
+            $row = Review::query()
+                ->where('reviewee_id', $this->user_id)
+                ->selectRaw('COUNT(*) as count, AVG(rating) as average')
+                ->first();
+            $rating = [
+                'count'   => (int) ($row->count ?? 0),
+                'average' => $row->average !== null ? round((float) $row->average, 2) : null,
+            ];
+        }
+
         return [
             'id'                => $this->id,
             'user_id'           => $this->user_id,
@@ -36,6 +49,7 @@ final class FreelancerCardResource extends JsonResource
             'city'              => $this->user?->city,
             'hourly_rate'       => $this->hourly_rate !== null ? (float) $this->hourly_rate : null,
             'is_available'      => (bool) $this->is_available,
+            'rating'            => $rating,
             'top_skills'        => $topSkills,
             'skills_count'      => $skills->count(),
             'profile_completion'=> $pct,

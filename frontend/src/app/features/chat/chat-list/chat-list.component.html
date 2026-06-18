@@ -1,0 +1,58 @@
+<section class="chat-list" data-test="chat-list">
+  <header class="chat-list__header">
+    <h2 class="chat-list__title">{{ 'chat.list_title' | t }}</h2>
+    <p class="chat-list__subtitle">{{ 'chat.list_subtitle' | t }}</p>
+  </header>
+
+  @if (errorMessage(); as msg) {
+    <p class="chat-list__error" role="alert">{{ msg | t }}</p>
+  }
+
+  @if (loading()) {
+    <p class="chat-list__loading">{{ 'chat.loading_list' | t }}</p>
+  } @else if (conversations().length === 0) {
+    <p class="chat-list__empty">{{ 'chat.empty_list' | t }}</p>
+  } @else {
+    <ul class="chat-list__items" role="list">
+      @for (conv of conversations(); track conv.id) {
+        <li
+          class="chat-list__item"
+          [attr.data-unread]="(conv.unread_count ?? 0) > 0"
+          (click)="selectConversation(conv)"
+          (keydown.enter)="selectConversation(conv)"
+          (keydown.space)="selectConversation(conv)"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="'chat.open_chat' | t"
+        >
+          <div class="chat-list__avatar" aria-hidden="true">
+            {{ counterpart(conv).name.charAt(0) || '?' }}
+          </div>
+          <div class="chat-list__body">
+            <div class="chat-list__row">
+              <strong class="chat-list__name">
+                {{ 'chat.with_label' | t : { name: counterpart(conv).name } }}
+              </strong>
+              <span class="chat-list__time">{{ conv.last_message_at | date: 'short' }}</span>
+            </div>
+            <div class="chat-list__brief">
+              {{ 'chat.context_brief' | t : { title: conv.brief?.title ?? '—' } }}
+            </div>
+            <div class="chat-list__preview">
+              @if (previewBody(conv)) {
+                {{ previewBody(conv) }}
+              } @else {
+                <em class="chat-list__preview-empty">{{ 'chat.no_messages_yet_short' | t }}</em>
+              }
+            </div>
+          </div>
+          @if ((conv.unread_count ?? 0) > 0) {
+            <span class="chat-list__badge" aria-label="unread">
+              {{ 'chat.unread_badge' | t : { n: conv.unread_count ?? 0 } }}
+            </span>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

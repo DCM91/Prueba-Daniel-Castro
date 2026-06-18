@@ -1,0 +1,63 @@
+<section class="chat-thread" data-test="chat-thread">
+  <header class="chat-thread__header">
+    <button type="button" class="chat-thread__back" (click)="back.emit()">
+      {{ 'chat.back_to_list' | t }}
+    </button>
+    <div class="chat-thread__title">
+      <h2>{{ counterpart()?.name || ('chat.sender_fallback' | t) }}</h2>
+      @if (conversation().brief; as brief) {
+        <p class="chat-thread__context">
+          {{ 'chat.context_brief' | t : { title: brief.title } }}
+          · {{ 'chat.context_status' | t : { status: brief.status } }}
+        </p>
+      }
+    </div>
+  </header>
+
+  <div class="chat-thread__body" #scrollContainer>
+    @if (loading()) {
+      <p class="chat-thread__loading">{{ 'chat.loading_messages' | t }}</p>
+    } @else if (messages().length === 0) {
+      <p class="chat-thread__empty">{{ 'chat.no_messages' | t }}</p>
+    } @else {
+      <ul class="chat-thread__list" role="list">
+        @for (msg of messages(); track trackById($index, msg)) {
+          <li
+            class="chat-thread__message"
+            [attr.data-own]="isOwn(msg)"
+            [attr.data-test]="'chat-message-' + msg.id"
+          >
+            <div class="chat-thread__bubble">
+              @if (!isOwn(msg)) {
+                <span class="chat-thread__sender">{{ msg.sender?.name ?? ('chat.sender_fallback' | t) }}</span>
+              }
+              <p class="chat-thread__text">{{ msg.body }}</p>
+              <span class="chat-thread__time">{{ msg.created_at | date: 'short' }}</span>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  @if (errorMessage(); as msg) {
+    <p class="chat-thread__error" role="alert">{{ msg | t }}</p>
+  }
+
+  <form class="chat-thread__form" [formGroup]="form" (ngSubmit)="send()">
+    <textarea
+      formControlName="body"
+      rows="2"
+      [attr.aria-label]="'chat.message_placeholder' | t"
+      [attr.placeholder]="'chat.message_placeholder' | t"
+      [attr.maxlength]="maxLength"
+    ></textarea>
+    <button
+      type="submit"
+      class="chat-thread__send"
+      [disabled]="form.invalid || sending()"
+    >
+      {{ sending() ? ('chat.sending' | t) : ('chat.send' | t) }}
+    </button>
+  </form>
+</section>

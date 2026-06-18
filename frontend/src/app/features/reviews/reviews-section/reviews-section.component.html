@@ -1,0 +1,53 @@
+<section class="reviews-section" data-test="reviews-section">
+  @if (isParticipant()) {
+    @if (canComplete()) {
+      <div class="reviews-section__complete">
+        <button
+          type="button"
+          class="reviews-section__complete-btn"
+          [disabled]="completing()"
+          (click)="markAsCompleted()"
+        >
+          {{ 'reviews.complete_brief_cta' | t }}
+        </button>
+        @if (completeError(); as msg) {
+          <p class="reviews-section__error" role="alert">{{ msg | t }}</p>
+        }
+        @if (completeDone()) {
+          <p class="reviews-section__done" role="status">
+            {{ 'reviews.complete_brief_done' | t }}
+          </p>
+        }
+      </div>
+    }
+
+    @if (isCompleted()) {
+      @if (existingReview(); as mine) {
+        <p class="reviews-section__note" data-test="already-reviewed">
+          {{ 'reviews.already_reviewed' | t }}
+        </p>
+        <app-review-form
+          [briefId]="briefId()"
+          [existing]="mine"
+          (submitted)="onReviewSubmitted()"
+        />
+      } @else {
+        <app-review-form
+          [briefId]="briefId()"
+          (submitted)="onReviewSubmitted()"
+        />
+      }
+    } @else {
+      <p class="reviews-section__note muted">
+        {{ 'reviews.complete_brief_first' | t }}
+      </p>
+    }
+  }
+
+  <app-review-list
+    [briefId]="briefId()"
+    [emptyKey]="'reviews.empty_for_brief'"
+    [sectionTitle]="'reviews.title'"
+    [refreshKey]="refreshKey()"
+  />
+</section>

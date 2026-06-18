@@ -12,6 +12,16 @@
       @if (freelancer?.city) {
         <p class="city">{{ freelancer?.city }}</p>
       }
+      @if (rating(); as r) {
+        <div class="card-rating" data-test="card-rating">
+          <app-rating-stars [value]="r.average ?? 0" size="sm" />
+          @if (r.count > 0) {
+            <span class="card-rating__text muted">
+              {{ 'rating.summary' | t : { average: r.average ?? 0, count: r.count } }}
+            </span>
+          }
+        </div>
+      }
     </div>
     @if (isAvailable()) {
       <span class="status status--on" [attr.aria-label]="'freelancers.card.available' | t">{{ 'freelancers.card.available' | t }}</span>

@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
+import { of } from 'rxjs';
 
 import { AccountComponent } from './account.component';
 import { AuthService } from '../../core/services/auth.service';
@@ -38,6 +39,10 @@ describe('AccountComponent', () => {
         currentUser,
         setCurrentUser: jest.fn((u: User) => currentUser.set(u)),
         logout: jest.fn(),
+        listOAuthIdentities: jest.fn().mockReturnValue(of([])),
+        unlinkOAuthProvider: jest.fn().mockReturnValue(of({ message: 'ok' })),
+        linkOAuthProvider: jest.fn(),
+        me: jest.fn().mockReturnValue(of({ data: user })),
       },
     };
   }
@@ -176,6 +181,10 @@ describe('AccountComponent', () => {
             currentUser: userSignal,
             setCurrentUser: jest.fn((u: User) => userSignal.set(u)),
             logout: jest.fn(),
+            listOAuthIdentities: jest.fn().mockReturnValue(of([])),
+            unlinkOAuthProvider: jest.fn().mockReturnValue(of({ message: 'ok' })),
+            linkOAuthProvider: jest.fn(),
+            me: jest.fn().mockReturnValue(of({ data: freelancerUser })),
           },
         },
         provideLanguageServiceMock('es', {
@@ -199,7 +208,9 @@ describe('AccountComponent', () => {
     component.form.controls.phone.markAsTouched();
     fixture.detectChanges();
     expect(component.form.controls.phone.errors?.['pattern']).toBeTruthy();
-    expect(component.errorFor('phone')).toContain('Solo dígitos');
+    const err = component.errorFor('phone');
+    expect(err).not.toBeNull();
+    expect(err?.key).toBe('account.error_phone_format');
   });
 
   it('accepts phone with international format', () => {

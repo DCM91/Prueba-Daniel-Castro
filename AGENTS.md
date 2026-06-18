@@ -8,7 +8,7 @@ Convenciones generales del monorepo. Para detalles específicos, consulta:
 - **Sistema de diseño visual:** [docs/design-system.md](./docs/design-system.md)
 - **Referencia de la API:** [docs/api.md](./docs/api.md)
 - **Esquema de base de datos:** [docs/database.md](./docs/database.md)
-- **Roadmap y fases:** [docs/roadmap.md](./docs/roadmap.md)
+- **Roadmap y fases (incluye checklist operativo fusionado):** [docs/roadmap.md](./docs/roadmap.md)
 
 ---
 
@@ -46,6 +46,9 @@ Todas viven en `.agents/skills/<nombre>/SKILL.md` y son **auto-descubiertas** po
 - **Nombre:** FrameMatch. APP_NAME en backend, prefijo `framematch_` en localStorage del frontend.
 - **Monorepo simple:** `backend/` y `frontend/` independientes, comparten solo convenciones y la base de datos. No hay workspaces de npm ni de composer.
 - **Arranque típico:** backend en `127.0.0.1:8000`, frontend en `localhost:4200`, MySQL en `127.0.0.1:3306`. El frontend hace proxy de `/api/*` al backend (ver `frontend/proxy.conf.json`).
+- **Tests backend:** `php artisan test` → **227 tests / 927 assertions, 15 feature suites + 2 unit suites**, todos en verde.
+- **Tests frontend:** `npm run build` → **OK sin warnings**. `npx jest` → **36 suites / 249 tests verdes**. Runner + 5 specs con bugs pre-existentes resueltos (ver [§ Pendiente de tests frontend](./docs/roadmap.md#pendiente-de-tests-frontend) y hotfix 0.18).
+- **Fases cerradas:** 0 → 5.5.A → 5.5.B → 5.5.C → 5.5.D → 5.5.E → 5.5.F → 5.6 (deploy) → 5.7 (CI) → 6 (chat) → 7 (reviews). Detalle en [docs/roadmap.md](./docs/roadmap.md).
 
 ## Estructura del monorepo
 
@@ -142,8 +145,12 @@ main (producción, intocable directamente)
 | Término | Significado |
 |---|---|
 | **Cliente** | Usuario que contrata freelancers. Tiene `role='client'`. |
-| **Freelancer** | Usuario que ofrece servicios de foto/vídeo. Tiene `role='freelancer'` + fila en `freelancer_profiles`. |
-| **Skill** | Capacidad específica del freelancer (foto de producto, edición, etc.). Catálogo en `skills`. |
-| **Perfil de freelancer** | Datos específicos (bio, tarifas, ciudad) en `freelancer_profiles`. Vinculado 1:1 al `User`. |
-| **Brief** | (futuro) Proyecto que un cliente publica para recibir propuestas de freelancers. |
-| **Encargo** | (futuro) Aceptación de un brief por un freelancer; da lugar a la entrega. |
+| **Freelancer** | Usuario que ofrece servicios de foto/vídeo/contenido. Tiene `role='freelancer'` + fila en `freelancer_profiles`. |
+| **Skill** | Capacidad específica del freelancer (foto de producto, edición, copywriting, etc.). Catálogo en `skills` con 4 categorías (`photo`, `video`, `edit`, `content`). |
+| **Perfil de freelancer** | Datos específicos (bio, tarifas, ciudad, avatar, cover, portfolio) en `freelancer_profiles`. Vinculado 1:1 al `User`. |
+| **Brief** | Proyecto que un cliente publica para recibir propuestas de freelancers. Estados: `draft`, `published`, `in_review`, `assigned`, `completed`, `cancelled`. |
+| **Propuesta** | Oferta de un freelancer para un brief, con mensaje y precio. Estados: `pending`, `accepted`, `rejected`, `withdrawn`. Al aceptar → brief pasa a `assigned` y se crea una conversación. |
+| **Conversación** | Chat 1:1 entre cliente y freelancer ligado a un brief con propuesta aceptada. Tiene un `last_message_at` para ordenar. |
+| **Mensaje** | Texto dentro de una conversación. Tiene `read_at` para receipts. |
+| **Review** | Valoración 1-5 con comentario opcional que cliente o freelancer deja al completar un brief. |
+| **Identidad OAuth** | Vinculación entre un user de FrameMatch y un provider externo (Google, Facebook). N:M. |

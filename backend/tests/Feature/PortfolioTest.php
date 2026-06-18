@@ -164,7 +164,41 @@ final class PortfolioTest extends TestCase
                 'title'     => str_repeat('a', 121),
             ])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['public_id', 'title', 'url']);
+            ->assertJsonValidationErrors(['public_id', 'title', 'description', 'url']);
+    }
+
+    public function test_portfolio_requires_title_and_description(): void
+    {
+        $this->bindFakeCloudinary();
+        $user = User::factory()->freelancer()->create();
+        $token = JWTAuth::fromUser($user);
+
+        $payload = $this->validPayload();
+        unset($payload['title'], $payload['description']);
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/freelancer/me/portfolios', $payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['title', 'description']);
+
+        $this->assertDatabaseCount('portfolios', 0);
+    }
+
+    public function test_portfolio_rejects_blank_title_or_description(): void
+    {
+        $this->bindFakeCloudinary();
+        $user = User::factory()->freelancer()->create();
+        $token = JWTAuth::fromUser($user);
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/freelancer/me/portfolios', $this->validPayload([
+                'title'       => '',
+                'description' => '   ',
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['title', 'description']);
+
+        $this->assertDatabaseCount('portfolios', 0);
     }
 
     public function test_freelancer_can_update_title_and_description(): void

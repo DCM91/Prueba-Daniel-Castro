@@ -29,6 +29,7 @@ const CLIENT_LINKS: readonly TopbarNavLink[] = [
   { labelKey: 'topbar.nav.professionals', route: '/freelancers' },
   { labelKey: 'topbar.nav.briefs', route: '/briefs' },
   { labelKey: 'topbar.nav.new_brief', route: '/briefs/new', cta: true },
+  { labelKey: 'topbar.nav.messages', route: '/messages' },
   { labelKey: 'topbar.nav.account', route: '/account' },
 ];
 
@@ -38,6 +39,7 @@ const FREELANCER_LINKS: readonly TopbarNavLink[] = [
   { labelKey: 'topbar.nav.briefs', route: '/briefs' },
   { labelKey: 'topbar.nav.profile', route: '/freelancer/profile/edit' },
   { labelKey: 'topbar.nav.portfolio', route: '/freelancer/portfolio' },
+  { labelKey: 'topbar.nav.messages', route: '/messages' },
   { labelKey: 'topbar.nav.account', route: '/account' },
 ];
 
@@ -80,7 +82,8 @@ export class CoreTopbarComponent {
     const url = this.currentUrl();
 
     if (url.startsWith('/login') || url.startsWith('/register') ||
-        url.startsWith('/auth/') || url.startsWith('/briefs/new')) {
+        url.startsWith('/auth/') || url.startsWith('/briefs/new') ||
+        url.startsWith('/onboarding')) {
       return 'auth';
     }
 

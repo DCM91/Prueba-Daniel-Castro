@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
@@ -23,7 +23,7 @@ interface Tip {
 @Component({
   selector: 'app-freelancer-home',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './freelancer-home.component.html',
   styleUrl: './freelancer-home.component.css',
@@ -77,6 +77,10 @@ export class FreelancerHomeComponent implements OnInit {
   }
 
   goToEdit(): void {
-    this.router.navigate(['/freelancer/profile/edit']);
+    if (this.currentUser()?.freelancer_profile?.onboarding_completed_at == null) {
+      void this.router.navigate(['/onboarding/welcome']);
+      return;
+    }
+    void this.router.navigate(['/freelancer/profile/edit']);
   }
 }

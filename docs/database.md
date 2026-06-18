@@ -94,15 +94,55 @@ Almacena credenciales y rol. Es la **única tabla** que toca el flujo de auth.
 
 **Modelo:** `App\Models\User` (`backend/app/Models/User.php`). Implementa `JWTSubject`, `Authenticatable`, `HasFactory`, `Notifiable`. Castea `password` a `hashed`, `email_verified_at` a `datetime`, `role` a `UserRole` y `oauth_provider` a `OAuthProvider` (nullable). Tiene helper `isFreelancer()`, `isClient()` e `isOAuthUser()`.
 
-### OAuth (Google / Facebook) — Fase 5.3
+### OAuth (Google / Facebook) — Fase 5.3 (actualizado en Fase 5.5.F)
 
-Estrategia de **auto-vinculación por email**:
+Estrategia de **vinculación N:M** mediante la tabla `user_oauth_identities`. Un user puede tener vinculadas varias identidades (Google + Facebook a la vez). Cada `(provider, provider_user_id)` es único en la tabla, así que una cuenta de Google solo puede estar vinculada a un único user de FrameMatch.
 
-1. **User nuevo**: `OAuthService::findOrCreateUser` crea el `User` con `role=client` (default), `password=null`, `email_verified_at=now()`, `avatar_url` del provider, `oauth_provider` y `oauth_id` rellenos.
-2. **User existente con mismo email**: si encuentra un user con ese email y el provider confirma email verificado, vincula `oauth_provider` + `oauth_id` al user existente. NO le cambia el `role` (mantiene lo que tenía). La fila de `freelancer_profiles` (si existe) se preserva.
-3. **El user completa el rol después** vía `POST /api/auth/oauth/complete-profile` si es nuevo (con `new_user=1` en el callback del backend).
+1. **User nuevo**: `OAuthIdentityService::findOrCreateUserFromSocialite` crea el `User` con `role=client` (default), `password=null`, `email_verified_at=now()`, `avatar_url` del provider, y crea una fila en `user_oauth_identities` con `provider` + `provider_user_id` + `access_token` (si viene en el payload).
+2. **User existente con mismo email**: si el email del provider ya está en `users` y el provider confirma email verificado, vincula la nueva identidad (`user_oauth_identities`) al user existente. NO le cambia el `role`. La fila de `freelancer_profiles` (si existe) se preserva.
+3. **User existente con identidad ya vinculada** (re-login): actualiza los tokens y el `last_used_at`. No crea duplicados gracias al `UNIQUE (provider, provider_user_id)`.
+4. **El user completa el rol después** vía `POST /api/auth/oauth/complete-profile` si es nuevo (con `new_user=1` en el callback del backend).
+
+Las columnas legacy `users.oauth_provider` y `users.oauth_id` se eliminaron en la migración `2026_06_18_194144_create_user_oauth_identities_table`. La misma migración copia los datos existentes de `users` a `user_oauth_identities` antes de borrar las columnas.
 
 > **Decisión de seguridad:** confiamos en que Google y Facebook solo exponen emails verificados a través de su OAuth. Si en el futuro añadimos un provider que pueda devolver `email_verified=false`, hay que cambiar la lógica de `OAuthController::callback` para leer ese flag y propagarlo.
+
+---
+
+## Tabla `user_oauth_identities` (Fase 5.5.F)
+
+Identidades OAuth vinculadas a un user. Permite N:M (un user puede tener varias identidades, y una identidad solo puede estar en un user).
+
+| Columna | Tipo | Null | Default | Notas |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | NO | AUTO_INCREMENT | PK |
+| `user_id` | BIGINT UNSIGNED | NO | — | FK a `users.id`, ON DELETE CASCADE. |
+| `provider` | VARCHAR(32) | NO | — | `google` \| `facebook` (enum `OAuthProvider`). |
+| `provider_user_id` | VARCHAR(191) | NO | — | ID que devuelve el provider (`sub` en Google, `id` en Facebook). |
+| `access_token` | TEXT | YES | NULL | Token de acceso devuelto por el provider (cifrado en reposo en producción). |
+| `refresh_token` | TEXT | YES | NULL | Token de refresco, si el provider lo entrega. |
+| `token_expires_at` | TIMESTAMP | YES | NULL | Fecha de expiración del `access_token`. |
+| `scopes` | JSON | YES | NULL | Scopes aprobados por el user en el provider. |
+| `provider_email` | VARCHAR(191) | YES | NULL | Email que devolvió el provider (puede diferir del email principal del user). |
+| `linked_at` | TIMESTAMP | NO | `CURRENT_TIMESTAMP` | Cuándo se vinculó por primera vez. |
+| `last_used_at` | TIMESTAMP | YES | NULL | Último login OAuth con esta identidad. |
+| `created_at` | TIMESTAMP | YES | NULL | |
+| `updated_at` | TIMESTAMP | YES | NULL | |
+
+**Índices**
+- `PRIMARY (id)`
+- `UNIQUE (provider, provider_user_id)` — una identidad de provider solo puede estar en un user.
+- `INDEX (user_id, provider)` — listado de identidades de un user.
+
+**Relaciones**
+- `belongsTo(User)` vía `user_id`.
+- `User::oauthIdentities()` (`hasMany`).
+
+**Endpoints que la consumen**
+- `GET /api/me/oauth-identities` (lista vinculadas).
+- `DELETE /api/me/oauth-identities/{provider}` (desvincula; abort 422 si es el único método de login y no tiene password).
+
+**Decisión de UX:** un user OAuth-only (sin password y al menos una identidad) ve un warning persistente en `/account` invitándolo a añadir una contraseña para no perder el acceso si el provider falla.
 
 ## Tabla `freelancer_profiles`
 
@@ -237,6 +277,39 @@ Items del portfolio de un freelancer. Cada item es una imagen subida a Cloudinar
 
 ---
 
+## Tabla `brief_attachments` (Fase 5.5.C)
+
+Imágenes de referencia que el cliente adjunta a un brief para que los freelancers entiendan mejor el proyecto. Cada adjunto es una imagen subida a Cloudinary y referenciada por su `public_id`.
+
+| Columna | Tipo | Null | Default | Notas |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | NO | AUTO_INCREMENT | PK |
+| `brief_id` | BIGINT UNSIGNED | NO | — | FK a `briefs.id`, ON DELETE CASCADE. |
+| `public_id` | VARCHAR(191) | NO | — | UNIQUE. `public_id` de Cloudinary. |
+| `url` | VARCHAR(500) | NO | — | URL original subida. |
+| `width` | INT UNSIGNED | YES | NULL | Ancho en píxeles. |
+| `height` | INT UNSIGNED | YES | NULL | Alto en píxeles. |
+| `format` | VARCHAR(16) | YES | NULL | `jpg`, `png`, `webp`, `gif`, `avif`. |
+| `bytes` | INT UNSIGNED | YES | NULL | Peso en bytes. |
+| `title` | VARCHAR(191) | YES | NULL | Título opcional. |
+| `position` | INT UNSIGNED | NO | `0` | Orden manual. Reasignado vía `PATCH /attachments/reorder`. |
+| `created_at` | TIMESTAMP | YES | NULL | |
+| `updated_at` | TIMESTAMP | YES | NULL | |
+
+**Índices**
+- `PRIMARY (id)`
+- `UNIQUE (public_id)` — un `public_id` solo se persiste una vez en toda la tabla.
+- `INDEX (brief_id, position)` — listado ordenado por `position` para un brief.
+
+**Relaciones**
+- `belongsTo(Brief)` vía `brief_id`.
+
+**Carpeta en Cloudinary:** `framematch/briefs/{brief_id}/` (validada en el backend contra la carpeta esperada antes de persistir el adjunto).
+
+**Límite:** máximo 10 adjuntos por brief (validado en `BriefController::attachImage`).
+
+---
+
 ## Tabla `proposals`
 
 Propuestas que los profesionales envían a un brief. La FK va contra `freelancer_profiles` (no contra `users`) para mantener la consistencia: si se borra el perfil, sus propuestas también.
@@ -263,6 +336,88 @@ Propuestas que los profesionales envían a un brief. La FK va contra `freelancer
 - `belongsTo(FreelancerProfile, 'freelancer_id')`.
 
 **Modelo:** `App\Models\Proposal`. Castea `price` a `decimal:2`; `status` a `ProposalStatus` enum.
+
+## Tabla `conversations` (Fase 6)
+
+Conversación 1:1 entre cliente y freelancer ligada a un brief. Se crea automáticamente cuando el cliente acepta una proposal (`ProposalController::updateStatus` delega en `ChatService::getOrCreateForBrief`).
+
+| Columna | Tipo | Null | Default | Notas |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | NO | AUTO_INCREMENT | PK |
+| `brief_id` | BIGINT UNSIGNED | NO | — | FK a `briefs.id`, **UNIQUE**. ON DELETE CASCADE. |
+| `client_id` | BIGINT UNSIGNED | NO | — | FK a `users.id`, ON DELETE CASCADE. |
+| `freelancer_id` | BIGINT UNSIGNED | NO | — | FK a `users.id`, ON DELETE CASCADE. |
+| `last_message_at` | TIMESTAMP | YES | NULL | Se actualiza al enviar un mensaje. Útil para ordenar la lista. |
+| `created_at` | TIMESTAMP | YES | NULL | |
+| `updated_at` | TIMESTAMP | YES | NULL | |
+
+**Índices**
+- `PRIMARY (id)`
+- `UNIQUE (brief_id)` — solo una conversación por brief.
+- `INDEX (client_id, last_message_at)` — listado rápido de las conversaciones de un cliente.
+- `INDEX (freelancer_id, last_message_at)` — idem para freelancers.
+
+**Reglas de negocio**
+- Solo se puede enviar mensajes si el user es `client_id` o `freelancer_id` (403 en otro caso).
+- La conversación se crea cuando el brief tiene una proposal aceptada; sin propuesta aceptada, el endpoint `POST /api/briefs/{id}/conversation` devuelve `409`.
+
+---
+
+## Tabla `messages` (Fase 6)
+
+Mensajes de una conversación.
+
+| Columna | Tipo | Null | Default | Notas |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | NO | AUTO_INCREMENT | PK |
+| `conversation_id` | BIGINT UNSIGNED | NO | — | FK a `conversations.id`, ON DELETE CASCADE. |
+| `sender_id` | BIGINT UNSIGNED | NO | — | FK a `users.id`, ON DELETE CASCADE. |
+| `body` | TEXT | NO | — | Texto del mensaje, 1-2000 chars. |
+| `read_at` | TIMESTAMP | YES | NULL | Se setea con `markRead` cuando el destinatario lo lee. |
+| `created_at` | TIMESTAMP | YES | NULL | |
+| `updated_at` | TIMESTAMP | YES | NULL | |
+
+**Índices**
+- `PRIMARY (id)`
+- `INDEX (conversation_id, created_at)` — listado por conversación ordenado por fecha.
+- `INDEX (conversation_id, read_at)` — consultas de mensajes no leídos (`unread_count`, `unread-count`).
+
+**Modelo:** `App\Models\Message`. `body` no se sanitiza más allá de la longitud; se renderiza en el cliente con `white-space: pre-wrap` y `word-break: break-word` para preservar saltos de línea.
+
+**Polling:** el frontend hace `GET /api/conversations/{id}/messages?since=<latest_at>` cada 5s para traer solo los mensajes nuevos. El endpoint está optimizado para esa query (índice por `(conversation_id, created_at)` + `where created_at > since`).
+
+## Tabla `reviews` (Fase 7)
+
+Reviews cruzadas entre cliente y freelancer tras completar un brief. Una fila por par `(brief, reviewer)` (constraint UNIQUE) — un user solo puede dejar una review por proyecto.
+
+| Columna | Tipo | Null | Default | Notas |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | NO | AUTO_INCREMENT | PK |
+| `brief_id` | BIGINT UNSIGNED | NO | — | FK a `briefs.id`, ON DELETE CASCADE. |
+| `reviewer_id` | BIGINT UNSIGNED | NO | — | FK a `users.id`, ON DELETE CASCADE. Quien deja la review. |
+| `reviewee_id` | BIGINT UNSIGNED | NO | — | FK a `users.id`, ON DELETE CASCADE. Quien la recibe. |
+| `rating` | TINYINT UNSIGNED | NO | — | 1-5 (validado en `StoreReviewRequest`). |
+| `comment` | TEXT | YES | NULL | Comentario libre, max 1000 chars. |
+| `created_at` | TIMESTAMP | YES | NULL | |
+| `updated_at` | TIMESTAMP | YES | NULL | |
+
+**Índices**
+- `PRIMARY (id)`
+- `UNIQUE (brief_id, reviewer_id)` — un user solo puede reseñar 1 vez cada proyecto.
+- `INDEX (reviewee_id, created_at)` — listado cronológico inverso de reviews recibidas (se usa en `GET /api/users/{id}/reviews`).
+
+**Reglas de negocio**
+- Solo se puede crear si el brief está en `completed` (`ReviewService::canReview`).
+- El reviewer debe ser participante del brief (cliente o freelancer de la conversación asociada).
+- El reviewee se resuelve automáticamente: si reviewer=cliente → reviewee=freelancer de la conversación, y viceversa.
+- El rating agregado (`AVG(rating)`, `COUNT(*)`) se calcula on-the-fly con `selectRaw` en `FreelancerCardResource`, `FreelancerDetailResource` y `ReviewService::aggregateForUser`. No se cachea (volumen bajo, queries < 1ms).
+
+**Endpoints que la consumen**
+- `POST /api/briefs/{id}/reviews` — crear.
+- `GET /api/briefs/{id}/reviews` — listar las 2 direcciones (cliente→freelancer y freelancer→cliente).
+- `GET /api/users/{id}/reviews` — públicas, paginadas.
+- `GET /api/users/{id}/rating` — público, devuelve agregado.
+- `PATCH /api/briefs/{id}/complete` — precondición para poder reseñar.
 
 ## Tabla `freelancer_skill` (pivot N:M)
 

@@ -1,0 +1,88 @@
+<section class="linked-accounts" data-test="linked-accounts">
+  <header class="linked-accounts__header">
+    <h3 class="linked-accounts__title">{{ 'account.section_oauth' | t }}</h3>
+    <p class="linked-accounts__hint">{{ 'account.section_oauth_hint' | t }}</p>
+  </header>
+
+  @if (isOAuthOnly()) {
+    <p class="linked-accounts__warning" role="alert">
+      {{ 'account.oauth_only_warning' | t }}
+    </p>
+  }
+
+  @if (errorMessage(); as msg) {
+    <p class="linked-accounts__status linked-accounts__status--error" role="alert">
+      {{ msg | t }}
+    </p>
+  }
+  @if (successMessage(); as msg) {
+    <p class="linked-accounts__status linked-accounts__status--success" role="status">
+      {{ msg | t }}
+    </p>
+  }
+
+  @if (loading()) {
+    <p class="linked-accounts__loading">{{ 'account.oauth_loading' | t }}</p>
+  } @else {
+    <ul class="linked-accounts__list" role="list">
+      @for (slot of slots(); track slot.provider) {
+        <li
+          class="linked-accounts__row"
+          [attr.data-provider]="slot.provider"
+          [attr.data-test]="'linked-account-' + slot.provider"
+        >
+          <div class="linked-accounts__provider">
+            <span class="linked-accounts__provider-label">{{ providerLabel(slot.provider) }}</span>
+            @if (slot.identity; as identity) {
+              <span class="linked-accounts__badge linked-accounts__badge--linked">
+                {{ 'account.oauth_linked_on' | t : { date: formatDate(identity.linked_at) ?? '—' } }}
+              </span>
+            } @else {
+              <span class="linked-accounts__badge linked-accounts__badge--unlinked">
+                {{ 'account.oauth_no_accounts' | t }}
+              </span>
+            }
+          </div>
+          <div class="linked-accounts__meta">
+          @if (slot.identity; as identity) {
+            @if (identity.provider_email) {
+              <p class="linked-accounts__email">
+                {{ 'account.oauth_provider_email' | t : { provider: providerLabel(slot.provider), email: identity.provider_email } }}
+              </p>
+            }
+            @if (identity.last_used_at; as lastUsed) {
+              <p class="linked-accounts__hint-row">
+                {{ 'account.oauth_last_used' | t : { date: formatDate(lastUsed) ?? '—' } }}
+              </p>
+            } @else {
+              <p class="linked-accounts__hint-row">
+                {{ 'account.oauth_never_used' | t }}
+              </p>
+            }
+          }
+          </div>
+          <div class="linked-accounts__actions">
+            @if (slot.identity) {
+              <button
+                type="button"
+                class="linked-accounts__btn linked-accounts__btn--danger"
+                [disabled]="unlinkingProvider() === slot.provider"
+                (click)="unlink(slot)"
+              >
+                {{ 'account.oauth_unlink' | t }}
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="linked-accounts__btn linked-accounts__btn--primary"
+                (click)="linkProvider(slot.provider)"
+              >
+                {{ ('account.oauth_link_' + slot.provider) | t }}
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

@@ -5,13 +5,15 @@ import { BriefsService } from '../../../core/services/briefs.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
-import { Brief, Proposal } from '../../../core/types/auth.types';
+import { Brief, BriefAttachment, Proposal } from '../../../core/types/auth.types';
 import { ProposalFormComponent } from './proposal-form.component';
+import { BriefAttachmentUploaderComponent } from '../brief-attachment-uploader/brief-attachment-uploader.component';
+import { ReviewsSectionComponent } from '../../reviews/reviews-section/reviews-section.component';
 
 @Component({
   selector: 'app-brief-detail',
   standalone: true,
-  imports: [TranslatePipe, ProposalFormComponent],
+  imports: [TranslatePipe, ProposalFormComponent, BriefAttachmentUploaderComponent, ReviewsSectionComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './brief-detail.component.html',
   styleUrl: './brief-detail.component.css',
@@ -26,6 +28,7 @@ export class BriefDetailComponent implements OnInit {
   readonly brief = signal<Brief | null>(null);
   readonly proposalsList = signal<Proposal[]>([]);
   readonly showProposalForm = signal<boolean>(false);
+  readonly attachments = signal<BriefAttachment[]>([]);
 
   readonly currentUser = this.auth.currentUser;
 
@@ -52,6 +55,7 @@ export class BriefDetailComponent implements OnInit {
     this.briefs.getById(id).subscribe({
       next: (b) => {
         this.brief.set(b);
+        this.attachments.set(b.attachments ?? []);
         this.state.set('ready');
         if (this.isOwner()) {
           this.proposals.listForBrief(id).subscribe({
@@ -66,5 +70,32 @@ export class BriefDetailComponent implements OnInit {
 
   toggleForm(): void {
     this.showProposalForm.update((v) => !v);
+  }
+
+  updateProposalStatus(proposal: Proposal, status: 'accepted' | 'rejected'): void {
+    const brief = this.brief();
+    if (brief === null) return;
+
+    this.proposals.updateStatus(brief.id, proposal.id, status).subscribe({
+      next: ({ proposal: updatedProposal, brief: updatedBrief }) => {
+        this.proposalsList.update((list) =>
+          list.map((p) => (p.id === updatedProposal.id ? updatedProposal : p)),
+        );
+        this.brief.set({ ...brief, status: updatedBrief.status as Brief['status'] });
+      },
+    });
+  }
+
+  onAttachmentsChange(updated: BriefAttachment[]): void {
+    this.attachments.set(updated);
+    const b = this.brief();
+    if (b !== null) {
+      this.brief.set({ ...b, attachments: updated });
+    }
+  }
+
+  freelancerIdFor(): number | null {
+    const accepted = this.proposalsList().find((p) => p.status === 'accepted');
+    return accepted?.freelancer?.user_id ?? null;
   }
 }

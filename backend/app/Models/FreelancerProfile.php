@@ -23,14 +23,16 @@ final class FreelancerProfile extends Model
         'is_available',
         'cover_url',
         'cover_public_id',
+        'onboarding_completed_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'hourly_rate'       => 'decimal:2',
-            'price_per_project' => 'decimal:2',
-            'is_available'      => 'boolean',
+            'hourly_rate'             => 'decimal:2',
+            'price_per_project'       => 'decimal:2',
+            'is_available'            => 'boolean',
+            'onboarding_completed_at' => 'datetime',
         ];
     }
 

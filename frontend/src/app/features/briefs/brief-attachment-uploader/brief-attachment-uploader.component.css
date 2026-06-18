@@ -1,0 +1,293 @@
+.brief-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.brief-attachments__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.brief-attachments__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.brief-attachments__help {
+  margin: 0;
+  color: #a1a1aa;
+  font-size: 0.875rem;
+}
+
+.brief-attachments__dropzone {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1rem;
+  border: 2px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.brief-attachments__dropzone:hover,
+.brief-attachments__dropzone:focus-visible,
+.brief-attachments__dropzone[data-drag-over='true'] {
+  border-color: rgba(124, 58, 237, 0.6);
+  background: rgba(124, 58, 237, 0.06);
+  outline: none;
+}
+
+.brief-attachments__dropzone[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.brief-attachments__dropzone:focus-visible {
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.18);
+}
+
+.brief-attachments__dropzone-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(103, 232, 249, 0.1);
+  color: #67e8f9;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.brief-attachments__dropzone-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  color: #fff;
+}
+
+.brief-attachments__counter {
+  font-size: 0.75rem;
+  color: #a1a1aa;
+}
+
+.brief-attachments__status {
+  margin: 0;
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.brief-attachments__status--error {
+  background: rgba(248, 113, 113, 0.08);
+  color: #f87171;
+}
+
+.brief-attachments__status--info {
+  background: rgba(103, 232, 249, 0.08);
+  color: #67e8f9;
+}
+
+.brief-attachments__empty {
+  margin: 0;
+  color: #a1a1aa;
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.brief-attachments__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.brief-attachments__item {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.brief-attachments__thumb {
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.brief-attachments__thumb--queue {
+  opacity: 0.7;
+}
+
+.brief-attachments__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.brief-attachments__caption {
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brief-attachments__caption--muted {
+  color: #a1a1aa;
+  font-weight: 400;
+}
+
+.brief-attachments__hint {
+  font-size: 0.75rem;
+  color: #71717a;
+}
+
+.brief-attachments__actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.brief-attachments__btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.brief-attachments__btn:hover:not(:disabled),
+.brief-attachments__btn:focus-visible {
+  border-color: rgba(124, 58, 237, 0.6);
+  background: rgba(124, 58, 237, 0.1);
+  outline: none;
+}
+
+.brief-attachments__btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.3);
+}
+
+.brief-attachments__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.brief-attachments__btn--danger:hover:not(:disabled),
+.brief-attachments__btn--danger:focus-visible {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.brief-attachments__queue {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.brief-attachments__queue-item {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border: 1px dashed rgba(103, 232, 249, 0.3);
+  border-radius: 8px;
+  background: rgba(103, 232, 249, 0.04);
+}
+
+.brief-attachments__queue-status {
+  color: #67e8f9;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 720px) {
+  .brief-attachments__item {
+    grid-template-columns: 60px 1fr;
+    grid-template-areas: 'thumb meta' 'actions actions';
+  }
+
+  .brief-attachments__item > .brief-attachments__thumb {
+    grid-area: thumb;
+    width: 60px;
+    height: 60px;
+  }
+
+  .brief-attachments__item > .brief-attachments__meta {
+    grid-area: meta;
+  }
+
+  .brief-attachments__item > .brief-attachments__actions {
+    grid-area: actions;
+    justify-content: flex-end;
+  }
+}
+
+.brief-attachments__title-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.brief-attachments__title-field label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #d4d4d8;
+  font-weight: 500;
+}
+.brief-attachments__title-field input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f4f4f5;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+.brief-attachments__title-field input:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+}
+.brief-attachments__error {
+  color: #f87171;
+  font-size: 12px;
+  font-weight: 500;
+}

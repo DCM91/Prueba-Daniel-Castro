@@ -29,6 +29,9 @@ final class BriefResource extends JsonResource
                 'id'    => $this->client->id,
                 'name'  => $this->client->name,
             ]),
+            'attachments' => $this->whenLoaded('attachments', fn () =>
+                BriefAttachmentResource::collection($this->attachments)->resolve()
+            ),
         ];
     }
 }

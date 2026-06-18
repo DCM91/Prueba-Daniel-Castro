@@ -47,7 +47,36 @@
               </section>
             }
 
+            @if (attachments().length > 0) {
+              <section class="brief-attachments-preview" data-test="brief-attachments-preview">
+                <h2>{{ 'brief_attachments.section_title' | t }}</h2>
+                <ul class="brief-attachments-preview__grid">
+                  @for (att of attachments(); track att.id; let i = $index) {
+                    <li>
+                      <img
+                        [src]="att.url || att.urls.card"
+                        [alt]="'brief_attachments.image_alt' | t : { n: i + 1 }"
+                        loading="lazy" />
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+
             @if (isOwner()) {
+              <app-brief-attachment-uploader
+                [briefId]="b.id"
+                [initialAttachments]="attachments()"
+                (attachmentChange)="onAttachmentsChange($event)" />
+            }
+
+            @if (isOwner()) {
+              <app-reviews-section
+                [briefId]="b.id"
+                [briefStatus]="b.status"
+                [briefClientId]="b.client_id"
+                [briefFreelancerId]="freelancerIdFor()"
+              />
               <section class="brief-proposals">
                 <h2>{{ 'briefs.detail.proposals_title' | t : { count: proposalsList().length } }}</h2>
                 @if (proposalsList().length === 0) {
@@ -59,8 +88,27 @@
                         <header>
                           <strong>{{ p.freelancer?.display_name ?? ('briefs.detail.freelancer_fallback' | t) }}</strong>
                           <span class="proposal-price">{{ p.price }}€</span>
+                          <span class="proposal-status" [attr.data-status]="p.status">
+                            {{ ('briefs.proposals.status_' + p.status) | t }}
+                          </span>
                         </header>
                         <p>{{ p.message }}</p>
+                        @if (p.status === 'pending') {
+                          <div class="proposal-actions">
+                            <button
+                              type="button"
+                              class="btn btn--primary"
+                              (click)="updateProposalStatus(p, 'accepted')">
+                              {{ 'briefs.proposals.accept' | t }}
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn--ghost"
+                              (click)="updateProposalStatus(p, 'rejected')">
+                              {{ 'briefs.proposals.reject' | t }}
+                            </button>
+                          </div>
+                        }
                       </li>
                     }
                   </ul>
@@ -77,6 +125,13 @@
                 <app-proposal-form [briefId]="b.id" (submitted)="showProposalForm.set(false); load(b.id)" />
               }
             }
+
+            <app-reviews-section
+              [briefId]="b.id"
+              [briefStatus]="b.status"
+              [briefClientId]="b.client_id"
+              [briefFreelancerId]="freelancerIdFor()"
+            />
           </article>
         }
       }

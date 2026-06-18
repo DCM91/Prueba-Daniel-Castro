@@ -8,8 +8,10 @@ use App\Enums\OAuthProvider;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\CompleteOAuthProfileRequest;
+use App\Http\Resources\OAuthIdentityResource;
 use App\Models\FreelancerProfile;
 use App\Models\User;
+use App\Services\OAuthIdentityService;
 use App\Services\OAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -22,9 +24,12 @@ use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse
 final class OAuthController extends Controller
 {
     private const STATE_SESSION_KEY = 'oauth_state';
+    private const LINK_INTENT_KEY    = 'oauth_link_intent';
 
-    public function __construct(private readonly OAuthService $oauthService)
-    {
+    public function __construct(
+        private readonly OAuthService $oauthService,
+        private readonly OAuthIdentityService $identityService,
+    ) {
     }
 
     public function redirect(Request $request, string $provider): SymfonyRedirectResponse
@@ -33,6 +38,13 @@ final class OAuthController extends Controller
 
         $state = Str::random(40);
         $request->session()->put(self::STATE_SESSION_KEY . '.' . $provider, $state);
+
+        if ($request->boolean('link') && Auth::guard('api')->check()) {
+            $request->session()->put(
+                self::LINK_INTENT_KEY . '.' . $provider,
+                Auth::guard('api')->id(),
+            );
+        }
 
         return Socialite::driver($provider)
             ->stateless()
@@ -54,27 +66,20 @@ final class OAuthController extends Controller
 
         $socialiteUser = Socialite::driver($provider)->stateless()->user();
 
-        $email = $socialiteUser->getEmail();
-        if (! is_string($email) || $email === '') {
-            abort(422, 'El proveedor no devolvió un email.');
+        $linkUserId = $request->session()->pull(self::LINK_INTENT_KEY . '.' . $provider);
+        if (is_int($linkUserId) || (is_string($linkUserId) && ctype_digit($linkUserId))) {
+            return $this->completeLinking($providerEnum, $socialiteUser, (int) $linkUserId);
         }
 
-        $oauthId = (string) $socialiteUser->getId();
-        $name    = (string) ($socialiteUser->getName() ?: $socialiteUser->getNickname() ?: 'Usuario');
-        $avatar  = method_exists($socialiteUser, 'getAvatar')
-            ? $socialiteUser->getAvatar()
-            : null;
-
-        // Google y Facebook solo exponen emails verificados a través de su OAuth.
-        // Si en el futuro añadimos un provider que devuelva `email_verified=false`,
-        // se puede refactorizar para leer el flag del payload.
-        $emailVerified = true;
+        $email = $socialiteUser->getEmail();
+        $name  = (string) ($socialiteUser->getName() ?: $socialiteUser->getNickname() ?: 'Usuario');
+        $avatar = method_exists($socialiteUser, 'getAvatar') ? $socialiteUser->getAvatar() : null;
 
         [$user, $isNew] = $this->oauthService->findOrCreateUser(
             provider: $providerEnum,
-            oauthId: $oauthId,
-            email: $email,
-            emailVerified: $emailVerified,
+            oauthId: (string) $socialiteUser->getId(),
+            email: is_string($email) ? $email : '',
+            emailVerified: true,
             name: $name,
             avatarUrl: is_string($avatar) ? $avatar : null,
         );
@@ -110,7 +115,7 @@ final class OAuthController extends Controller
             FreelancerProfile::create(['user_id' => $user->id]);
         }
 
-        $user->load('freelancerProfile.skills');
+        $user->load(['freelancerProfile.skills', 'oauthIdentities']);
 
         $token = Auth::guard('api')->login($user);
         $ttl   = Auth::guard('api')->factory()->getTTL() * 60;
@@ -123,6 +128,88 @@ final class OAuthController extends Controller
                 'expires_in'   => $ttl,
             ],
         ], 200);
+    }
+
+    public function listIdentities(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::guard('api')->user();
+        $identities = $user->oauthIdentities()
+            ->orderBy('provider')
+            ->get();
+
+        return response()->json([
+            'data' => OAuthIdentityResource::collection($identities)->resolve(),
+        ]);
+    }
+
+    public function unlinkIdentity(Request $request, string $provider): JsonResponse
+    {
+        $this->ensureValidProvider($provider);
+        $providerEnum = OAuthProvider::from($provider);
+
+        /** @var User $user */
+        $user = Auth::guard('api')->user();
+        $removed = $this->identityService->unlinkProvider($user, $providerEnum);
+
+        if (! $removed) {
+            return response()->json([
+                'message' => 'No tienes esa cuenta vinculada.',
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'Cuenta desvinculada.',
+        ]);
+    }
+
+    private function completeLinking(OAuthProvider $provider, $socialite, int $userId): RedirectResponse
+    {
+        /** @var User|null $user */
+        $user = User::find($userId);
+        if ($user === null) {
+            abort(401, 'La sesión de vinculación ha caducado.');
+        }
+
+        try {
+            $this->identityService->linkIdentityToUser(
+                $user,
+                $provider,
+                (string) $socialite->getId(),
+                $socialite,
+                is_string($socialite->getEmail()) ? $socialite->getEmail() : null,
+                method_exists($socialite, 'getAvatar') ? $socialite->getAvatar() : null,
+            );
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $frontendUrl = rtrim((string) env('FRONTEND_URL', 'http://localhost:4200'), '/');
+            $separator   = str_contains($frontendUrl, '?') ? '&' : '?';
+            return redirect()->to(
+                $frontendUrl
+                . '/account'
+                . $separator
+                . http_build_query([
+                    'oauth_error' => $e->getMessage(),
+                    'provider'    => $provider->value,
+                ])
+            );
+        }
+
+        $token = Auth::guard('api')->login($user);
+        $ttl   = Auth::guard('api')->factory()->getTTL() * 60;
+
+        $frontendUrl = rtrim((string) env('FRONTEND_URL', 'http://localhost:4200'), '/');
+        $separator   = str_contains($frontendUrl, '?') ? '&' : '?';
+
+        return redirect()->to(
+            $frontendUrl
+            . '/account'
+            . $separator
+            . http_build_query([
+                'token'           => $token,
+                'expires_in'      => $ttl,
+                'oauth_linked'    => $provider->value,
+            ])
+        );
     }
 
     private function ensureValidProvider(string $provider): void

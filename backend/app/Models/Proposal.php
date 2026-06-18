@@ -38,4 +38,16 @@ final class Proposal extends Model
     {
         return $this->belongsTo(FreelancerProfile::class, 'freelancer_id');
     }
+
+    public function freelancerUser(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            User::class,
+            FreelancerProfile::class,
+            'id',
+            'id',
+            'freelancer_id',
+            'user_id',
+        );
+    }
 }

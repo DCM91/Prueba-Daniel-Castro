@@ -212,6 +212,35 @@ final class CloudinaryService implements CloudinaryServiceInterface
         ];
     }
 
+    public function briefUrl(?string $publicId, string $variant = 'card'): ?string
+    {
+        if ($publicId === null) {
+            return null;
+        }
+
+        $t = match ($variant) {
+            'thumb' => 'w_240,h_180,c_fill,q_auto,f_auto',
+            'card'  => 'w_600,h_450,c_fill,q_auto,f_auto',
+            'full'  => 'w_1600,c_limit,q_auto,f_auto',
+            default => 'w_600,h_450,c_fill,q_auto,f_auto',
+        };
+
+        return $this->buildUrl($publicId, $t);
+    }
+
+    public function briefUrls(?string $publicId): ?array
+    {
+        if ($publicId === null) {
+            return null;
+        }
+
+        return [
+            'thumb' => $this->briefUrl($publicId, 'thumb'),
+            'card'  => $this->briefUrl($publicId, 'card'),
+            'full'  => $this->briefUrl($publicId, 'full'),
+        ];
+    }
+
     public function presetFor(string $type): string
     {
         return (string) ($this->presets[$type] ?? '');

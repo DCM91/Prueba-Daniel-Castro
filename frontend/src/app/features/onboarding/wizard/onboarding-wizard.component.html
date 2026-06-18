@@ -1,0 +1,227 @@
+<div class="page">
+  <main class="main">
+    @if (stepIndex() > 0) {
+      <div class="stepper">
+        @for (s of STEPS; track s; let i = $index) {
+          @if (i > 0) { <span class="step-sep"></span> }
+          @if (i >= 1 && i <= 6) {
+            <span class="step" [class.step--active]="step() === s" [class.step--done]="i < stepIndex()">
+              <span class="step-num">{{ i }}</span>
+              <span>{{ stepLabel(s) | t }}</span>
+            </span>
+          }
+        }
+      </div>
+
+      <div class="progress">
+        <div class="progress-bar" [style.width.%]="progressPct()"></div>
+      </div>
+    }
+
+    @if (errorMessage(); as msg) {
+      <div class="error-banner">{{ msg | t }}</div>
+    }
+
+    @switch (step()) {
+      @case ('welcome') {
+        <div class="card welcome">
+          <div class="welcome__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 2l1.6 6.4L20 10l-6.4 1.6L12 18l-1.6-6.4L4 10l6.4-1.6L12 2z"/><path d="M19 16l.8 3.2L23 20l-3.2.8L19 24l-.8-3.2L15 20l3.2-.8L19 16z"/></svg>
+          </div>
+          <h1 class="welcome__title">{{ 'onboarding.welcome.title' | t }}</h1>
+          <p class="welcome__body">{{ 'onboarding.welcome.body' | t }}</p>
+          <button class="btn btn--primary" (click)="start()">{{ 'onboarding.welcome.cta' | t }}</button>
+        </div>
+      }
+
+      @case ('datos') {
+        <div class="card">
+          <h2>{{ 'onboarding.step.datos.title' | t }}</h2>
+          <p class="lead">{{ 'onboarding.step.datos.lead' | t }}</p>
+
+          <form [formGroup]="datosForm" (ngSubmit)="saveDatos()">
+            <div class="field">
+              <label for="datos-name">{{ 'account.label_name' | t }}</label>
+              <input id="datos-name" type="text" formControlName="name" autocomplete="name" />
+              @if (errorForDatos('name'); as msg) { <span class="err">{{ msg | t }}</span> }
+            </div>
+
+            <div class="field">
+              <label for="datos-email">{{ 'account.label_email' | t }}</label>
+              <input id="datos-email" type="email" formControlName="email" autocomplete="email" />
+              @if (errorForDatos('email'); as msg) { <span class="err">{{ msg | t }}</span> }
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="datos-phone">{{ 'account.label_phone' | t }}</label>
+                <input id="datos-phone" type="tel" formControlName="phone" autocomplete="tel" maxlength="30" />
+                @if (errorForDatos('phone'); as msg) { <span class="err">{{ msg | t }}</span> }
+              </div>
+              <div class="field">
+                <label for="datos-city">{{ 'account.label_city' | t }}</label>
+                <input id="datos-city" type="text" formControlName="city" maxlength="80" />
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="button" class="btn btn--ghost" (click)="goPrev()">{{ 'common.back' | t }}</button>
+              <button type="submit" class="btn btn--primary" [disabled]="submitting()">
+                {{ (submitting() ? 'onboarding.saving' : 'onboarding.next') | t }}
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      @case ('avatar') {
+        <div class="card">
+          <h2>{{ 'onboarding.step.avatar.title' | t }}</h2>
+          <p class="lead">{{ 'onboarding.step.avatar.lead' | t }}</p>
+
+          <app-avatar-uploader
+            [currentAvatarUrl]="currentUser()?.avatar_url ?? null"
+            [currentAvatarUrls]="currentUser()?.avatar_urls ?? null"
+            [userName]="currentUser()?.name ?? ''"
+            (avatarUpdated)="onAvatarUpdated($event)"
+          />
+
+          <div class="actions">
+            <button type="button" class="btn btn--ghost" (click)="goPrev()">{{ 'common.back' | t }}</button>
+            <button type="button" class="btn btn--primary" (click)="onboarding.goNext()">{{ 'onboarding.next' | t }}</button>
+          </div>
+        </div>
+      }
+
+      @case ('bio-tarifa') {
+        <div class="card">
+          <h2>{{ 'onboarding.step.bio-tarifa.title' | t }}</h2>
+          <p class="lead">{{ 'onboarding.step.bio-tarifa.lead' | t }}</p>
+
+          <form [formGroup]="bioForm" (ngSubmit)="saveBio()">
+            <div class="field">
+              <label for="bio-display-name">{{ 'profile_editor.label_display_name' | t }}</label>
+              <input id="bio-display-name" type="text" formControlName="display_name" maxlength="100" />
+            </div>
+
+            <div class="field">
+              <label for="bio-bio">{{ 'profile_editor.label_bio' | t }}</label>
+              <textarea id="bio-bio" formControlName="bio" maxlength="1000"></textarea>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="bio-hourly">{{ 'profile_editor.label_hourly_rate' | t }}</label>
+                <input id="bio-hourly" type="number" formControlName="hourly_rate" min="0" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="bio-project">{{ 'profile_editor.label_price_per_project' | t }}</label>
+                <input id="bio-project" type="number" formControlName="price_per_project" min="0" step="0.01" />
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="button" class="btn btn--ghost" (click)="goPrev()">{{ 'common.back' | t }}</button>
+              <button type="submit" class="btn btn--primary" [disabled]="submitting()">
+                {{ (submitting() ? 'onboarding.saving' : 'onboarding.next') | t }}
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      @case ('skills') {
+        <div class="card">
+          <h2>{{ 'onboarding.step.skills.title' | t }}</h2>
+          <p class="lead">{{ 'onboarding.step.skills.lead' | t }}</p>
+
+          <div class="chip-row">
+            @for (skill of allSkills(); track skill.id) {
+              <button
+                type="button"
+                class="chip"
+                [class.chip--selected]="isSelected(skill.id)"
+                (click)="toggleSkill(skill.id)">
+                {{ skill.name }}
+              </button>
+            }
+          </div>
+
+          @if (selectedSkills().length > 0) {
+            <h3 class="section-title">{{ 'onboarding.step.skills.levels_title' | t }}</h3>
+            @for (skill of selectedSkills(); track skill.id) {
+              <div class="skill-card">
+                <h4>{{ skill.name }}</h4>
+                <div class="skill-meta">
+                  <div>
+                    <label [attr.for]="'skill-level-' + skill.id">{{ 'profile_editor.label_skill_level' | t }}</label>
+                    <select [id]="'skill-level-' + skill.id" [value]="getSkillLevel(skill.id)" (change)="setSkillLevel(skill.id, $any($event.target).value)">
+                      <option value="junior">{{ 'skill_levels.junior' | t }}</option>
+                      <option value="mid">{{ 'skill_levels.mid' | t }}</option>
+                      <option value="senior">{{ 'skill_levels.senior' | t }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label [attr.for]="'skill-years-' + skill.id">{{ 'profile_editor.label_skill_years' | t }}</label>
+                    <input
+                      [id]="'skill-years-' + skill.id"
+                      type="number"
+                      min="0"
+                      max="50"
+                      [value]="getSkillYears(skill.id)"
+                      (change)="setSkillYears(skill.id, $any($event.target).valueAsNumber)" />
+                  </div>
+                </div>
+              </div>
+            }
+          }
+
+          <div class="actions">
+            <button type="button" class="btn btn--ghost" (click)="goPrev()">{{ 'common.back' | t }}</button>
+            <button type="button" class="btn btn--primary" (click)="saveSkills()" [disabled]="submitting()">
+              {{ (submitting() ? 'onboarding.saving' : 'onboarding.next') | t }}
+            </button>
+          </div>
+        </div>
+      }
+
+      @case ('cover-portfolio') {
+        <div class="card">
+          <h2>{{ 'onboarding.step.cover-portfolio.title' | t }}</h2>
+          <p class="lead">{{ 'onboarding.step.cover-portfolio.lead' | t }}</p>
+
+          <h3 class="section-title section-title--first">{{ 'cover.section_title' | t }}</h3>
+          <app-cover-uploader
+            [currentCoverUrl]="currentUser()?.freelancer_profile?.cover_url ?? null"
+            [currentCoverUrls]="currentUser()?.freelancer_profile?.cover_urls ?? null"
+            (coverUpdated)="onCoverUpdated()"
+          />
+
+          <h3 class="section-title section-title--spaced">{{ 'portfolio.section_title' | t }}</h3>
+          <a routerLink="/freelancer/portfolio" class="btn btn--ghost" target="_blank">
+            {{ 'onboarding.step.cover-portfolio.manage_portfolio' | t }}
+          </a>
+          <p class="lead hint">{{ 'onboarding.step.cover-portfolio.optional_hint' | t }}</p>
+
+          <div class="actions">
+            <button type="button" class="btn btn--ghost" (click)="goPrev()">{{ 'common.back' | t }}</button>
+            <div class="actions--inline">
+              <button type="button" class="btn btn--link" (click)="skipCover()">{{ 'onboarding.skip' | t }}</button>
+              <button type="button" class="btn btn--primary" (click)="onboarding.goNext()">{{ 'onboarding.next' | t }}</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      @case ('done') {
+        <div class="card welcome">
+          <h1>{{ 'onboarding.step.done.title' | t }}</h1>
+          <p>{{ 'onboarding.step.done.body' | t }}</p>
+          <button class="btn btn--primary" (click)="finish()" [disabled]="submitting()">
+            {{ (submitting() ? 'onboarding.saving' : 'onboarding.done.cta') | t }}
+          </button>
+        </div>
+      }
+    }
+  </main>
+</div>
