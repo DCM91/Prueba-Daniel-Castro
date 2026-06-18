@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\FreelancerCoverController;
 use App\Http\Controllers\Api\FreelancerPortfolioController;
 use App\Http\Controllers\Api\FreelancerProfileController;
 use App\Http\Controllers\Api\OAuthController;
+use App\Http\Controllers\Api\ProfileCompletionController;
 use App\Http\Controllers\Api\ProposalController;
 use App\Http\Controllers\Api\SkillController;
 use App\Http\Controllers\Api\UserAccountController;
@@ -49,6 +50,8 @@ Route::middleware('auth:api')->group(function () {
         ->middleware('throttle:30,1');
 
     Route::put('/me', [UserAccountController::class, 'update']);
+
+    Route::get('/me/completion', [ProfileCompletionController::class, 'show']);
 });
 
 Route::prefix('auth')->group(function () {

@@ -177,7 +177,10 @@
         "city": "city",
         "hourly_rate": "hourly rate",
         "price_per_project": "price per project",
-        "skills": "at least one skill"
+        "skills": "at least one skill",
+        "avatar": "profile photo",
+        "cover": "cover image",
+        "portfolio": "portfolio (at least 3)"
       },
       "greeting": "Hi, {{name}}",
       "lead": "Here's what's happening with your profile today.",

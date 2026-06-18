@@ -177,7 +177,10 @@
         "city": "ciudad",
         "hourly_rate": "tarifa por hora",
         "price_per_project": "precio por proyecto",
-        "skills": "al menos una skill"
+        "skills": "al menos una skill",
+        "avatar": "foto de perfil",
+        "cover": "imagen de portada",
+        "portfolio": "portfolio (al menos 3)"
       },
       "greeting": "Hola, {{name}}",
       "lead": "Esto es lo que está pasando con tu perfil hoy.",

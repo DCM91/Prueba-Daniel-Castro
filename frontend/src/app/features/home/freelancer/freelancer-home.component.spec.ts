@@ -4,12 +4,14 @@ import { provideRouter } from '@angular/router';
 
 import { FreelancerHomeComponent } from './freelancer-home.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { ProfileCompletionService } from '../../../core/services/profile-completion.service';
 import { provideLanguageServiceMock } from '../../../core/testing/language-service.mock';
 import { FreelancerProfile, User } from '../../../core/types/auth.types';
 
 describe('FreelancerHomeComponent', () => {
   let component: FreelancerHomeComponent;
   let fixture: ComponentFixture<FreelancerHomeComponent>;
+  let mockCompletion: { pct: ReturnType<typeof signal<number | null>>; missing: ReturnType<typeof signal<string[] | null>> };
 
   const makeUser = (profile: FreelancerProfile | null = null): User => ({
     id: 1,
@@ -90,8 +92,12 @@ describe('FreelancerHomeComponent', () => {
     });
   };
 
-  const configure = (user: User, lang: 'es' | 'en' = 'es') => {
+  const configure = (user: User, lang: 'es' | 'en' = 'es', completion?: { pct: number; missing: string[] }) => {
     const userSignal = signal<User | null>(user);
+    mockCompletion = {
+      pct: signal<number | null>(completion?.pct ?? null),
+      missing: signal<string[] | null>(completion?.missing ?? null),
+    };
     TestBed.configureTestingModule({
       imports: [FreelancerHomeComponent],
       providers: [
@@ -103,6 +109,17 @@ describe('FreelancerHomeComponent', () => {
             logout: () => ({ subscribe: () => undefined }),
           },
         },
+        {
+          provide: ProfileCompletionService,
+          useValue: {
+            pct: mockCompletion.pct,
+            missing: mockCompletion.missing,
+            loading: signal<boolean>(false),
+            isComplete: signal<boolean>(false),
+            refresh: () => Promise.resolve(),
+            reset: () => undefined,
+          },
+        },
         langMock(lang, {
           profile: 'perfil',
           display_name: 'nombre artístico',
@@ -111,6 +128,9 @@ describe('FreelancerHomeComponent', () => {
           hourly_rate: 'tarifa por hora',
           price_per_project: 'precio por proyecto',
           skills: 'al menos una skill',
+          avatar: 'foto de perfil',
+          cover: 'imagen de portada',
+          portfolio: 'portfolio (al menos 3)',
         }),
       ],
     }).compileComponents();
@@ -121,50 +141,43 @@ describe('FreelancerHomeComponent', () => {
   };
 
   it('greets the user with their name', () => {
-    configure(makeUser(makeEmptyProfile()));
+    configure(makeUser(makeEmptyProfile()), 'es', { pct: 5, missing: ['display_name', 'bio', 'city', 'hourly_rate', 'price_per_project', 'skills', 'avatar', 'cover', 'portfolio'] });
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Hola, Luis Foto');
   });
 
   describe('profileCompletion', () => {
-    it('returns 5 when only is_available is true (the auto-true at registration)', () => {
-      configure(makeUser(makeEmptyProfile()));
+    it('reflects the service pct for a freshly-registered freelancer (5%)', () => {
+      configure(makeUser(makeEmptyProfile()), 'es', { pct: 5, missing: ['skills', 'avatar', 'cover', 'portfolio'] });
       expect(component.profileCompletion()).toBe(5);
     });
 
-    it('returns 100 when every field is filled and at least one skill is present', () => {
-      configure(makeUser(makeFullProfile()));
+    it('reflects 100 when the service reports complete', () => {
+      configure(makeUser(makeFullProfile()), 'es', { pct: 100, missing: [] });
       expect(component.profileCompletion()).toBe(100);
     });
 
-    it('returns a partial value matching the weighted sum', () => {
-      configure(makeUser(makeFullProfile({
-        display_name: 'Luis',
-        bio: null,
-        city: 'Madrid',
-        hourly_rate: 50,
-        price_per_project: null,
-        skills: [],
-      })));
-      expect(component.profileCompletion()).toBe(45);
+    it('reflects a partial value coming from the service', () => {
+      configure(makeUser(makeFullProfile({ bio: null, skills: [] })), 'es', { pct: 55, missing: ['bio', 'skills', 'avatar', 'cover', 'portfolio'] });
+      expect(component.profileCompletion()).toBe(55);
     });
   });
 
   describe('missingFields', () => {
-    it('lists every empty field for a freshly-registered freelancer', () => {
-      configure(makeUser(makeEmptyProfile()));
+    it('translates the raw missing keys from the service', () => {
+      configure(makeUser(makeEmptyProfile()), 'es', { pct: 5, missing: ['display_name', 'bio', 'city', 'hourly_rate', 'price_per_project', 'skills', 'avatar', 'cover', 'portfolio'] });
       const missing = component.missingFields();
-      expect(missing).toEqual(expect.arrayContaining(['nombre artístico', 'bio', 'ciudad', 'tarifa por hora', 'precio por proyecto', 'al menos una skill']));
+      expect(missing).toEqual(expect.arrayContaining(['nombre artístico', 'bio', 'ciudad', 'tarifa por hora', 'precio por proyecto', 'al menos una skill', 'foto de perfil', 'imagen de portada', 'portfolio (al menos 3)']));
     });
 
-    it('is empty when the profile is complete', () => {
-      configure(makeUser(makeFullProfile()));
+    it('is empty when the service reports 100', () => {
+      configure(makeUser(makeFullProfile()), 'es', { pct: 100, missing: [] });
       expect(component.missingFields()).toEqual([]);
     });
   });
 
   it('exposes 4 stats and 3 tips', () => {
-    configure(makeUser(makeEmptyProfile()));
+    configure(makeUser(makeEmptyProfile()), 'es', { pct: 0, missing: [] });
     expect(component.stats.length).toBe(4);
     expect(component.tips.length).toBe(3);
   });

@@ -18,7 +18,6 @@ final class FreelancerProfile extends Model
         'user_id',
         'display_name',
         'bio',
-        'city',
         'hourly_rate',
         'price_per_project',
         'is_available',

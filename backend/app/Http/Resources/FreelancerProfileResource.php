@@ -20,7 +20,7 @@ final class FreelancerProfileResource extends JsonResource
             'user_id'           => $this->user_id,
             'display_name'      => $this->display_name,
             'bio'               => $this->bio,
-            'city'              => $this->city,
+            'city'              => $this->user?->city,
             'hourly_rate'       => $this->hourly_rate !== null ? (float) $this->hourly_rate : null,
             'price_per_project' => $this->price_per_project !== null ? (float) $this->price_per_project : null,
             'is_available'      => (bool) $this->is_available,

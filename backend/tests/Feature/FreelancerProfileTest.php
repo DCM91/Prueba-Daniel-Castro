@@ -46,9 +46,9 @@ final class FreelancerProfileTest extends TestCase
 
     public function test_freelancer_me_returns_profile_with_skills(): void
     {
-        [$user, $token] = $this->makeFreelancer(['name' => 'Luis Foto']);
+        [$user, $token] = $this->makeFreelancer(['name' => 'Luis Foto', 'city' => 'Madrid']);
         $profile = $user->freelancerProfile;
-        $profile->update(['display_name' => 'Luis Foto Pro', 'city' => 'Madrid']);
+        $profile->update(['display_name' => 'Luis Foto Pro']);
         $profile->load('skills');
 
         $response = $this->withHeader('Authorization', "Bearer {$token}")
@@ -82,13 +82,12 @@ final class FreelancerProfileTest extends TestCase
 
     public function test_update_profile_succeeds_with_valid_data(): void
     {
-        [$user, $token] = $this->makeFreelancer();
+        [$user, $token] = $this->makeFreelancer(['city' => 'Madrid']);
 
         $response = $this->withHeader('Authorization', "Bearer {$token}")
             ->putJson('/api/freelancer/me', [
                 'display_name'      => 'Luis Foto Pro',
                 'bio'               => 'Fotógrafo especializado en producto.',
-                'city'              => 'Madrid',
                 'hourly_rate'       => 60,
                 'price_per_project' => 450,
                 'is_available'      => true,
@@ -103,8 +102,11 @@ final class FreelancerProfileTest extends TestCase
         $this->assertDatabaseHas('freelancer_profiles', [
             'user_id'           => $user->id,
             'display_name'      => 'Luis Foto Pro',
-            'city'              => 'Madrid',
             'is_available'      => 1,
+        ]);
+        $this->assertDatabaseHas('users', [
+            'id'   => $user->id,
+            'city' => 'Madrid',
         ]);
     }
 

@@ -19,10 +19,12 @@ final class FreelancerProfileFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id'           => User::factory()->state(['role' => UserRole::Freelancer]),
+            'user_id'           => User::factory()->state([
+                'role' => UserRole::Freelancer,
+                'city' => fake()->city(),
+            ]),
             'display_name'      => fake()->name(),
             'bio'               => fake()->paragraph(),
-            'city'              => fake()->city(),
             'hourly_rate'       => fake()->randomFloat(2, 10, 200),
             'price_per_project' => fake()->randomFloat(2, 50, 5000),
             'is_available'      => true,

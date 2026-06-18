@@ -29,7 +29,9 @@ final class FreelancerCatalogController extends Controller
         }
 
         if ($city = $request->validated('city')) {
-            $query->where('city', $city);
+            $query->whereHas('user', function ($q) use ($city) {
+                $q->where('city', $city);
+            });
         }
 
         if ($maxRate = $request->validated('max_rate')) {
@@ -40,7 +42,9 @@ final class FreelancerCatalogController extends Controller
             $like = '%' . $q . '%';
             $query->where(function ($q1) use ($like) {
                 $q1->where('display_name', 'like', $like)
-                    ->orWhere('city', 'like', $like)
+                    ->orWhereHas('user', function ($q2) use ($like) {
+                        $q2->where('city', 'like', $like);
+                    })
                     ->orWhereHas('skills', function ($q2) use ($like) {
                         $q2->where('name', 'like', $like);
                     });
@@ -90,15 +94,20 @@ final class FreelancerCatalogController extends Controller
      * - `recent`: más recientes primero.
      * - sin sort o no reconocido: comportamiento legacy (hourly_rate ASC, display_name ASC).
      *
-     * La fórmula de completion replica los pesos de FreelancerCardResource::computeProfileCompletion
-     * para que la lista pública y el "Profesionales destacados" coincidan.
+     * La fórmula de completion replica exactamente los pesos de
+     * `App\Services\ProfileCompletionService::WEIGHTS` para que la lista
+     * pública y el "Profesionales destacados" coincidan con el número que
+     * muestra la SPA al freelancer.
      */
     private function applySort(\Illuminate\Database\Eloquent\Builder $query, ?string $sort): \Illuminate\Database\Eloquent\Builder
     {
         $driver = $query->getModel()->getConnection()->getDriverName();
 
         if ($sort === 'featured') {
-            return $query->orderBy('freelancer_profiles.updated_at', 'desc');
+            return $query
+                ->select('freelancer_profiles.*')
+                ->orderByRaw($this->completionExpression($driver) . ' DESC')
+                ->orderBy('freelancer_profiles.created_at', 'ASC');
         }
 
         if ($sort === 'price_asc') {
@@ -116,20 +125,48 @@ final class FreelancerCatalogController extends Controller
         return $query->orderBy('hourly_rate', 'asc')->orderBy('display_name', 'asc');
     }
 
+    /**
+     * SQL expression that mirrors ProfileCompletionService::WEIGHTS so that
+     * ORDER BY in the catalog matches the per-card `profile_completion`
+     * field served by the API.
+     */
     private function completionExpression(string $driver): string
     {
-        $hasSkill = $driver === 'mysql'
-            ? "(SELECT CASE WHEN COUNT(*) > 0 THEN 10 ELSE 0 END FROM freelancer_skill WHERE freelancer_skill.freelancer_profile_id = freelancer_profiles.id)"
-            : "(SELECT CASE WHEN COUNT(*) > 0 THEN 10 ELSE 0 END FROM freelancer_skill WHERE freelancer_skill.freelancer_profile_id = freelancer_profiles.id)";
+        $w = \App\Services\ProfileCompletionService::WEIGHTS;
+
+        $hasSkillSubquery = "(SELECT CASE WHEN COUNT(*) > 0 THEN {$w['skills']} ELSE 0 END "
+            . "FROM freelancer_skill WHERE freelancer_skill.freelancer_profile_id = freelancer_profiles.id)";
+
+        $hasPortfolioSubquery = "(SELECT CASE WHEN COUNT(*) >= 3 THEN {$w['portfolio']} ELSE 0 END "
+            . "FROM portfolios WHERE portfolios.freelancer_profile_id = freelancer_profiles.id)";
+
+        $avatarSubquery = $driver === 'mysql'
+            ? "(SELECT CASE WHEN u.avatar_public_id IS NOT NULL THEN {$w['avatar']} ELSE 0 END FROM users u WHERE u.id = freelancer_profiles.user_id)"
+            : "(SELECT CASE WHEN u.avatar_public_id IS NOT NULL THEN {$w['avatar']} ELSE 0 END FROM users u WHERE u.id = freelancer_profiles.user_id)";
+
+        $citySubquery = $driver === 'mysql'
+            ? "(SELECT CASE WHEN u.city IS NOT NULL AND TRIM(u.city) <> '' THEN {$w['city']} ELSE 0 END FROM users u WHERE u.id = freelancer_profiles.user_id)"
+            : "(SELECT CASE WHEN u.city IS NOT NULL AND TRIM(u.city) <> '' THEN {$w['city']} ELSE 0 END FROM users u WHERE u.id = freelancer_profiles.user_id)";
 
         return sprintf(
-            '((CASE WHEN display_name IS NOT NULL THEN 20 ELSE 0 END) '
-            . '+ (CASE WHEN bio IS NOT NULL THEN 25 ELSE 0 END) '
-            . '+ (CASE WHEN city IS NOT NULL THEN 15 ELSE 0 END) '
-            . '+ (CASE WHEN hourly_rate IS NOT NULL THEN 20 ELSE 0 END) '
-            . '+ (CASE WHEN price_per_project IS NOT NULL THEN 10 ELSE 0 END) '
-            . '+ %s)',
-            $hasSkill
-        );
+            '((CASE WHEN display_name IS NOT NULL AND TRIM(display_name) <> "" THEN %1$d ELSE 0 END) '
+            . '+ (CASE WHEN bio IS NOT NULL AND TRIM(bio) <> "" THEN %2$d ELSE 0 END) '
+            . '+ %3$s '
+            . '+ (CASE WHEN hourly_rate IS NOT NULL THEN %4$d ELSE 0 END) '
+            . '+ (CASE WHEN price_per_project IS NOT NULL THEN %5$d ELSE 0 END) '
+            . '+ (CASE WHEN is_available = 1 THEN %6$d ELSE 0 END) '
+            . '+ %7$s '
+            . '+ %8$s '
+            . '+ (CASE WHEN cover_public_id IS NOT NULL THEN %9$d ELSE 0 END))',
+            $w['display_name'],
+            $w['bio'],
+            $citySubquery,
+            $w['hourly_rate'],
+            $w['price_per_project'],
+            $w['is_available'],
+            $hasSkillSubquery,
+            $avatarSubquery,
+            $w['cover'],
+        ) . ' + ' . $hasPortfolioSubquery;
     }
 }

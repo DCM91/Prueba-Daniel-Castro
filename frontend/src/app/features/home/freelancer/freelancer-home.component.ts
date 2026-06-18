@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
+import { ProfileCompletionService } from '../../../core/services/profile-completion.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { FreelancerProfile } from '../../../core/types/auth.types';
 
@@ -27,39 +28,24 @@ interface Tip {
   templateUrl: './freelancer-home.component.html',
   styleUrl: './freelancer-home.component.css',
 })
-export class FreelancerHomeComponent {
+export class FreelancerHomeComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly lang = inject(LanguageService);
+  private readonly completion = inject(ProfileCompletionService);
 
   readonly currentUser = this.auth.currentUser;
   readonly profile = computed<FreelancerProfile | null>(() => this.currentUser()?.freelancer_profile ?? null);
 
-  readonly profileCompletion = computed<number>(() => {
-    const p = this.profile();
-    if (!p) return 0;
-    let pct = 0;
-    if (p.display_name && p.display_name.trim().length > 0) pct += 15;
-    if (p.bio && p.bio.trim().length > 0) pct += 20;
-    if (p.city && p.city.trim().length > 0) pct += 10;
-    if (p.hourly_rate !== null && p.hourly_rate !== undefined) pct += 15;
-    if (p.price_per_project !== null && p.price_per_project !== undefined) pct += 15;
-    if (p.is_available) pct += 5;
-    if (p.skills && p.skills.length > 0) pct += 20;
-    return pct;
-  });
+  readonly profileCompletion = this.completion.pct;
+  readonly missingRaw = this.completion.missing;
 
   readonly missingFields = computed<string[]>(() => {
-    const p = this.profile();
-    if (!p) return [this.lang.t('home.freelancer.missing.profile')];
-    const missing: string[] = [];
-    if (!p.display_name) missing.push(this.lang.t('home.freelancer.missing.display_name'));
-    if (!p.bio) missing.push(this.lang.t('home.freelancer.missing.bio'));
-    if (!p.city) missing.push(this.lang.t('home.freelancer.missing.city'));
-    if (p.hourly_rate === null || p.hourly_rate === undefined) missing.push(this.lang.t('home.freelancer.missing.hourly_rate'));
-    if (p.price_per_project === null || p.price_per_project === undefined) missing.push(this.lang.t('home.freelancer.missing.price_per_project'));
-    if (!p.skills || p.skills.length === 0) missing.push(this.lang.t('home.freelancer.missing.skills'));
-    return missing;
+    const raw = this.missingRaw();
+    if (raw === null) {
+      return [this.lang.t('home.freelancer.missing.profile')];
+    }
+    return raw.map((key) => this.lang.t(`home.freelancer.missing.${key}`));
   });
 
   readonly stats: Stat[] = [
@@ -85,6 +71,10 @@ export class FreelancerHomeComponent {
     const name = this.currentUser()?.name ?? this.lang.t('freelancers.card.initials_fallback');
     return name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
   });
+
+  ngOnInit(): void {
+    void this.completion.refresh();
+  }
 
   goToEdit(): void {
     this.router.navigate(['/freelancer/profile/edit']);

@@ -173,11 +173,11 @@ final class AuthTest extends TestCase
             'name'  => 'Con Perfil',
             'email' => 'conperfil@example.com',
             'role'  => 'freelancer',
+            'city'  => 'Madrid',
         ]);
         FreelancerProfile::create([
             'user_id'       => $user->id,
             'display_name'  => 'Luis Foto Pro',
-            'city'          => 'Madrid',
             'hourly_rate'   => 50.00,
             'is_available'  => true,
         ]);

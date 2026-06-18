@@ -23,12 +23,16 @@ final class FreelancerCatalogTest extends TestCase
 
     private function makeFreelancer(array $profileOverrides = []): FreelancerProfile
     {
-        $user = User::factory()->freelancer()->create();
+        $userAttrs = [];
+        if (array_key_exists('city', $profileOverrides)) {
+            $userAttrs['city'] = $profileOverrides['city'];
+            unset($profileOverrides['city']);
+        }
+        $user = User::factory()->freelancer()->create($userAttrs);
         $defaults = [
             'user_id'           => $user->id,
             'display_name'      => 'Freelancer ' . $user->id,
             'bio'               => 'Bio de prueba',
-            'city'              => 'Madrid',
             'hourly_rate'       => 50,
             'price_per_project' => 300,
             'is_available'      => true,
@@ -268,6 +272,35 @@ final class FreelancerCatalogTest extends TestCase
         $this->assertSame('OldestFull', $names[0], 'El más antiguo con perfil completo va primero.');
         $this->assertSame('NewestFull', $names[1], 'El más reciente con perfil completo va segundo.');
         $this->assertSame('Incomplete', $names[2], 'El perfil incompleto va el último.');
+    }
+
+    public function test_index_sort_featured_uses_avatar_and_cover_in_completion(): void
+    {
+        $noAvatar = $this->makeFreelancer([
+            'display_name'      => 'NoAvatar',
+            'bio'               => 'Bio',
+            'hourly_rate'       => 50,
+            'price_per_project' => 300,
+        ]);
+        $noAvatar->user->update(['avatar_public_id' => null]);
+        $this->attachSkills($noAvatar, ['fotografia-de-producto']);
+
+        $withAvatar = $this->makeFreelancer([
+            'display_name'      => 'WithAvatar',
+            'bio'               => 'Bio',
+            'hourly_rate'       => 50,
+            'price_per_project' => 300,
+        ]);
+        $withAvatar->user->update(['avatar_public_id' => 'framematch/avatars/x']);
+        $this->attachSkills($withAvatar, ['video-corporativo']);
+
+        $response = $this->getJson('/api/freelancers?sort=featured');
+
+        $response->assertStatus(200);
+        $names = collect($response->json('data'))->pluck('display_name')->all();
+
+        $this->assertSame('WithAvatar', $names[0], 'El perfil con avatar (10 pts extra) va primero.');
+        $this->assertSame('NoAvatar',   $names[1]);
     }
 
     public function test_index_sort_recent_orders_by_created_at_desc(): void
