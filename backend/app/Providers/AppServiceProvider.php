@@ -31,9 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Event::listen(SocialiteWasCalled::class, function (SocialiteWasCalled $event) {
-            $event->extendSocialite('google', GoogleExtendSocialite::class);
-            $event->extendSocialite('facebook', FacebookExtendSocialite::class);
-        });
+        Event::listen(SocialiteWasCalled::class, [GoogleExtendSocialite::class,   'handle']);
+        Event::listen(SocialiteWasCalled::class, [FacebookExtendSocialite::class, 'handle']);
     }
 }

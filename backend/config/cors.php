@@ -20,10 +20,14 @@ return [
     'allowed_methods' => ['*'],
 
     /*
-    | NOTA: allowed_origins ['*'] es para desarrollo local.
-    | En producción, restringir a los dominios específicos del frontend.
+    | Orígenes permitidos. En dev se incluye localhost:4200 (Angular dev server);
+    | en prod se añade framematch.vercel.app (Vercel). Mantener la lista
+    | sincronizada con los deploy targets.
     */
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        'http://localhost:4200',
+        'https://framematch.vercel.app',
+    ],
 
     'allowed_origins_patterns' => [],
 
@@ -33,6 +37,6 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 
 ];
