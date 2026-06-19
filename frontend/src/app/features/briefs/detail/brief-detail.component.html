@@ -71,12 +71,6 @@
             }
 
             @if (isOwner()) {
-              <app-reviews-section
-                [briefId]="b.id"
-                [briefStatus]="b.status"
-                [briefClientId]="b.client_id"
-                [briefFreelancerId]="freelancerIdFor()"
-              />
               <section class="brief-proposals">
                 <h2>{{ 'briefs.detail.proposals_title' | t : { count: proposalsList().length } }}</h2>
                 @if (proposalsList().length === 0) {

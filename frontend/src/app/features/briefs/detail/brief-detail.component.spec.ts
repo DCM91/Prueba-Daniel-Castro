@@ -161,4 +161,11 @@ describe('BriefDetailComponent', () => {
     const b = (component as unknown as { brief: () => Brief | null }).brief();
     expect(b?.status).toBe('assigned');
   });
+
+  it('renders the reviews section exactly once (no duplicate)', () => {
+    configure(ownerUser, brief, false, [pendingProposal]);
+    const reviewsSections = (fixture.nativeElement as HTMLElement)
+      .querySelectorAll('app-reviews-section');
+    expect(reviewsSections.length).toBe(1);
+  });
 });

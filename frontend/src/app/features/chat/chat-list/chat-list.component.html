@@ -47,7 +47,10 @@
             </div>
           </div>
           @if ((conv.unread_count ?? 0) > 0) {
-            <span class="chat-list__badge" aria-label="unread">
+            <span
+              class="chat-list__badge"
+              [attr.aria-label]="'chat.unread_aria' | t : { n: conv.unread_count ?? 0 }"
+            >
               {{ 'chat.unread_badge' | t : { n: conv.unread_count ?? 0 } }}
             </span>
           }

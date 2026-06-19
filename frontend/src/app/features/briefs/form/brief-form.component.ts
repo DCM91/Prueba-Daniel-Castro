@@ -68,8 +68,8 @@ import { SkillCategory } from '../../../core/types/auth.types';
             </label>
           </div>
 
-          @if (errorMessage()) {
-            <p class="error error--global">{{ errorMessage() }}</p>
+          @if (errorMessage(); as msg) {
+            <p class="error error--global">{{ msg | t }}</p>
           }
 
           <div class="actions">
@@ -151,9 +151,9 @@ export class BriefFormComponent {
         this.submitting.set(false);
         if (err.error?.errors) {
           const first = Object.values(err.error.errors)[0]?.[0];
-          this.errorMessage.set(first ?? 'No se pudo publicar el brief.');
+          this.errorMessage.set(first ?? 'briefs.form.error_generic');
         } else {
-          this.errorMessage.set(err.error?.message ?? 'No se pudo publicar el brief.');
+          this.errorMessage.set(err.error?.message ?? 'briefs.form.error_generic');
         }
       },
     });

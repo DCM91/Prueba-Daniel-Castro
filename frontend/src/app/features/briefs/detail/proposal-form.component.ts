@@ -25,8 +25,8 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
         <input type="number" formControlName="price" min="0" />
       </label>
 
-      @if (errorMessage()) {
-        <p class="error error--global">{{ errorMessage() }}</p>
+      @if (errorMessage(); as msg) {
+        <p class="error error--global">{{ msg | t }}</p>
       }
 
       <div class="actions">

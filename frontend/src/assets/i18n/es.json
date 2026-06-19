@@ -51,6 +51,7 @@
     "back_to_briefs": "← Proyectos",
     "back_to_home": "← Inicio",
     "back_to_profile": "← Volver al perfil",
+    "nav_aria": "Navegación principal",
     "nav": {
       "home": "Inicio",
       "login": "Iniciar sesión",
@@ -404,7 +405,8 @@
       "label_budget_max": "Presupuesto máximo (€)",
       "label_deadline": "Fecha límite",
       "submit": "Publicar proyecto",
-      "submitting": "Publicando…"
+      "submitting": "Publicando…",
+      "error_generic": "No se pudo publicar el proyecto."
     },
     "proposal_form": {
       "title": "Tu propuesta",
@@ -512,6 +514,7 @@
     "sending": "Enviando…",
     "mark_as_read": "Marcar como leído",
     "unread_badge": "{{n}}",
+    "unread_aria": "{{n}} mensajes sin leer",
     "you": "Tú",
     "load_more": "Cargar mensajes anteriores",
     "loading_more": "Cargando…",

@@ -51,6 +51,7 @@
     "back_to_briefs": "← Briefs",
     "back_to_home": "← Home",
     "back_to_profile": "← Back to profile",
+    "nav_aria": "Main navigation",
     "nav": {
       "home": "Home",
       "login": "Log in",
@@ -403,8 +404,9 @@
       "label_budget_min": "Minimum budget (€)",
       "label_budget_max": "Maximum budget (€)",
       "label_deadline": "Deadline",
-      "submit": "Publish brief",
-      "submitting": "Publishing…"
+      "submit": "Publish project",
+      "submitting": "Publishing…",
+      "error_generic": "Could not publish the project."
     },
     "proposal_form": {
       "title": "Your proposal",
@@ -512,6 +514,7 @@
     "sending": "Sending…",
     "mark_as_read": "Mark as read",
     "unread_badge": "{{n}}",
+    "unread_aria": "{{n}} unread",
     "you": "You",
     "load_more": "Load previous messages",
     "loading_more": "Loading…",

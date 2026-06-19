@@ -277,4 +277,55 @@ describe('CoreTopbarComponent', () => {
     emitNavigationEnd();
     expect((fixture.nativeElement as HTMLElement).querySelector('.topbar')).toBeTruthy();
   });
+
+  it('uses i18n key for the navigation aria-label (not hardcoded Spanish)', () => {
+    userSignal.set(clientUser);
+    configure('/home');
+    emitNavigationEnd();
+    const nav = (fixture.nativeElement as HTMLElement).querySelector('.topbar-nav');
+    const aria = nav?.getAttribute('aria-label');
+    expect(aria).toBeTruthy();
+    expect(aria).not.toBe('Navegación principal');
+  });
+
+  it('marks the host as is-mobile when the viewport is mobile', () => {
+    userSignal.set(clientUser);
+    configure('/home');
+    emitNavigationEnd();
+
+    Object.defineProperty(window, 'innerWidth', { value: 375, writable: true, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+    fixture.detectChanges();
+
+    const host = (fixture.nativeElement as HTMLElement).querySelector('app-core-topbar') as HTMLElement;
+    expect(host.classList.contains('is-mobile')).toBe(true);
+  });
+
+  it('marks the desktop language selector with a dedicated class so CSS can hide it on mobile', () => {
+    userSignal.set(clientUser);
+    configure('/home');
+    emitNavigationEnd();
+    fixture.detectChanges();
+
+    const lang = (fixture.nativeElement as HTMLElement).querySelector('app-language-selector');
+    expect(lang).toBeTruthy();
+    expect((lang as HTMLElement)?.classList.contains('topbar-lang-desktop')).toBe(true);
+  });
+
+  it('removes the is-mobile class when the viewport returns to desktop', () => {
+    userSignal.set(clientUser);
+    configure('/home');
+    emitNavigationEnd();
+
+    Object.defineProperty(window, 'innerWidth', { value: 375, writable: true, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+    fixture.detectChanges();
+
+    Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+    fixture.detectChanges();
+
+    const host = (fixture.nativeElement as HTMLElement).querySelector('app-core-topbar') as HTMLElement;
+    expect(host.classList.contains('is-mobile')).toBe(false);
+  });
 });

@@ -15,7 +15,7 @@
 
     <!-- Desktop nav -->
     @if (navLinks().length > 0) {
-      <nav class="topbar-nav" role="navigation" aria-label="Navegación principal">
+      <nav class="topbar-nav" role="navigation" [attr.aria-label]="'topbar.nav_aria' | t">
         @for (link of navLinks(); track link.labelKey) {
           <a
             class="nav-link"
@@ -33,7 +33,7 @@
         <a [routerLink]="back.route" class="back-link">{{ back.labelKey | t }}</a>
       }
 
-      <app-language-selector />
+      <app-language-selector [class.topbar-lang-desktop]="true" />
 
       @if (showUserArea() && user(); as u) {
         <span class="user-name">{{ u.name }}</span>
@@ -112,7 +112,7 @@
         }
 
         @if (navLinks().length > 0) {
-          <nav class="panel-nav" role="navigation" aria-label="Navegación principal">
+          <nav class="panel-nav" role="navigation" [attr.aria-label]="'topbar.nav_aria' | t">
             @for (link of navLinks(); track link.labelKey) {
               <a
                 class="panel-link"

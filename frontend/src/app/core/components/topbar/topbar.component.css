@@ -221,7 +221,7 @@
   display: flex;
   flex-direction: column;
   padding: 20px;
-  overflow: visible;
+  overflow: hidden;
   animation: slideIn 0.25s ease;
 }
 
@@ -377,26 +377,71 @@
   border-color: rgba(248, 113, 113, 0.5);
 }
 
-/* ---- Responsive ---- */
-@media (max-width: 719px) {
-  .topbar {
-    padding: 14px 18px;
-    gap: 14px;
-  }
-
-  .topbar-nav { display: none; }
-  .user-name     { display: none; }
-  .role-pill     { display: none; }
-  .logout-btn    { display: none; }
-  .avatar        { display: none; }
-  .avatar--image { display: none; }
-
-  .hamburger { display: flex; }
-  .nav-link--active::after { display: none; }
+/* ---- Responsive (class-based via signal isMobile) ---- */
+:host(.is-mobile) .topbar {
+  padding: 14px 18px;
+  gap: 14px;
 }
 
-@media (min-width: 720px) {
-  .hamburger { display: none; }
-  .mobile-overlay { display: none; }
-  .mobile-panel { display: none; }
+:host(.is-mobile) .topbar-nav { display: none; }
+:host(.is-mobile) .user-name     { display: none; }
+:host(.is-mobile) .role-pill     { display: none; }
+:host(.is-mobile) .logout-btn    { display: none; }
+:host(.is-mobile) .avatar        { display: none; }
+:host(.is-mobile) .avatar--image { display: none; }
+
+:host(.is-mobile) .topbar-lang-desktop { display: none; }
+
+:host(.is-mobile) .hamburger { display: flex; }
+:host(.is-mobile) .nav-link--active::after { display: none; }
+
+:host(.is-mobile) .mobile-panel {
+  width: 100%;
+  max-width: 100vw;
+  border-left: 0;
+  padding: 24px 20px;
 }
+
+:host(.is-mobile) .panel-nav {
+  gap: 4px;
+  margin-top: 12px;
+}
+
+:host(.is-mobile) .panel-link {
+  font-size: 17px;
+  padding: 16px 18px;
+}
+
+:host(.is-mobile) .panel-link--cta {
+  margin-top: 16px;
+  padding: 16px 18px;
+  font-size: 16px;
+}
+
+:host(.is-mobile) .panel-user {
+  padding: 12px 0 20px;
+}
+
+:host(.is-mobile) .panel-user .avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 18px;
+}
+
+:host(.is-mobile) .panel-user-name { font-size: 17px; }
+
+:host(.is-mobile) .panel-foot {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:host(.is-mobile) .panel-close {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 8px;
+}
+
+:host(:not(.is-mobile)) .hamburger { display: none; }
+:host(:not(.is-mobile)) .mobile-overlay { display: none; }
+:host(:not(.is-mobile)) .mobile-panel { display: none; }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
 
@@ -54,10 +54,11 @@ const BACK_LABEL_MAP: Record<string, string> = {
   standalone: true,
   imports: [RouterLink, RouterLinkActive, BrandLogoComponent, LanguageSelectorComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.is-mobile]': 'isMobile()' },
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.css',
 })
-export class CoreTopbarComponent {
+export class CoreTopbarComponent implements OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -67,7 +68,16 @@ export class CoreTopbarComponent {
 
   readonly isHidden = signal<boolean>(true);
 
+  private readonly updateIsMobile = (): void => {
+    this.isMobile.set(typeof window !== 'undefined' && window.innerWidth < 720);
+  };
+  readonly isMobile = signal<boolean>(false);
+
   constructor() {
+    this.updateIsMobile();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', this.updateIsMobile);
+    }
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
     ).subscribe(() => {
@@ -200,5 +210,11 @@ export class CoreTopbarComponent {
       next: () => this.router.navigateByUrl('/'),
       error: () => this.router.navigateByUrl('/'),
     });
+  }
+
+  ngOnDestroy(): void {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.updateIsMobile);
+    }
   }
 }

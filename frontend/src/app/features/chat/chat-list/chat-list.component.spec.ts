@@ -142,4 +142,14 @@ describe('ChatListComponent', () => {
     const badge = item.querySelector('.chat-list__badge');
     expect(badge?.textContent).toContain('3');
   });
+
+  it('exposes a translated aria-label on the unread badge (not hardcoded "unread")', () => {
+    listMock.mockReturnValue(of([makeConversation({ unread_count: 5 })]));
+    fixture.detectChanges();
+
+    const badge = fixture.nativeElement.querySelector('.chat-list__badge');
+    const aria = badge?.getAttribute('aria-label');
+    expect(aria).toBeTruthy();
+    expect(aria).not.toBe('unread');
+  });
 });
