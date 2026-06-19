@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { ProposalsService } from '../../../core/services/proposals.service';
+import { focusFirstInvalid } from '../../../core/utils/focus-first-invalid';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 @Component({
@@ -74,6 +75,7 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 export class ProposalFormComponent {
   private readonly fb = inject(FormBuilder);
   private readonly proposals = inject(ProposalsService);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   @Input({ required: true }) briefId!: number;
   @Output() submitted = new EventEmitter<void>();
@@ -89,6 +91,7 @@ export class ProposalFormComponent {
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focusFirstInvalid(this.form, this.host.nativeElement);
       return;
     }
     this.submitting.set(true);

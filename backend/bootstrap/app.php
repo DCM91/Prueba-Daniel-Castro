@@ -9,6 +9,7 @@ use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
+        channels: __DIR__.'/../routes/channels.php',
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../console.php',
         health: '/up',

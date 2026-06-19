@@ -12,6 +12,16 @@ if [ "$IS_LARAVEL" = "true" ]; then
   php artisan optimize:clear
   php artisan optimize
 
+  # ─── Reverb (WebSockets) ──────────────────────────────────────────
+  # Solo se arranca si BROADCAST_CONNECTION=reverb (prod).
+  # En dev se usa el driver "log" (las broadcasts se escriben a storage/logs).
+  # En Railway con un solo proceso, Reverb corre en background; para
+  # producción real lo ideal es un servicio separado en Railway.
+  if [ "$BROADCAST_CONNECTION" = "reverb" ]; then
+    echo "Starting Reverb WebSocket server on port ${REVERB_SERVER_PORT:-8080} ..."
+    php artisan reverb:start --host=0.0.0.0 --port=${REVERB_SERVER_PORT:-8080} &
+  fi
+
   echo "Starting Laravel server ..."
 fi
 

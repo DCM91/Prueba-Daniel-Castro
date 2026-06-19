@@ -36,7 +36,7 @@ describe('BriefListComponent', () => {
         },
         {
           provide: AuthService,
-          useValue: { currentUser: () => mockUser },
+          useValue: { currentUser: () => mockUser, getToken: () => null },
         },
         {
           provide: BriefsService,
@@ -50,6 +50,8 @@ describe('BriefListComponent', () => {
               scope_mine: 'Mis briefs',
               new_brief: '+ Nuevo brief',
               empty: 'No hay briefs disponibles.',
+              empty_state_title: 'Aún no hay proyectos',
+              empty_state_body: 'Sé el primero en publicar un proyecto.',
               proposal_count_one: '{{n}} propuesta',
               proposal_count_other: '{{n}} propuestas',
               deadline_label: 'Fecha límite:',
@@ -75,7 +77,7 @@ describe('BriefListComponent', () => {
   it('shows the empty state when there are no briefs', () => {
     configure([]);
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('No hay briefs disponibles.');
+    expect(text).toContain('Aún no hay proyectos');
   });
 
   it('uses the i18n "propuesta/propuestas" plural', () => {
@@ -93,5 +95,14 @@ describe('BriefListComponent', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Fotografía');
     expect(text).not.toContain('>photo<');
+  });
+
+  it('renders the illustrated empty state with icon, title and body when no briefs', () => {
+    configure([]);
+    const emptyState = (fixture.nativeElement as HTMLElement).querySelector('[data-test="empty-state"]');
+    expect(emptyState).toBeTruthy();
+    expect(emptyState?.querySelector('svg')).toBeTruthy();
+    expect(emptyState?.querySelector('.brief-list__empty-title')?.textContent).toContain('Aún no hay proyectos');
+    expect(emptyState?.querySelector('.brief-list__empty-body')?.textContent).toContain('Sé el primero');
   });
 });

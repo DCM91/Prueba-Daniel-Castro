@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../services/auth.service';
+import { ChatRealtimeService } from '../../services/chat-realtime.service';
+import { ChatService } from '../../services/chat.service';
 import { BrandLogoComponent } from '../brand-logo/brand-logo.component';
 import { LanguageSelectorComponent } from '../language-selector/language-selector.component';
 import { TranslatePipe } from '../../pipes/translate.pipe';
@@ -60,11 +62,14 @@ const BACK_LABEL_MAP: Record<string, string> = {
 })
 export class CoreTopbarComponent implements OnDestroy {
   private readonly auth = inject(AuthService);
+  private readonly chat = inject(ChatService);
+  private readonly realtime = inject(ChatRealtimeService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   readonly currentUrl = signal<string>(this.router.url);
   readonly mobileMenuOpen = signal<boolean>(false);
+  readonly unreadCount = signal<number>(0);
 
   readonly isHidden = signal<boolean>(true);
 
@@ -72,6 +77,9 @@ export class CoreTopbarComponent implements OnDestroy {
     this.isMobile.set(typeof window !== 'undefined' && window.innerWidth < 720);
   };
   readonly isMobile = signal<boolean>(false);
+
+  private unreadInterval: ReturnType<typeof setInterval> | null = null;
+  private unreadUnsub: (() => void) | null = null;
 
   constructor() {
     this.updateIsMobile();
@@ -86,6 +94,51 @@ export class CoreTopbarComponent implements OnDestroy {
       this.isHidden.set(url === '/');
       this.mobileMenuOpen.set(false);
     });
+
+    effect(() => {
+      const user = this.auth.currentUser();
+      if (user) {
+        this.refreshUnread();
+        this.startUnreadPolling();
+        this.subscribeRealtime();
+      } else {
+        this.stopUnreadPolling();
+        this.unsubscribeRealtime();
+        this.unreadCount.set(0);
+      }
+    });
+  }
+
+  private refreshUnread(): void {
+    this.chat.getUnreadCount().subscribe({
+      next: (n) => this.unreadCount.set(n),
+      error: () => this.unreadCount.set(0),
+    });
+  }
+
+  private startUnreadPolling(): void {
+    this.stopUnreadPolling();
+    if (typeof window === 'undefined') return;
+    this.unreadInterval = setInterval(() => this.refreshUnread(), 30_000);
+  }
+
+  private stopUnreadPolling(): void {
+    if (this.unreadInterval !== null) {
+      clearInterval(this.unreadInterval);
+      this.unreadInterval = null;
+    }
+  }
+
+  private subscribeRealtime(): void {
+    this.unsubscribeRealtime();
+    this.unreadUnsub = this.realtime.onUnreadChange((evt) => {
+      this.unreadCount.set(evt.total);
+    });
+  }
+
+  private unsubscribeRealtime(): void {
+    this.unreadUnsub?.();
+    this.unreadUnsub = null;
   }
 
   readonly variant = computed<TopbarVariant>(() => {
@@ -216,5 +269,7 @@ export class CoreTopbarComponent implements OnDestroy {
     if (typeof window !== 'undefined') {
       window.removeEventListener('resize', this.updateIsMobile);
     }
+    this.stopUnreadPolling();
+    this.unsubscribeRealtime();
   }
 }

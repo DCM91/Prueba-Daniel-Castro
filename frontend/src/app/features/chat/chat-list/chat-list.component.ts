@@ -13,10 +13,11 @@ import { Subscription, interval } from 'rxjs';
 
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { AuthService } from '../../../core/services/auth.service';
+import { ChatRealtimeService } from '../../../core/services/chat-realtime.service';
 import { ChatService } from '../../../core/services/chat.service';
 import { Conversation } from '../../../core/types/auth.types';
 
-const POLL_INTERVAL_MS = 5000;
+const POLL_INTERVAL_MS = 30_000;
 
 @Component({
   selector: 'app-chat-list',
@@ -29,6 +30,7 @@ const POLL_INTERVAL_MS = 5000;
 export class ChatListComponent implements OnInit, OnDestroy {
   private readonly chat = inject(ChatService);
   private readonly auth = inject(AuthService);
+  private readonly realtime = inject(ChatRealtimeService);
 
   readonly briefId = input<number | null>(null);
   readonly open = output<Conversation>();
@@ -39,14 +41,20 @@ export class ChatListComponent implements OnInit, OnDestroy {
   readonly errorMessage = signal<string | null>(null);
 
   private pollSub: Subscription | null = null;
+  private unreadUnsub: (() => void) | null = null;
 
   ngOnInit(): void {
     this.refresh();
+    // Slow polling as fallback for clients where WebSockets are blocked
+    // (corporate proxies, devtools open, etc). Fast updates come from WS.
     this.pollSub = interval(POLL_INTERVAL_MS).subscribe(() => this.refresh(true));
+    // Refresh whenever the server pushes an unread count change.
+    this.unreadUnsub = this.realtime.onUnreadChange(() => this.refresh(true));
   }
 
   ngOnDestroy(): void {
     this.pollSub?.unsubscribe();
+    this.unreadUnsub?.();
   }
 
   refresh(silent = false): void {

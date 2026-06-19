@@ -11,7 +11,13 @@
   @if (loading()) {
     <p class="chat-list__loading">{{ 'chat.loading_list' | t }}</p>
   } @else if (conversations().length === 0) {
-    <p class="chat-list__empty">{{ 'chat.empty_list' | t }}</p>
+    <div class="chat-list__empty-state" data-test="empty-state">
+      <svg class="chat-list__empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <h3 class="chat-list__empty-title">{{ 'chat.empty_state_title' | t }}</h3>
+      <p class="chat-list__empty-body">{{ 'chat.empty_state_body' | t }}</p>
+    </div>
   } @else {
     <ul class="chat-list__items" role="list">
       @for (conv of conversations(); track conv.id) {

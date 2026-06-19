@@ -58,6 +58,8 @@ describe('ChatListComponent', () => {
             list_title: 'Conversaciones',
             list_subtitle: 'Chats ligados a tus proyectos.',
             empty_list: 'Sin conversaciones.',
+            empty_state_title: 'Aún no hay conversaciones',
+            empty_state_body: 'Empieza aceptando una propuesta o enviando la tuya.',
             loading_list: 'Cargando…',
             error_load_list: 'No se pudieron cargar.',
             unread_badge: '{{n}}',
@@ -69,7 +71,7 @@ describe('ChatListComponent', () => {
         }),
         {
           provide: AuthService,
-          useValue: { currentUser: () => makeUser() },
+          useValue: { currentUser: () => makeUser(), getToken: () => null },
         },
         {
           provide: ChatService,
@@ -89,7 +91,18 @@ describe('ChatListComponent', () => {
     listMock.mockReturnValue(of([]));
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Sin conversaciones');
+    expect(fixture.nativeElement.textContent).toContain('Aún no hay conversaciones');
+  });
+
+  it('renders the illustrated empty state with icon, title and body when no conversations', () => {
+    listMock.mockReturnValue(of([]));
+    fixture.detectChanges();
+
+    const emptyState = fixture.nativeElement.querySelector('[data-test="empty-state"]');
+    expect(emptyState).toBeTruthy();
+    expect(emptyState?.querySelector('svg')).toBeTruthy();
+    expect(emptyState?.querySelector('.chat-list__empty-title')?.textContent).toContain('Aún no hay conversaciones');
+    expect(emptyState?.querySelector('.chat-list__empty-body')?.textContent).toContain('Empieza aceptando');
   });
 
   it('renders a row per conversation with the counterpart name', () => {

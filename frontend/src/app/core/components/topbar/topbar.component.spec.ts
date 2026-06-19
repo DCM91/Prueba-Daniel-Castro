@@ -6,8 +6,10 @@ import { Subject } from 'rxjs';
 
 import { CoreTopbarComponent } from './topbar.component';
 import { AuthService } from '../../services/auth.service';
+import { ChatService } from '../../services/chat.service';
 import { provideLanguageServiceMock } from '../../testing/language-service.mock';
 import { User } from '../../types/auth.types';
+import { of } from 'rxjs';
 
 const clientUser: User = {
   id: 1, name: 'Lucia Marin', email: 'l@e.com', role: 'client', created_at: null,
@@ -62,7 +64,8 @@ describe('CoreTopbarComponent', () => {
       providers: [
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
-        { provide: AuthService, useValue: { currentUser: userSignal, logout: mockLogout } },
+        { provide: AuthService, useValue: { currentUser: userSignal, logout: mockLogout, getToken: jest.fn().mockReturnValue(null) } },
+        { provide: ChatService, useValue: { getUnreadCount: jest.fn().mockReturnValue(of(0)) } },
         provideLanguageServiceMock('es', {
           app: { brand: 'FrameMatch' },
           topbar: {
@@ -74,6 +77,7 @@ describe('CoreTopbarComponent', () => {
             back_to_briefs: '← Briefs',
             back_to_catalog: '← Volver al catálogo',
             back_to_home: '← Inicio',
+            messages_unread_aria: 'Tienes {{n}} mensajes sin leer',
             nav: {
               home: 'Inicio',
               login: 'Iniciar sesión',
@@ -327,5 +331,27 @@ describe('CoreTopbarComponent', () => {
 
     const host = (fixture.nativeElement as HTMLElement).querySelector('app-core-topbar') as HTMLElement;
     expect(host.classList.contains('is-mobile')).toBe(false);
+  });
+
+  it('does not show the unread badge when unread count is 0', () => {
+    configure('/home');
+    userSignal.set(clientUser);
+    emitNavigationEnd();
+    fixture.detectChanges();
+    const badge = (fixture.nativeElement as HTMLElement).querySelector('[data-test="unread-badge"]');
+    expect(badge).toBeNull();
+  });
+
+  it('shows the unread badge with the count when unread count is greater than 0', () => {
+    configure('/home');
+    userSignal.set(clientUser);
+    emitNavigationEnd();
+    fixture.detectChanges();
+    const topbarInstance = (fixture.debugElement.children[0].componentInstance as { unreadCount: { set: (n: number) => void } });
+    topbarInstance.unreadCount.set(5);
+    fixture.detectChanges();
+    const badge = (fixture.nativeElement as HTMLElement).querySelector('[data-test="unread-badge"]');
+    expect(badge).toBeTruthy();
+    expect(badge?.textContent?.trim()).toBe('5');
   });
 });

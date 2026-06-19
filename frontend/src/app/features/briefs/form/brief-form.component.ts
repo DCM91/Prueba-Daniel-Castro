@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { BriefsService } from '../../../core/services/briefs.service';
+import { focusFirstInvalid } from '../../../core/utils/focus-first-invalid';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { SkillCategory } from '../../../core/types/auth.types';
 
@@ -112,6 +113,7 @@ export class BriefFormComponent {
   private readonly fb = inject(FormBuilder);
   private readonly briefs = inject(BriefsService);
   private readonly router = inject(Router);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -129,6 +131,7 @@ export class BriefFormComponent {
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focusFirstInvalid(this.form, this.host.nativeElement);
       return;
     }
     this.submitting.set(true);

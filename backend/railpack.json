@@ -2,5 +2,10 @@
   "$schema": "https://schema.railpack.com",
   "packages": {
     "php": "8.4"
+  },
+  "aptPackages": {
+    "packages": [
+      "php8.4-sockets"
+    ]
   }
 }

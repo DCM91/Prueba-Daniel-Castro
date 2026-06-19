@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
 import { AvatarUploaderComponent } from '../../core/components/avatar-uploader/avatar-uploader.component';
 import { UserService } from '../../core/services/user.service';
+import { focusFirstInvalid } from '../../core/utils/focus-first-invalid';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { LinkedAccountsComponent } from './linked-accounts/linked-accounts.component';
 
@@ -28,6 +29,7 @@ export class AccountComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly userService = inject(UserService);
   private readonly router = inject(Router);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   readonly currentUser = this.auth.currentUser;
   readonly loading = signal<boolean>(true);
@@ -91,6 +93,9 @@ export class AccountComponent implements OnInit {
   submit(): void {
     this.form.markAllAsTouched();
     if (this.form.invalid || this.submitting()) {
+      if (this.form.invalid) {
+        focusFirstInvalid(this.form, this.host.nativeElement);
+      }
       return;
     }
 

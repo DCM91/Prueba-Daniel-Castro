@@ -52,6 +52,8 @@
     "back_to_home": "← Home",
     "back_to_profile": "← Back to profile",
     "nav_aria": "Main navigation",
+    "messages_unread_aria": "You have {{n}} unread messages",
+    "unread_badge_aria": "Unread messages",
     "nav": {
       "home": "Home",
       "login": "Log in",
@@ -363,6 +365,8 @@
       "scope_mine": "My briefs",
       "new_brief": "+ New brief",
       "sub_bar_aria": "Briefs filters and actions",
+      "empty_state_title": "No briefs yet",
+      "empty_state_body": "Be the first to publish a brief.",
       "loading": "Loading briefs…",
       "error": "Could not load the brief catalog.",
       "empty": "No briefs available.",
@@ -528,7 +532,9 @@
     "context_status": "Status: {{status}}",
     "context_label": "Project",
     "sender_fallback": "Counterpart",
-    "no_messages_yet_short": "No messages yet"
+    "no_messages_yet_short": "No messages yet",
+    "empty_state_title": "No conversations yet",
+    "empty_state_body": "Start by accepting a proposal or sending your own."
   },
   "footer": {
     "copyright": "© 2026 FrameMatch · {{tagline}}"

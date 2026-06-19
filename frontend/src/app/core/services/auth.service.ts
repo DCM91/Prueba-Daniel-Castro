@@ -36,6 +36,14 @@ export class AuthService {
   readonly token = this._token.asReadonly();
   readonly currentUser = this._currentUser.asReadonly();
 
+  /**
+   * Convenience synchronous accessor for non-Angular consumers (e.g. the
+   * WebSocket service that needs the current token before connecting).
+   */
+  getToken(): string | null {
+    return this._token();
+  }
+
   readonly isAuthenticated = computed<boolean>(() => !!this._token() && !!this._currentUser());
   readonly isClient = computed<boolean>(() => this._currentUser()?.role === 'client');
   readonly isFreelancer = computed<boolean>(() => this._currentUser()?.role === 'freelancer');

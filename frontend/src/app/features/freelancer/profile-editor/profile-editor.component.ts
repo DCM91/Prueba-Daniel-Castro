@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, switchMap } from 'rxjs';
@@ -6,6 +6,7 @@ import { forkJoin, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { CoverUploaderComponent } from '../../../core/components/cover-uploader/cover-uploader.component';
 import { FreelancerProfileService } from '../../../core/services/freelancer-profile.service';
+import { focusFirstInvalid } from '../../../core/utils/focus-first-invalid';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import {
   FreelancerProfile,
@@ -39,6 +40,7 @@ export class ProfileEditorComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly profileService = inject(FreelancerProfileService);
   private readonly router = inject(Router);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   readonly loading = signal(true);
   readonly submitting = signal(false);
@@ -131,6 +133,8 @@ export class ProfileEditorComponent implements OnInit {
     this.skillsForm.markAllAsTouched();
 
     if (this.basicForm.invalid || this.skillsForm.invalid) {
+      const invalidControl = this.basicForm.invalid ? this.basicForm : this.skillsForm;
+      focusFirstInvalid(invalidControl, this.host.nativeElement);
       return;
     }
 

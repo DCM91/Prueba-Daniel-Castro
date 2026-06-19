@@ -52,6 +52,8 @@
     "back_to_home": "← Inicio",
     "back_to_profile": "← Volver al perfil",
     "nav_aria": "Navegación principal",
+    "messages_unread_aria": "Tienes {{n}} mensajes sin leer",
+    "unread_badge_aria": "Mensajes sin leer",
     "nav": {
       "home": "Inicio",
       "login": "Iniciar sesión",
@@ -363,6 +365,8 @@
       "scope_mine": "Mis proyectos",
       "new_brief": "+ Nuevo proyecto",
       "sub_bar_aria": "Filtros y acciones de proyectos",
+      "empty_state_title": "Aún no hay proyectos",
+      "empty_state_body": "Sé el primero en publicar un proyecto.",
       "loading": "Cargando proyectos…",
       "error": "No se pudo cargar el catálogo de proyectos.",
       "empty": "No hay proyectos disponibles.",
@@ -528,7 +532,9 @@
     "context_status": "Estado: {{status}}",
     "context_label": "Proyecto",
     "sender_fallback": "Interlocutor",
-    "no_messages_yet_short": "Sin mensajes aún"
+    "no_messages_yet_short": "Sin mensajes aún",
+    "empty_state_title": "Aún no hay conversaciones",
+    "empty_state_body": "Empieza aceptando una propuesta o enviando la tuya."
   },
   "footer": {
     "copyright": "© 2026 FrameMatch · {{tagline}}"

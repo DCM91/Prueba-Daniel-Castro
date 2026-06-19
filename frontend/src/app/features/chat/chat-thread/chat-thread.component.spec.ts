@@ -84,7 +84,7 @@ describe('ChatThreadComponent', () => {
             you: 'Tú',
           },
         }),
-        { provide: AuthService, useValue: { currentUser: () => makeUser() } },
+        { provide: AuthService, useValue: { currentUser: () => makeUser(), getToken: () => null } },
         {
           provide: ChatService,
           useValue: {

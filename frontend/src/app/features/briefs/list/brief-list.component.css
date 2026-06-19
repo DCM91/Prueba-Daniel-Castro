@@ -6,6 +6,22 @@
 .count { color: #a1a1aa; font-size: 14px; margin: 0 0 18px; }
 .state { padding: 32px; text-align: center; color: #a1a1aa; }
 .state--error { color: #fca5a5; background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); border-radius: 12px; }
+
+.brief-list__empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+.brief-list__empty-icon { width: 48px; height: 48px; color: #67e8f9; opacity: 0.6; }
+.brief-list__empty-title { margin: 0; font-size: 18px; font-weight: 600; color: #f4f4f5; }
+.brief-list__empty-body { margin: 0; font-size: 14px; line-height: 1.5; max-width: 320px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
 .brief-card { display: flex; flex-direction: column; gap: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 20px; text-decoration: none; color: inherit; transition: transform 0.18s, border-color 0.18s, background 0.18s; }
 .brief-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.05); }

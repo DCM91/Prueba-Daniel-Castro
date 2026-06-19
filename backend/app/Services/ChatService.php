@@ -6,6 +6,9 @@ namespace App\Services;
 
 use App\Enums\BriefStatus;
 use App\Enums\ProposalStatus;
+use App\Events\ConversationUpdated;
+use App\Events\MessageSent;
+use App\Events\UnreadCountChanged;
 use App\Models\Brief;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -133,23 +136,38 @@ final class ChatService
             return $message;
         });
 
-        return $message->load('sender');
+        $message = $message->load('sender');
+
+        MessageSent::dispatch($message);
+
+        $counterpartId = $conversation->counterpart($sender->id);
+        UnreadCountChanged::dispatch($counterpartId, $this->totalUnreadById($counterpartId));
+        UnreadCountChanged::dispatch($sender->id, $this->totalUnreadById($sender->id));
+
+        return $message;
     }
 
     public function markRead(Conversation $conversation, User $reader): int
     {
-        return Message::query()
+        $updated = Message::query()
             ->where('conversation_id', $conversation->id)
             ->whereNull('read_at')
             ->where('sender_id', '!=', $reader->id)
             ->update(['read_at' => Carbon::now()]);
+
+        if ($updated > 0) {
+            ConversationUpdated::dispatch($conversation);
+            UnreadCountChanged::dispatch($reader->id, $this->totalUnreadById($reader->id));
+        }
+
+        return $updated;
     }
 
-    public function totalUnread(User $user): int
+    private function totalUnreadById(int $userId): int
     {
         $conversationIds = Conversation::query()
-            ->where('client_id', $user->id)
-            ->orWhere('freelancer_id', $user->id)
+            ->where('client_id', $userId)
+            ->orWhere('freelancer_id', $userId)
             ->pluck('id')
             ->all();
 
@@ -159,8 +177,13 @@ final class ChatService
 
         return Message::query()
             ->whereNull('read_at')
-            ->where('sender_id', '!=', $user->id)
+            ->where('sender_id', '!=', $userId)
             ->whereIn('conversation_id', $conversationIds)
             ->count();
+    }
+
+    public function totalUnread(User $user): int
+    {
+        return $this->totalUnreadById($user->id);
     }
 }

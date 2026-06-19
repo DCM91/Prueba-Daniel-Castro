@@ -17,13 +17,22 @@
     @if (navLinks().length > 0) {
       <nav class="topbar-nav" role="navigation" [attr.aria-label]="'topbar.nav_aria' | t">
         @for (link of navLinks(); track link.labelKey) {
-          <a
-            class="nav-link"
-            [class.nav-link--cta]="link.cta"
-            [routerLink]="link.route"
-            routerLinkActive="nav-link--active"
-            [routerLinkActiveOptions]="{ exact: link.route === '/' }"
-          >{{ link.labelKey | t }}</a>
+          <span class="nav-link-wrapper">
+            <a
+              class="nav-link"
+              [class.nav-link--cta]="link.cta"
+              [routerLink]="link.route"
+              routerLinkActive="nav-link--active"
+              [routerLinkActiveOptions]="{ exact: link.route === '/' }"
+            >{{ link.labelKey | t }}</a>
+            @if (link.route === '/messages' && unreadCount() > 0) {
+              <span
+                class="topbar__unread-badge"
+                data-test="unread-badge"
+                [attr.aria-label]="'topbar.messages_unread_aria' | t : { n: unreadCount() }"
+              >{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
+            }
+          </span>
         }
       </nav>
     }
@@ -114,14 +123,23 @@
         @if (navLinks().length > 0) {
           <nav class="panel-nav" role="navigation" [attr.aria-label]="'topbar.nav_aria' | t">
             @for (link of navLinks(); track link.labelKey) {
-              <a
-                class="panel-link"
-                [class.panel-link--cta]="link.cta"
-                [routerLink]="link.route"
-                routerLinkActive="panel-link--active"
-                [routerLinkActiveOptions]="{ exact: link.route === '/' }"
-                (click)="closeMobileMenu()"
-              >{{ link.labelKey | t }}</a>
+              <span class="panel-link-wrapper">
+                <a
+                  class="panel-link"
+                  [class.panel-link--cta]="link.cta"
+                  [routerLink]="link.route"
+                  routerLinkActive="panel-link--active"
+                  [routerLinkActiveOptions]="{ exact: link.route === '/' }"
+                  (click)="closeMobileMenu()"
+                >{{ link.labelKey | t }}</a>
+                @if (link.route === '/messages' && unreadCount() > 0) {
+                  <span
+                    class="topbar__unread-badge"
+                    data-test="unread-badge"
+                    [attr.aria-label]="'topbar.messages_unread_aria' | t : { n: unreadCount() }"
+                  >{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
+                }
+              </span>
             }
           </nav>
           <hr class="panel-divider" />

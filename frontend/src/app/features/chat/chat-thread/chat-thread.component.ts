@@ -18,10 +18,11 @@ import { Subscription, interval } from 'rxjs';
 
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { AuthService } from '../../../core/services/auth.service';
+import { ChatRealtimeService } from '../../../core/services/chat-realtime.service';
 import { ChatService } from '../../../core/services/chat.service';
 import { ChatMessage, Conversation } from '../../../core/types/auth.types';
 
-const POLL_INTERVAL_MS = 5000;
+const POLL_INTERVAL_MS = 30_000;
 const MAX_BODY = 2000;
 
 type SendForm = FormGroup<{ body: FormControl<string> }>;
@@ -37,6 +38,7 @@ type SendForm = FormGroup<{ body: FormControl<string> }>;
 export class ChatThreadComponent implements OnInit, OnDestroy {
   private readonly chat = inject(ChatService);
   private readonly auth = inject(AuthService);
+  private readonly realtime = inject(ChatRealtimeService);
   private readonly fb = inject(NonNullableFormBuilder);
 
   readonly conversation = input.required<Conversation>();
@@ -67,6 +69,7 @@ export class ChatThreadComponent implements OnInit, OnDestroy {
   });
 
   private pollSub: Subscription | null = null;
+  private conversationUnsub: (() => void) | null = null;
 
   constructor() {
     effect(() => {
@@ -79,16 +82,16 @@ export class ChatThreadComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Slow polling as fallback (proxies that block WS, devtools open, etc).
     this.pollSub = interval(POLL_INTERVAL_MS).subscribe(() => {
       const conv = this.conversation();
-      if (conv) {
-        this.pollNew(conv.id);
-      }
+      if (conv) this.pollNew(conv.id);
     });
   }
 
   ngOnDestroy(): void {
     this.pollSub?.unsubscribe();
+    this.conversationUnsub?.();
   }
 
   loadHistory(conversationId: number): void {
@@ -100,12 +103,44 @@ export class ChatThreadComponent implements OnInit, OnDestroy {
         this.lastSyncedAt.set(resp.latest_at);
         this.loading.set(false);
         this.scrollToBottom();
+        this.subscribeToConversation(conversationId);
       },
       error: () => {
         this.errorMessage.set('chat.error_load_messages');
         this.loading.set(false);
       },
     });
+  }
+
+  private subscribeToConversation(conversationId: number): void {
+    this.conversationUnsub?.();
+    this.conversationUnsub = this.realtime.subscribeToConversation(
+      conversationId,
+      (msg) => {
+        // Skip if we already have it (e.g. our own send).
+        if (this.messages().some((m) => m.id === msg.id)) return;
+        this.messages.update((list) => [...list, this.normalizeMessage(msg)]);
+        this.lastSyncedAt.set(msg.created_at);
+        this.scrollToBottom();
+      },
+      () => {
+        this.pollNew(conversationId);
+      },
+    );
+  }
+
+  private normalizeMessage(msg: { id: number; conversation_id: number; body: string; sender_id: number; read_at: string | null; created_at: string; sender?: { id: number; name: string } }): ChatMessage {
+    return {
+      id: msg.id,
+      conversation_id: msg.conversation_id,
+      body: msg.body,
+      sender_id: msg.sender_id,
+      read_at: msg.read_at,
+      created_at: msg.created_at,
+      sender: msg.sender
+        ? { id: msg.sender.id, name: msg.sender.name, avatar_url: null }
+        : undefined,
+    };
   }
 
   pollNew(conversationId: number): void {

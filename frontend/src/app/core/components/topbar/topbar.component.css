@@ -31,6 +31,12 @@
   min-width: 0;
 }
 
+.nav-link-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .nav-link {
   color: #a1a1aa;
   text-decoration: none;
@@ -307,6 +313,11 @@
   gap: 2px;
 }
 
+.panel-link-wrapper {
+  position: relative;
+  display: block;
+}
+
 .panel-link {
   display: block;
   color: #d4d4d8;
@@ -375,6 +386,32 @@
 .panel-logout:hover {
   background: rgba(248, 113, 113, 0.1);
   border-color: rgba(248, 113, 113, 0.5);
+}
+
+/* ---- Unread badge ---- */
+.topbar__unread-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #0f0f12;
+  pointer-events: none;
+}
+
+:host(.is-mobile) .topbar__unread-badge {
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  box-shadow: none;
 }
 
 /* ---- Responsive (class-based via signal isMobile) ---- */
