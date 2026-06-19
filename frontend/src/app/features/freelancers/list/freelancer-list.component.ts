@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { FreelancerCatalogService } from '../../../core/services/freelancer-catalog.service';
@@ -18,10 +18,17 @@ interface CategoryOption {
   labelKey: string;
 }
 
+type FilterForm = FormGroup<{
+  q: FormControl<string>;
+  category: FormControl<SkillCategory | ''>;
+  city: FormControl<string>;
+  maxRate: FormControl<number | null>;
+}>;
+
 @Component({
   selector: 'app-freelancer-list',
   standalone: true,
-  imports: [FormsModule, FreelancerCardComponent, TranslatePipe],
+  imports: [ReactiveFormsModule, FreelancerCardComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './freelancer-list.component.html',
   styleUrl: './freelancer-list.component.css',
@@ -31,15 +38,18 @@ export class FreelancerListComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly lang = inject(LanguageService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   readonly state = signal<'loading' | 'ready' | 'empty' | 'error'>('loading');
   readonly result = signal<Paginated<FreelancerCard> | null>(null);
   readonly errorMessage = signal<string | null>(null);
 
-  readonly q = signal<string>('');
-  readonly category = signal<SkillCategory | ''>('');
-  readonly city = signal<string>('');
-  readonly maxRate = signal<number | null>(null);
+  readonly form: FilterForm = this.fb.group({
+    q: this.fb.control(''),
+    category: this.fb.control<SkillCategory | ''>(''),
+    city: this.fb.control(''),
+    maxRate: this.fb.control<number | null>(null),
+  });
 
   readonly categoryOptions: CategoryOption[] = [
     { value: '',         labelKey: 'freelancers.list.category_all' },
@@ -49,17 +59,20 @@ export class FreelancerListComponent implements OnInit {
     { value: 'content',  labelKey: 'skill_categories.content' },
   ];
 
-  readonly hasActiveFilters = computed(() =>
-    !!this.q() || !!this.category() || !!this.city() || this.maxRate() !== null,
-  );
+  readonly hasActiveFilters = computed(() => {
+    const v = this.form.getRawValue();
+    return !!v.q || !!v.category || !!v.city || v.maxRate !== null;
+  });
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
-      this.q.set(params.get('q') ?? '');
-      this.category.set((params.get('category') as SkillCategory | null) ?? '');
-      this.city.set(params.get('city') ?? '');
       const maxRateParam = params.get('max_rate');
-      this.maxRate.set(maxRateParam ? Number(maxRateParam) : null);
+      this.form.patchValue({
+        q: params.get('q') ?? '',
+        category: (params.get('category') as SkillCategory | null) ?? '',
+        city: params.get('city') ?? '',
+        maxRate: maxRateParam ? Number(maxRateParam) : null,
+      });
       this.load();
     });
   }
@@ -68,11 +81,12 @@ export class FreelancerListComponent implements OnInit {
     this.state.set('loading');
     this.errorMessage.set(null);
 
+    const v = this.form.getRawValue();
     const filters: FreelancerSearchFilters = {
-      q: this.q() || undefined,
-      category: this.category() || undefined,
-      city: this.city() || undefined,
-      max_rate: this.maxRate() ?? undefined,
+      q: v.q || undefined,
+      category: v.category || undefined,
+      city: v.city || undefined,
+      max_rate: v.maxRate ?? undefined,
     };
 
     this.catalog.search(filters).subscribe({
@@ -94,10 +108,7 @@ export class FreelancerListComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.q.set('');
-    this.category.set('');
-    this.city.set('');
-    this.maxRate.set(null);
+    this.form.reset({ q: '', category: '', city: '', maxRate: null });
     void this.router.navigate(['/freelancers']);
   }
 
@@ -124,11 +135,12 @@ export class FreelancerListComponent implements OnInit {
   }
 
   private buildQueryParams(): Record<string, string | null> {
+    const v = this.form.getRawValue();
     return {
-      q: this.q() || null,
-      category: this.category() || null,
-      city: this.city() || null,
-      max_rate: this.maxRate() !== null ? String(this.maxRate()) : null,
+      q: v.q || null,
+      category: v.category || null,
+      city: v.city || null,
+      max_rate: v.maxRate !== null ? String(v.maxRate) : null,
     };
   }
 }

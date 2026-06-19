@@ -1,21 +1,11 @@
 <div class="page">
-  <header class="topbar">
-    <a routerLink="/home" class="brand-link">
-      <app-brand-logo [brandSize]="'md'" />
-    </a>
-    <nav class="topbar-nav">
-      <button class="nav-link" [class.nav-link--active]="scope() === 'all'" (click)="changeScope('all')">{{ 'briefs.list.scope_all' | t }}</button>
-      @if (currentUser()?.role === 'client') {
-        <button class="nav-link" [class.nav-link--active]="scope() === 'mine'" (click)="changeScope('mine')">{{ 'briefs.list.scope_mine' | t }}</button>
-      }
-    </nav>
-    <div class="topbar-right">
-      <app-language-selector />
-      @if (currentUser()?.role === 'client') {
-        <a routerLink="/briefs/new" class="btn btn--primary">{{ 'briefs.list.new_brief' | t }}</a>
-      }
-    </div>
-  </header>
+  <app-core-topbar />
+
+  <app-briefs-sub-bar
+    [scope]="scope()"
+    [currentUser]="currentUser()"
+    (scopeChange)="onScopeChange($event)"
+  />
 
   <main class="main">
     <header class="page-head">

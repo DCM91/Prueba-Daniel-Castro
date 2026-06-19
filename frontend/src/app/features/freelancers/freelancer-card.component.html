@@ -17,7 +17,7 @@
           <app-rating-stars [value]="r.average ?? 0" size="sm" />
           @if (r.count > 0) {
             <span class="card-rating__text muted">
-              {{ 'rating.summary' | t : { average: r.average ?? 0, count: r.count } }}
+              {{ 'rating.summary_short' | t : { average: r.average ?? 0, count: r.count } }}
             </span>
           }
         </div>
@@ -35,14 +35,19 @@
     <span class="rate-value" [class.rate-value--muted]="freelancer?.hourly_rate === null">{{ hourlyRateLabel() }}</span>
   </div>
 
-  @if (freelancer?.top_skills?.length) {
+  @if (topSkills().length) {
     <ul class="skills" [attr.aria-label]="'home.freelancer.preview_title' | t">
-      @for (skill of freelancer?.top_skills; track skill.id) {
+      @for (skill of topSkills(); track skill.id) {
         <li class="chip">
           <span>{{ skill.name }}</span>
           @if (skill.level) {
             <span class="chip-level">{{ levelLabel(skill.level) }}</span>
           }
+        </li>
+      }
+      @if (moreSkillsCount() > 0) {
+        <li class="chip chip--more">
+          <a [routerLink]="detailLink()">{{ 'freelancers.card.more_skills' | t : { count: moreSkillsCount() } }}</a>
         </li>
       }
     </ul>

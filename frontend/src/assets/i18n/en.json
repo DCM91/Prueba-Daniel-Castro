@@ -224,6 +224,7 @@
       "rate_label": "Rate",
       "skills_empty": "No skills listed.",
       "footer_meta": "{{count}} skill{{s}} · {{pct}}% complete",
+      "more_skills": "+{{count}} more",
       "view_profile": "View profile →",
       "aria_view_profile": "View {{name}}'s profile",
       "initials_fallback": "?",
@@ -357,10 +358,11 @@
   "briefs": {
     "list": {
       "title": "Briefs",
-      "subtitle": "Projects posted by clients looking for talent.",
+      "subtitle": "Briefs published by clients looking for talent.",
       "scope_all": "All",
       "scope_mine": "My briefs",
       "new_brief": "+ New brief",
+      "sub_bar_aria": "Briefs filters and actions",
       "loading": "Loading briefs…",
       "error": "Could not load the brief catalog.",
       "empty": "No briefs available.",
@@ -462,6 +464,7 @@
     "summary": "{{average}} out of 5 ({{count}} reviews)",
     "summary_no_reviews": "No reviews yet",
     "summary_one": "{{average}} out of 5 (1 review)",
+    "summary_short": "{{average}} ({{count}})",
     "aria_label": "Rating: {{n}} out of 5"
   },
   "brief_attachments": {

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter, ActivatedRoute, convertToParamMap } from '@angular/router';
+import { provideRouter, ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
 
 import { FreelancerListComponent } from './freelancer-list.component';
@@ -89,5 +89,25 @@ describe('FreelancerListComponent', () => {
   it('exposes hasActiveFilters as true when any filter is set', () => {
     configure({ q: 'video' });
     expect(component.hasActiveFilters()).toBe(true);
+  });
+
+  it('navigates with the current form filters when applyFilters is called', () => {
+    configure({ q: 'video', city: 'Madrid' });
+    const router = TestBed.inject(Router);
+    const navSpy = jest.spyOn(router, 'navigate');
+    component.applyFilters();
+    expect(navSpy).toHaveBeenCalledWith(['/freelancers'], {
+      queryParams: { q: 'video', category: null, city: 'Madrid', max_rate: null },
+    });
+  });
+
+  it('clears the form when clearFilters is called', () => {
+    configure({ q: 'video', city: 'Madrid' });
+    component.clearFilters();
+    const v = component.form.getRawValue() as { q: string; category: string; city: string; maxRate: number | null };
+    expect(v.q).toBe('');
+    expect(v.city).toBe('');
+    expect(v.category).toBe('');
+    expect(v.maxRate).toBeNull();
   });
 });

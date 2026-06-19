@@ -1,18 +1,5 @@
 :host { display: block; }
 .page { min-height: 100vh; background: #0f0f12; color: #f4f4f5; font-family: -apple-system, sans-serif; }
-.topbar { display: flex; align-items: center; gap: 24px; padding: 18px 32px; border-bottom: 1px solid rgba(255,255,255,0.06); position: sticky; top: 0; background: rgba(15,15,18,0.85); backdrop-filter: blur(12px); z-index: 10; }
-.brand-link { display: inline-flex; text-decoration: none; }
-.topbar-nav { display: flex; gap: 8px; flex: 1; margin-left: 8px; }
-.nav-link { background: transparent; border: 0; color: #a1a1aa; font-size: 14px; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
-.nav-link:hover { color: #f4f4f5; background: rgba(255,255,255,0.04); }
-.nav-link--active { color: #c4b5fd; background: rgba(124,58,237,0.18); }
-.topbar-right { display: flex; align-items: center; gap: 12px; }
-.btn { display: inline-flex; align-items: center; gap: 6px; appearance: none; border: 0; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
-.btn--primary { background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%); color: #fff; }
-.btn--primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px -6px rgba(124, 58, 237, 0.6); }
-.btn--ghost { background: transparent; color: #f4f4f5; border: 1px solid rgba(255,255,255,0.16); }
-.btn--ghost:hover { background: rgba(255,255,255,0.08); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px; }
 .page-head h1 { margin: 0 0 6px; font-size: 28px; }
 .muted { color: #a1a1aa; }
@@ -29,23 +16,22 @@
 .brief-foot { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #a1a1aa; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; }
 .pagination { margin-top: 28px; display: flex; justify-content: center; align-items: center; gap: 16px; }
 .page-info { color: #a1a1aa; font-size: 13px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; appearance: none; border: 0; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.btn--ghost { background: transparent; color: #f4f4f5; border: 1px solid rgba(255,255,255,0.16); }
+.btn--ghost:hover { background: rgba(255,255,255,0.08); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 @media (max-width: 720px) {
-  .topbar { gap: 12px; padding: 14px 18px; flex-wrap: wrap; }
-  .topbar-nav { order: 3; width: 100%; margin-left: 0; justify-content: center; }
-  .topbar-right { gap: 8px; }
-  .btn { padding: 8px 12px; font-size: 13px; }
   .main { padding: 24px 18px 48px; }
   .page-head h1 { font-size: 22px; }
   .grid { grid-template-columns: 1fr; gap: 12px; }
   .brief-card { padding: 16px; }
   .pagination { gap: 8px; flex-wrap: wrap; }
   .page-info { font-size: 12px; }
+  .btn { padding: 8px 12px; font-size: 13px; }
 }
 
 @media (max-width: 420px) {
-  .topbar-right .btn { font-size: 12px; padding: 6px 10px; }
-  .nav-link { font-size: 12px; padding: 4px 8px; }
   .brief-head h3 { font-size: 15px; }
   .brief-foot { gap: 8px; font-size: 11px; }
   .page-head h1 { font-size: 20px; }

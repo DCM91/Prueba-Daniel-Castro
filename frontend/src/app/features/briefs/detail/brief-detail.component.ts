@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { BriefsService } from '../../../core/services/briefs.service';
@@ -39,6 +39,21 @@ export class BriefDetailComponent implements OnInit {
   };
 
   readonly isFreelancer = (): boolean => this.currentUser()?.role === 'freelancer';
+
+  readonly budgetDisplay = computed<
+    | { mode: 'none' }
+    | { mode: 'range'; min: number; max: number }
+    | { mode: 'from'; min: number }
+    | { mode: 'up_to'; max: number }
+  >(() => {
+    const b = this.brief();
+    if (b === null) return { mode: 'none' };
+    const { budget_min: min, budget_max: max } = b;
+    if (min === null && max === null) return { mode: 'none' };
+    if (min !== null && max !== null) return { mode: 'range', min, max };
+    if (min !== null) return { mode: 'from', min };
+    return { mode: 'up_to', max: max as number };
+  });
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');

@@ -83,7 +83,7 @@ export class CoreTopbarComponent implements OnDestroy {
     ).subscribe(() => {
       const url = this.router.url.split('?')[0];
       this.currentUrl.set(url);
-      this.isHidden.set(url === '/' || url === '/briefs');
+      this.isHidden.set(url === '/');
       this.mobileMenuOpen.set(false);
     });
   }
@@ -91,9 +91,9 @@ export class CoreTopbarComponent implements OnDestroy {
   readonly variant = computed<TopbarVariant>(() => {
     const url = this.currentUrl();
 
-    if (url.startsWith('/login') || url.startsWith('/register') ||
-        url.startsWith('/auth/') || url.startsWith('/briefs/new') ||
-        url.startsWith('/onboarding')) {
+    if (url === '/briefs/new' ||
+        url.startsWith('/login') || url.startsWith('/register') ||
+        url.startsWith('/auth/') || url.startsWith('/onboarding')) {
       return 'auth';
     }
 

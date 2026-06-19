@@ -224,6 +224,7 @@
       "rate_label": "Tarifa",
       "skills_empty": "Sin skills registradas.",
       "footer_meta": "{{count}} skill{{s}} · {{pct}}% completo",
+      "more_skills": "+{{count}} más",
       "view_profile": "Ver perfil →",
       "aria_view_profile": "Ver perfil de {{name}}",
       "initials_fallback": "?",
@@ -361,6 +362,7 @@
       "scope_all": "Todos",
       "scope_mine": "Mis proyectos",
       "new_brief": "+ Nuevo proyecto",
+      "sub_bar_aria": "Filtros y acciones de proyectos",
       "loading": "Cargando proyectos…",
       "error": "No se pudo cargar el catálogo de proyectos.",
       "empty": "No hay proyectos disponibles.",
@@ -462,6 +464,7 @@
     "summary": "{{average}} sobre 5 ({{count}} reseñas)",
     "summary_no_reviews": "Sin reseñas todavía",
     "summary_one": "{{average}} sobre 5 (1 reseña)",
+    "summary_short": "{{average}} ({{count}})",
     "aria_label": "Puntuación: {{n}} de 5"
   },
   "brief_attachments": {

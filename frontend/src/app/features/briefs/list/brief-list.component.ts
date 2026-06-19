@@ -3,15 +3,15 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { BriefsService } from '../../../core/services/briefs.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { BrandLogoComponent } from '../../../core/components/brand-logo/brand-logo.component';
-import { LanguageSelectorComponent } from '../../../core/components/language-selector/language-selector.component';
+import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
+import { BriefsSubBarComponent, BriefsScope } from '../../../core/components/briefs-sub-bar/briefs-sub-bar.component';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { Brief } from '../../../core/types/auth.types';
 
 @Component({
   selector: 'app-brief-list',
   standalone: true,
-  imports: [RouterLink, BrandLogoComponent, LanguageSelectorComponent, TranslatePipe],
+  imports: [RouterLink, CoreTopbarComponent, BriefsSubBarComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './brief-list.component.html',
   styleUrl: './brief-list.component.css',
@@ -27,13 +27,13 @@ export class BriefListComponent implements OnInit {
   readonly total = signal<number>(0);
   readonly currentPage = signal<number>(1);
   readonly lastPage = signal<number>(1);
-  readonly scope = signal<'all' | 'mine'>('all');
+  readonly scope = signal<BriefsScope>('all');
 
   readonly currentUser = this.auth.currentUser;
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
-      this.scope.set((params.get('scope') as 'all' | 'mine') ?? 'all');
+      this.scope.set((params.get('scope') as BriefsScope | null) ?? 'all');
       this.currentPage.set(Number(params.get('page') ?? 1));
       this.load();
     });
@@ -53,7 +53,7 @@ export class BriefListComponent implements OnInit {
     });
   }
 
-  changeScope(scope: 'all' | 'mine'): void {
+  onScopeChange(scope: BriefsScope): void {
     void this.router.navigate(['/briefs'], { queryParams: { scope, page: 1 } });
   }
 

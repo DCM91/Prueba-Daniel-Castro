@@ -31,11 +31,15 @@ describe('FreelancerCardComponent', () => {
       busy: 'Ocupado',
       rate_consult: 'Consultar',
       rate_per_hour: '{{rate}}€/h',
+      rate_label: 'Tarifa',
       skills_empty: 'Sin skills registradas.',
       view_profile: 'Ver perfil →',
       aria_view_profile: "Ver perfil de {{name}}",
+      footer_meta: "{{count}} skill{{s}} · {{pct}}% completo",
+      more_skills: '+{{count}} más',
     },
     'skill_levels': { junior: 'Junior', mid: 'Mid', senior: 'Senior' },
+    'rating': { summary_short: '{{average}} ({{count}})' },
   });
 
   beforeEach(async () => {
@@ -87,5 +91,28 @@ describe('FreelancerCardComponent', () => {
     component.freelancer = { ...card, hourly_rate: null };
     fixture.detectChanges();
     expect(component.hourlyRateLabel()).toBe('Consultar');
+  });
+
+  it('does not render the "+N más" chip when there are no extra skills', () => {
+    component.freelancer = { ...card, skills_count: 2, top_skills: card.top_skills };
+    fixture.detectChanges();
+    const moreChip = (fixture.nativeElement as HTMLElement).querySelector('.chip--more');
+    expect(moreChip).toBeNull();
+  });
+
+  it('renders a "+N más" chip when skills_count exceeds top_skills length', () => {
+    component.freelancer = { ...card, skills_count: 7, top_skills: card.top_skills };
+    fixture.detectChanges();
+    const moreChip = (fixture.nativeElement as HTMLElement).querySelector('.chip--more');
+    expect(moreChip).toBeTruthy();
+    expect(moreChip?.textContent).toContain('+5');
+  });
+
+  it('exposes the compact rating short format when a rating is present', () => {
+    component.freelancer = { ...card, rating: { count: 3, average: 4.8 } };
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('4.8 (3)');
+    expect(text).not.toContain('reseñas');
   });
 });

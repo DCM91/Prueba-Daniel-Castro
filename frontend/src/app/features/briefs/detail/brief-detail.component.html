@@ -28,23 +28,25 @@
               <p>{{ b.description }}</p>
             </section>
 
-            @if (b.budget_min !== null || b.budget_max !== null) {
-              <section class="brief-budget">
-                <h2>{{ 'briefs.detail.budget' | t }}</h2>
-                <p>
-                  @if (b.budget_min !== null && b.budget_max !== null) {
-                    @let min = b.budget_min;
-                    @let max = b.budget_max;
-                    <strong>{{ 'briefs.detail.budget_range' | t : { min, max } }}</strong>
-                  } @else if (b.budget_min !== null) {
-                    @let min = b.budget_min;
-                    <strong>{{ 'briefs.detail.budget_from' | t : { amount: min } }}</strong>
-                  } @else {
-                    @let max = b.budget_max!;
-                    <strong>{{ 'briefs.detail.budget_up_to' | t : { amount: max } }}</strong>
-                  }
-                </p>
-              </section>
+            @if (budgetDisplay(); as budget) {
+              @if (budget.mode !== 'none') {
+                <section class="brief-budget">
+                  <h2>{{ 'briefs.detail.budget' | t }}</h2>
+                  <p>
+                    @switch (budget.mode) {
+                      @case ('range') {
+                        <strong>{{ 'briefs.detail.budget_range' | t : { min: budget.min, max: budget.max } }}</strong>
+                      }
+                      @case ('from') {
+                        <strong>{{ 'briefs.detail.budget_from' | t : { amount: budget.min } }}</strong>
+                      }
+                      @case ('up_to') {
+                        <strong>{{ 'briefs.detail.budget_up_to' | t : { amount: budget.max } }}</strong>
+                      }
+                    }
+                  </p>
+                </section>
+              }
             }
 
             @if (attachments().length > 0) {

@@ -266,10 +266,10 @@ describe('CoreTopbarComponent', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.topbar')).toBeFalsy();
   });
 
-  it('hides on briefs list route /briefs', () => {
+  it('shows on /briefs (the brief-list now uses the global topbar)', () => {
     configure('/briefs');
     emitNavigationEnd();
-    expect((fixture.nativeElement as HTMLElement).querySelector('.topbar')).toBeFalsy();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.topbar')).toBeTruthy();
   });
 
   it('shows on /briefs/123 (detail page)', () => {

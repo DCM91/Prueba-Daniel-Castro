@@ -53,6 +53,14 @@ export class FreelancerCardComponent {
 
   readonly skillsCount = computed(() => this._freelancer()?.skills_count ?? 0);
 
+  readonly topSkills = computed(() => this._freelancer()?.top_skills ?? []);
+
+  readonly moreSkillsCount = computed(() => {
+    const total = this.skillsCount();
+    const shown = this.topSkills().length;
+    return Math.max(0, total - shown);
+  });
+
   readonly profileCompletion = computed(() => this._freelancer()?.profile_completion ?? 0);
 
   readonly detailLink = computed(() => {

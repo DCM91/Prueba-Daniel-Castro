@@ -8,15 +8,13 @@
   </section>
 
   <section class="filters" [attr.aria-label]="'freelancers.list.title' | t">
-    <form class="filter-bar" (ngSubmit)="applyFilters()">
+    <form class="filter-bar" [formGroup]="form" (ngSubmit)="applyFilters()">
       <label class="field">
         <span class="field-label">{{ 'freelancers.list.filter_search_label' | t }}</span>
         <input
           type="search"
           [placeholder]="'freelancers.list.filter_search_placeholder' | t"
-          [ngModel]="q()"
-          (ngModelChange)="q.set($event)"
-          name="q"
+          formControlName="q"
           [attr.aria-label]="'freelancers.list.filter_search_label' | t"
         />
       </label>
@@ -24,9 +22,7 @@
       <label class="field">
         <span class="field-label">{{ 'freelancers.list.filter_category_label' | t }}</span>
         <select
-          [ngModel]="category()"
-          (ngModelChange)="category.set($event)"
-          name="category"
+          formControlName="category"
           [attr.aria-label]="'freelancers.list.filter_category_label' | t"
         >
           @for (opt of categoryOptions; track opt.value) {
@@ -42,9 +38,7 @@
         <input
           type="text"
           [placeholder]="'freelancers.list.filter_city_placeholder' | t"
-          [ngModel]="city()"
-          (ngModelChange)="city.set($event)"
-          name="city"
+          formControlName="city"
           [attr.aria-label]="'freelancers.list.filter_city_label' | t"
         />
       </label>
@@ -55,9 +49,7 @@
           type="number"
           min="0"
           [placeholder]="'freelancers.list.filter_max_rate_placeholder' | t"
-          [ngModel]="maxRate()"
-          (ngModelChange)="maxRate.set($event === null || $event === '' ? null : +$event)"
-          name="max_rate"
+          formControlName="maxRate"
           [attr.aria-label]="'freelancers.list.filter_max_rate_label' | t"
         />
       </label>
