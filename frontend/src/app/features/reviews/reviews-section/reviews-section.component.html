@@ -29,12 +29,16 @@
         <app-review-form
           [briefId]="briefId()"
           [existing]="mine"
-          (submitted)="onReviewSubmitted()"
+          (submitted)="onReviewSubmitted($event)"
+          (deleteRequested)="onDeleteRequested($event)"
         />
+        @if (deleteError(); as msg) {
+          <p class="reviews-section__error" role="alert" data-test="delete-error">{{ msg | t }}</p>
+        }
       } @else {
         <app-review-form
           [briefId]="briefId()"
-          (submitted)="onReviewSubmitted()"
+          (submitted)="onReviewSubmitted($event)"
         />
       }
     } @else {

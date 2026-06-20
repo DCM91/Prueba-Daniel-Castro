@@ -123,6 +123,29 @@ final class ReviewService
             ->get();
     }
 
+    public function update(Review $review, User $actor, int $rating, ?string $comment): Review
+    {
+        if ($actor->id !== $review->reviewer_id) {
+            throw new AccessDeniedHttpException('Solo el autor de la reseña puede editarla.');
+        }
+
+        $review->forceFill([
+            'rating'  => $rating,
+            'comment' => $comment,
+        ])->save();
+
+        return $review->fresh();
+    }
+
+    public function destroy(Review $review, User $actor): void
+    {
+        if ($actor->id !== $review->reviewer_id) {
+            throw new AccessDeniedHttpException('Solo el autor de la reseña puede eliminarla.');
+        }
+
+        $review->delete();
+    }
+
     public function listForBrief(Brief $brief, ?User $viewer = null): Collection
     {
         $query = Review::query()

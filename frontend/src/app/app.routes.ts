@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
+import { onboardingGuard } from './core/guards/onboarding.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { redirectIfAuthenticatedGuard } from './core/guards/redirect-if-authenticated.guard';
 
@@ -31,7 +32,7 @@ export const routes: Routes = [
   },
   {
     path: 'account',
-    canActivate: [authGuard],
+    canActivate: [authGuard, onboardingGuard],
     data: { backLink: '/home' },
     loadComponent: () => import('./features/account/account.component').then((m) => m.AccountComponent),
   },
@@ -67,13 +68,13 @@ export const routes: Routes = [
   },
   {
     path: 'freelancer/profile/edit',
-    canActivate: [authGuard, roleGuard(['freelancer'])],
+    canActivate: [authGuard, onboardingGuard, roleGuard(['freelancer'])],
     data: { backLink: '/home' },
     loadComponent: () => import('./features/freelancer/profile-editor/profile-editor.component').then((m) => m.ProfileEditorComponent),
   },
   {
     path: 'freelancer/portfolio',
-    canActivate: [authGuard, roleGuard(['freelancer'])],
+    canActivate: [authGuard, onboardingGuard, roleGuard(['freelancer'])],
     data: { backLink: '/home' },
     loadComponent: () => import('./features/freelancer/portfolio-editor/portfolio-editor.component').then((m) => m.PortfolioEditorComponent),
   },
@@ -92,7 +93,7 @@ export const routes: Routes = [
   },
   {
     path: 'briefs/new',
-    canActivate: [authGuard, roleGuard(['client'])],
+    canActivate: [authGuard, onboardingGuard, roleGuard(['client'])],
     data: { backLink: '/briefs' },
     loadComponent: () => import('./features/briefs/form/brief-form.component').then((m) => m.BriefFormComponent),
   },
@@ -103,7 +104,7 @@ export const routes: Routes = [
   },
   {
     path: 'messages',
-    canActivate: [authGuard],
+    canActivate: [authGuard, onboardingGuard],
     loadComponent: () => import('./features/chat/chat-page/chat-page.component').then((m) => m.ChatPageComponent),
   },
   { path: '**', redirectTo: '' },

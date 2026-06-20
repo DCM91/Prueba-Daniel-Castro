@@ -957,12 +957,30 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
   - Frontend tests: 6 tests en `brief-detail.component.spec.ts:129-163` cubriendo render, service call, y state update.
   - i18n: `briefs.proposals.{accept,reject,status_pending,status_accepted,status_rejected,status_withdrawn,confirm_accept,confirm_reject}` (ES+EN). Las claves `confirm_*` están definidas pero los botones actuales disparan la acción sin `confirm()` (decisión de UX: las acciones son reversibles y el botón de "Cancelar" en cada estado del brief permite re-evaluar).
   - **Pendiente menor:** el `confirm_accept` y `confirm_reject` se pueden añadir como `window.confirm()` en el `updateProposalStatus()` si se quiere blindar contra clics accidentales.
-- [ ] **Editar / borrar la propia review** (`PUT /api/reviews/{id}` + `DELETE /api/reviews/{id}`).
-  - 1 tests × 2 (auth, owner, validación, anti-duplicado por brief).
+- [x] **Editar / borrar la propia review** (`PUT /api/reviews/{id}` + `DELETE /api/reviews/{id}`) — ✅ **cerrado**.
+  - Backend: `ReviewController::update` con `UpdateReviewRequest` (rating 1-5, comment ≤1000) y `ReviewController::destroy` con 204. Ambos protegidos por auth y restringidos al `reviewer_id` vía `ReviewService::update`/`destroy` (lanza 403 si el actor no es el autor).
+  - Backend tests: 10 nuevos en `ReviewTest.php` cubriendo happy path, 403 non-owner, 401 sin auth, 422 validación de rating y comment, 404 review inexistente (update + destroy).
+  - Rutas: `PUT /api/reviews/{id}` y `DELETE /api/reviews/{id}` (auth:api, whereNumber). El backend pasa de **240/927** a **250/994** tests.
+  - Frontend service: `ReviewsService.update(id, input)` (PUT, devuelve `r.data`) y `ReviewsService.delete(id)` (DELETE, devuelve void).
+  - Frontend UI:
+    - `ReviewFormComponent` — el path de edit ya estaba medio cableado (`existing` input + `ngOnInit` que parchaba el form) pero la submit() hacía `of(null)` saltándose el update. Reemplazado por la llamada real a `ReviewsService.update`. El botón "Publicar" cambia a "Guardar cambios" cuando hay `existing`, y aparece un botón "Eliminar reseña" al lado con confirmación vía `window.confirm(this.lang.t('reviews.delete_confirm'))`.
+    - `ReviewsSectionComponent` — maneja el `deleteRequested` del form: confirma, llama a `ReviewsService.delete`, resetea `existingReview` a `null` (para que el form vuelva a "crear") e incrementa `refreshKey` para que el `ReviewListComponent` re-fetchee.
+  - Frontend tests: spec nuevo `review-form.component.spec.ts` con 10 tests (create title, patch from existing, edit title, delete button visible, create submit, update submit, error_save, error_update, invalid form, deleteRequested emit). Mock reasignable via `get create()`/`get update()` en el provider.
+  - i18n: 6 claves nuevas en `reviews.*` (ES+EN): `save_changes`, `edit_title`, `delete_cta`, `delete_confirm`, `error_update`, `error_delete`.
+  - El frontend pasa de **42/303** a **43/313** tests.
+  - **Cerrado el 2026-06-20.**
 - [ ] **Migrar chat de polling a WebSockets** (Laravel Reverb + push notifications).
   - Frontend cambia `interval(POLL_INTERVAL_MS)` por un `WebSocket` que escucha `MessageSent`. Backend emite evento en `ChatController::send`. Estimación: 12 tests (eventos, reconnection, ack).
-- [ ] **OnboardingGuard** (`CanActivateFn` que redirige a `/onboarding/welcome` si el freelancer autenticado tiene `onboarding_completed_at === null` y la ruta visitada no es `/onboarding/*` ni `/home`).
-  - El `OnboardingService` ya existe (Fase 5.5.D) y persiste el `step` en `localStorage`. El guard reutilizaría la señal `currentUser().freelancer_profile?.onboarding_completed_at`. Spec pequeño (1-2 tests: redirige, no redirige, bypass para rutas `/onboarding/*`).
+- [x] **OnboardingGuard** (`CanActivateFn` que redirige a `/onboarding/welcome` si el freelancer autenticado tiene `onboarding_completed_at === null` y la ruta visitada no es `/onboarding/*` ni `/home`).
+  - Implementado en `frontend/src/app/core/guards/onboarding.guard.ts`. Lógica:
+    - Sin sesión → `true` (deja que `authGuard` aguas arriba haga su trabajo).
+    - User con `role !== 'freelancer'` → `true` (el onboarding solo aplica a freelancers).
+    - Freelancer con `onboarding_completed_at` definido → `true` (ya completó).
+    - Path coincide con `/home`, `/home/*`, `/onboarding` o `/onboarding/*` → `true` (bypass).
+    - Resto → `UrlTree('/onboarding/welcome')`.
+  - Aplicado en `app.routes.ts` a las rutas autenticadas que NO son bypass: `/account`, `/freelancer/profile/edit`, `/freelancer/portfolio`, `/briefs/new`, `/messages`. Las rutas públicas (`/`, `/login`, `/register`, `/briefs`, `/briefs/:id`, `/freelancers`, `/freelancers/:id`, `/auth/callback`, `/auth/complete-profile`) y las bypass (`/home*`, `/onboarding*`) se quedan como están.
+  - Spec `frontend/src/app/core/guards/onboarding.guard.spec.ts` con 11 casos: no auth, no-freelancer, freelancer completo, 5 paths bypass, 6 paths redirigidos, query params (bypass y redirect), freelancer sin `freelancer_profile` (= incompleto).
+  - **Cerrado el 2026-06-20.**
 - [ ] **Reset de password** (requiere crear tabla `password_reset_tokens` — se eliminó en Fase 5.7 por no usarse). Link firmado con TTL 30 min, email transaccional, `MAIL_MAILER` configurado.
 - [ ] **Verificación de email** (campo `email_verified_at` ya existe).
   - Link firmado de un solo uso, reenvío, UI banner persistente si no verificado.

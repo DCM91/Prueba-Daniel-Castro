@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { ReviewsService } from '../../../core/services/reviews.service';
@@ -38,6 +38,7 @@ export class ReviewFormComponent implements OnInit {
   readonly briefId = input.required<number>();
   readonly existing = input<Review | null>(null);
   readonly submitted = output<Review>();
+  readonly deleteRequested = output<Review>();
 
   readonly saving = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
@@ -52,6 +53,7 @@ export class ReviewFormComponent implements OnInit {
   readonly starValue = signal<number>(0);
 
   readonly previewCharCount = computed<number>(() => this.form.controls.comment.value.length);
+  readonly isEditing = computed<boolean>(() => this.existing() !== null);
 
   ngOnInit(): void {
     const existing = this.existing();
@@ -74,19 +76,27 @@ export class ReviewFormComponent implements OnInit {
     this.errorMessage.set(null);
 
     const raw = this.form.getRawValue();
-    const obs$ = this.existing() !== null
-      ? of<Review | null>(null)
-      : this.reviews.create(this.briefId(), { rating: raw.rating, comment: raw.comment || null });
+    const payload = { rating: raw.rating, comment: raw.comment || null };
+    const existing = this.existing();
+    const obs$: Observable<Review> = existing !== null
+      ? this.reviews.update(existing.id, payload)
+      : this.reviews.create(this.briefId(), payload);
 
     obs$.subscribe({
-      next: (created: Review | null) => {
+      next: (saved) => {
         this.saving.set(false);
-        if (created) this.submitted.emit(created);
+        this.submitted.emit(saved);
       },
       error: () => {
-        this.errorMessage.set('reviews.error_save');
+        this.errorMessage.set(existing !== null ? 'reviews.error_update' : 'reviews.error_save');
         this.saving.set(false);
       },
     });
+  }
+
+  requestDelete(): void {
+    const existing = this.existing();
+    if (existing === null) return;
+    this.deleteRequested.emit(existing);
   }
 }

@@ -19,6 +19,18 @@ export class ReviewsService {
       .pipe(map((r) => r.data));
   }
 
+  update(reviewId: number, input: ReviewInput): Observable<Review> {
+    return this.http
+      .put<{ data: Review }>(`/api/reviews/${reviewId}`, input)
+      .pipe(map((r) => r.data));
+  }
+
+  delete(reviewId: number): Observable<void> {
+    return this.http
+      .delete<unknown>(`/api/reviews/${reviewId}`)
+      .pipe(map(() => undefined));
+  }
+
   listForUser(userId: number, limit = 20): Observable<Review[]> {
     const params = new HttpParams().set('limit', String(limit));
     return this.http

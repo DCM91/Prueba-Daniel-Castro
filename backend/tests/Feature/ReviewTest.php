@@ -372,4 +372,170 @@ final class ReviewTest extends TestCase
         $this->postJson("/api/briefs/{$ctx['brief']->id}/reviews", ['rating' => 5])
             ->assertStatus(401);
     }
+
+    public function test_owner_can_update_their_review(): void
+    {
+        $ctx = $this->makeCompletedContext();
+        $review = Review::create([
+            'brief_id'    => $ctx['brief']->id,
+            'reviewer_id' => $ctx['client']->id,
+            'reviewee_id' => $ctx['freelancer']->id,
+            'rating'      => 3,
+            'comment'     => 'Comentario inicial',
+        ]);
+
+        $this->withHeader('Authorization', "Bearer {$ctx['client_token']}")
+            ->putJson("/api/reviews/{$review->id}", [
+                'rating'  => 5,
+                'comment' => 'Comentario actualizado tras entregar las correcciones.',
+            ])
+            ->assertStatus(200)
+            ->assertJsonPath('data.rating', 5)
+            ->assertJsonPath('data.comment', 'Comentario actualizado tras entregar las correcciones.');
+
+        $this->assertDatabaseHas('reviews', [
+            'id'      => $review->id,
+            'rating'  => 5,
+            'comment' => 'Comentario actualizado tras entregar las correcciones.',
+        ]);
+    }
+
+    public function test_update_rejects_non_owner(): void
+    {
+        $ctx = $this->makeCompletedContext();
+        $review = Review::create([
+            'brief_id'    => $ctx['brief']->id,
+            'reviewer_id' => $ctx['client']->id,
+            'reviewee_id' => $ctx['freelancer']->id,
+            'rating'      => 3,
+        ]);
+
+        $this->withHeader('Authorization', "Bearer {$ctx['freelancer_tok']}")
+            ->putJson("/api/reviews/{$review->id}", ['rating' => 1])
+            ->assertStatus(403);
+
+        $this->assertDatabaseHas('reviews', ['id' => $review->id, 'rating' => 3]);
+    }
+
+    public function test_update_unauthenticated_returns_401(): void
+    {
+        $ctx = $this->makeCompletedContext();
+        $review = Review::create([
+            'brief_id'    => $ctx['brief']->id,
+            'reviewer_id' => $ctx['client']->id,
+            'reviewee_id' => $ctx['freelancer']->id,
+            'rating'      => 3,
+        ]);
+
+        $this->putJson("/api/reviews/{$review->id}", ['rating' => 5])
+            ->assertStatus(401);
+    }
+
+    public function test_update_validates_rating_range(): void
+    {
+        $ctx = $this->makeCompletedContext();
+        $review = Review::create([
+            'brief_id'    => $ctx['brief']->id,
+            'reviewer_id' => $ctx['client']->id,
+            'reviewee_id' => $ctx['freelancer']->id,
+            'rating'      => 3,
+        ]);
+
+        $this->withHeader('Authorization', "Bearer {$ctx['client_token']}")
+            ->putJson("/api/reviews/{$review->id}", ['rating' => 0])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['rating']);
+
+        $this->withHeader('Authorization', "Bearer {$ctx['client_token']}")
+            ->putJson("/api/reviews/{$review->id}", ['rating' => 7])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['rating']);
+    }
+
+    public function test_update_validates_comment_max_length(): void
+    {
+        $ctx = $this->makeCompletedContext();
+        $review = Review::create([
+            'brief_id'    => $ctx['brief']->id,
+            'reviewer_id' => $ctx['client']->id,
+            'reviewee_id' => $ctx['freelancer']->id,
+            'rating'      => 3,
+        ]);
+
+        $this->withHeader('Authorization', "Bearer {$ctx['client_token']}")
+            ->putJson("/api/reviews/{$review->id}", [
+                'rating'  => 4,
+                'comment' => str_repeat('a', 1001),
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['comment']);
+    }
+
+    public function test_update_404_for_unknown_review(): void
+    {
+        [, $token] = $this->makeClient();
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->putJson('/api/reviews/9999', ['rating' => 4])
+            ->assertStatus(404);
+    }
+
+    public function test_owner_can_delete_their_review(): void
+    {
+        $ctx = $this->makeCompletedContext();
+        $review = Review::create([
+            'brief_id'    => $ctx['brief']->id,
+            'reviewer_id' => $ctx['client']->id,
+            'reviewee_id' => $ctx['freelancer']->id,
+            'rating'      => 3,
+        ]);
+
+        $this->withHeader('Authorization', "Bearer {$ctx['client_token']}")
+            ->deleteJson("/api/reviews/{$review->id}")
+            ->assertStatus(204);
+
+        $this->assertDatabaseMissing('reviews', ['id' => $review->id]);
+    }
+
+    public function test_delete_rejects_non_owner(): void
+    {
+        $ctx = $this->makeCompletedContext();
+        $review = Review::create([
+            'brief_id'    => $ctx['brief']->id,
+            'reviewer_id' => $ctx['client']->id,
+            'reviewee_id' => $ctx['freelancer']->id,
+            'rating'      => 3,
+        ]);
+
+        $this->withHeader('Authorization', "Bearer {$ctx['freelancer_tok']}")
+            ->deleteJson("/api/reviews/{$review->id}")
+            ->assertStatus(403);
+
+        $this->assertDatabaseHas('reviews', ['id' => $review->id]);
+    }
+
+    public function test_delete_unauthenticated_returns_401(): void
+    {
+        $ctx = $this->makeCompletedContext();
+        $review = Review::create([
+            'brief_id'    => $ctx['brief']->id,
+            'reviewer_id' => $ctx['client']->id,
+            'reviewee_id' => $ctx['freelancer']->id,
+            'rating'      => 3,
+        ]);
+
+        $this->deleteJson("/api/reviews/{$review->id}")
+            ->assertStatus(401);
+
+        $this->assertDatabaseHas('reviews', ['id' => $review->id]);
+    }
+
+    public function test_delete_404_for_unknown_review(): void
+    {
+        [, $token] = $this->makeClient();
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->deleteJson('/api/reviews/9999')
+            ->assertStatus(404);
+    }
 }

@@ -53,6 +53,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/briefs/{id}/reviews', [ReviewController::class, 'forBrief'])->whereNumber('id');
     Route::get('/users/{id}/reviews', [ReviewController::class, 'forUser'])->whereNumber('id');
     Route::get('/users/{id}/rating', [ReviewController::class, 'aggregateForUser'])->whereNumber('id');
+    Route::put('/reviews/{id}', [ReviewController::class, 'update'])->whereNumber('id');
+    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->whereNumber('id');
 
     Route::post('/briefs/{briefId}/proposals', [ProposalController::class, 'store'])
         ->whereNumber('briefId');

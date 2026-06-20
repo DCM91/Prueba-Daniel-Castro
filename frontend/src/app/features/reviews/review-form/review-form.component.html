@@ -1,6 +1,8 @@
 <form class="review-form" [formGroup]="form" (ngSubmit)="submit()" data-test="review-form">
   <header class="review-form__head">
-    <h3 class="review-form__title">{{ 'reviews.form_title' | t }}</h3>
+    <h3 class="review-form__title">
+      {{ (isEditing() ? 'reviews.edit_title' : 'reviews.form_title') | t }}
+    </h3>
     <p class="review-form__subtitle muted">{{ 'reviews.form_subtitle' | t }}</p>
   </header>
 
@@ -40,9 +42,23 @@
     <button
       type="submit"
       class="review-form__submit"
+      data-test="review-form-submit"
       [disabled]="form.invalid || saving()"
     >
-      {{ saving() ? ('reviews.submitting' | t) : ('reviews.submit' | t) }}
+      {{ saving()
+          ? ('reviews.submitting' | t)
+          : ((isEditing() ? 'reviews.save_changes' : 'reviews.submit') | t) }}
     </button>
+    @if (isEditing()) {
+      <button
+        type="button"
+        class="review-form__delete"
+        data-test="review-form-delete"
+        [disabled]="saving()"
+        (click)="requestDelete()"
+      >
+        {{ 'reviews.delete_cta' | t }}
+      </button>
+    }
   </div>
 </form>
