@@ -1,6 +1,6 @@
 # Referencia de la API
 
-> Última revisión: Fase 5.7 (limpieza + branching + CI). Base URL en dev: `http://127.0.0.1:8000` (backend Laravel). El frontend hace proxy de `/api/*` desde `localhost:4200` (ver `frontend/proxy.conf.json`). En producción, Vercel hace rewrite de `/api/*` a Railway (ver `frontend/vercel.json`).
+> Última revisión: Sprint WebSockets (commit `f4f1621`, 2026-06-20) + drop beta branch (2026-06-20). Base URL en dev: `http://127.0.0.1:8000` (backend Laravel). El frontend hace proxy de `/api/*` desde `localhost:4200` (ver `frontend/proxy.conf.json`). En producción, Vercel hace rewrite de `/api/*` a Railway (ver `frontend/vercel.json`). Endpoint WS de Reverb en `ws[s]://<host>:8080` (ver § Real-time).
 
 ## Convenciones
 
@@ -1194,6 +1194,106 @@ Desvincula una identidad OAuth del usuario autenticado. **Requiere JWT.** `provi
 ### Flujo de linking (vinculación desde un usuario logueado)
 
 Si el usuario ya está autenticado y quiere añadir Google/Facebook a su cuenta, el frontend llama a `GET /api/auth/oauth/{provider}/redirect?link=1`. El backend marca la sesión con un `link_intent` que contiene el `user_id` actual. Al volver del provider, el callback detecta ese intent y, en lugar de crear/recuperar un user, vincula la nueva identidad al usuario actual. Si la operación tiene éxito, redirige a `{FRONTEND_URL}/account?oauth_linked={provider}&token={jwt}`; si falla, redirige a `{FRONTEND_URL}/account?oauth_error={mensaje}&provider={provider}`.
+
+---
+
+## Real-time (WebSockets) - Sprint WebSockets (commit `f4f1621`)
+
+El chat y el badge de no-leídas del topbar se actualizan en tiempo real vía **Laravel Reverb** (Pusher protocol 7 sobre WebSocket). El polling cada 30s queda solo como red de seguridad para entornos donde WS está bloqueado (corporate proxies, devtools cerrados, etc.).
+
+### Endpoint de conexión
+
+```
+ws[s]://<host>:<port>/app/<REVERB_APP_KEY>?protocol=7&client=js&version=8
+```
+
+| Entorno | URL |
+|---|---|
+| Dev | `ws://127.0.0.1:8080/app/framematch-reverb-key` |
+| Prod | `wss://framematch-ws.railway.app:443/app/framematch-reverb-key` |
+
+El header `Authorization: Bearer <jwt>` se pasa en el handshake inicial (Reverb lo lee para autorizar las suscripciones a canales privados).
+
+### Canales privados
+
+| Canal | Suscripción | Eventos | Auth policy |
+|---|---|---|---|
+| `private-user.{userId}` | Cada user autenticado, sobre su propio `id` | `unread.changed` | `subscriberId === channelUserId` |
+| `private-conversation.{conversationId}` | Los 2 participantes de la conversación | `message.sent`, `conversation.updated` | User debe ser `client_id` o `freelancer_id` de la conversación |
+
+### Evento `message.sent` (canal `private-conversation.{id}`)
+
+Emitido por `ChatService::sendMessage` tras persistir un mensaje.
+
+```json
+{
+  "message": {
+    "id": 42,
+    "conversation_id": 7,
+    "body": "Hola, ¿cuándo puedes empezar?",
+    "sender_id": 3,
+    "read_at": null,
+    "created_at": "2026-06-20T10:30:45.000000Z",
+    "sender": { "id": 3, "name": "Lucia Ramos" }
+  }
+}
+```
+
+### Evento `conversation.updated` (canal `private-conversation.{id}`)
+
+Emitido por `ChatService::markRead` solo cuando marca al menos 1 mensaje como leído (no spam por conversaciones sin no-leídos).
+
+```json
+{
+  "conversation_id": 7,
+  "last_message_at": "2026-06-20T10:30:45.000000Z"
+}
+```
+
+### Evento `unread.changed` (canal `private-user.{id}`)
+
+Emitido por `ChatService::sendMessage` (para el recipient y para el sender con `total=0`) y `markRead` (para el reader).
+
+```json
+{
+  "user_id": 3,
+  "total": 2
+}
+```
+
+### Endpoint HTTP de auth de canales
+
+```
+POST /api/broadcasting/auth
+```
+
+Lo invoca internamente el cliente Pusher-protocol cuando se suscribe a un canal privado. No se llama directamente desde el frontend.
+
+### Variables de entorno del backend
+
+| Var | Dev | Prod |
+|---|---|---|
+| `BROADCAST_CONNECTION` | `log` (escribe a `storage/logs/laravel.log`) | `reverb` (arranca el servidor WS) |
+| `REVERB_APP_ID` | `framematch-app` | `framematch-app` |
+| `REVERB_APP_KEY` | `framematch-reverb-key` | `framematch-reverb-key` (≥16 chars) |
+| `REVERB_APP_SECRET` | `framematch-reverb-secret-min-32-chars` | (≥32 chars, secret en Railway) |
+| `REVERB_SERVER_HOST` | `0.0.0.0` | `0.0.0.0` |
+| `REVERB_SERVER_PORT` | `8080` | `8080` (el dyno de Railway) |
+| `REVERB_HOST` | `localhost` | `framematch-ws.railway.app` |
+| `REVERB_PORT` | `8080` | `443` |
+| `REVERB_SCHEME` | `http` | `https` |
+
+### Limitaciones conocidas
+
+- **Single-process en Railway:** Reverb corre en el mismo dyno que el backend HTTP. Funciona para el tráfico actual pero no escala horizontalmente (las broadcasts de un dyno no llegan a clientes conectados a otro). Cuando sea un problema, mover Reverb a un servicio separado en Railway o a Pusher/Ably externo.
+- **Auth de canal vía JWT plano:** la implementación pasa el JWT como string de auth del canal. Reverb lo acepta en la mayoría de setups; si en el futuro hace falta HMAC real (`socketId:channel` firmado con `app_secret`), el hook está aislado en `WebSocketService.buildAuthForChannel`.
+
+### Cómo añadir un nuevo evento realtime
+
+1. Crear la clase en `app/Events/` que implemente `ShouldBroadcastNow`. Devolver el `PrivateChannel` en `broadcastOn()`.
+2. En el servicio que dispara el evento, llamar a `MyEvent::dispatch($payload)` después de persistir el cambio.
+3. Si el canal es nuevo, registrarlo en `routes/channels.php` con su policy en `ChatChannelAuthorizer` (o crear un nuevo `*ChannelAuthorizer`).
+4. Frontend: añadir un listener en `ChatRealtimeService` o crear un `*RealtimeService` paralelo si es un dominio distinto.
 
 ---
 

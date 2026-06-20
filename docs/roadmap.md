@@ -5,29 +5,31 @@
 > - Estado vivo. Marca con `[x]` cada tarea al cerrarla.
 > - Prioridad descendente (P0 = más urgente, P6 = sin priorizar).
 > - Las fases se numeran con cronología. Las sub-fases 5.5.x son bloques cortos dentro de "Fase 5.5 · Cloudinary".
-> - Última actualización: **cierre de hotfix 0.19 (2026-06-20)**.
+> - Última actualización: **sincronización de WebSockets + cierre de hotfixes de docs (2026-06-20)**.
 
 ---
 
 ## TL;DR
 
-**Métricas al cierre de hotfix 0.19 (2026-06-20):**
+**Métricas al cierre del sprint de sincronización (2026-06-20):**
 
-- **Backend:** 227 tests / 927 assertions, 15 feature suites + 2 unit suites, todos en verde.
-- **Frontend:** `npm run build` sin warnings. `npm run validate:i18n` OK. `npx jest` → **41 suites / 286 tests verdes** (subida desde 36/249 por hotfix 0.18 — runner de Jest resuelto + 5 specs pre-existentes reescritos).
+- **Backend:** 250 tests / 994 assertions, 17 feature suites + 2 unit suites, todos en verde.
+- **Frontend:** `npm run build` sin warnings. `npm run validate:i18n` OK. `npx jest` → **43 suites / 316 tests verdes**.
 - **Deploy:** producción en Railway (backend) + Vercel (frontend) con CI en GitHub Actions.
 - **Tablas nuevas desde Fase 5:** `brief_attachments` (5.5.C), `conversations` + `messages` (Fase 6), `reviews` (Fase 7), `user_oauth_identities` (5.5.F).
 - **Endpoints nuevos desde Fase 5:** 25+ nuevos entre 5.5.A, 5.5.B, 5.5.C, 5.5.D, 5.5.E, 5.5.F, Fase 6, Fase 7. Ver [docs/api.md](./api.md).
+- **Eventos realtime (Sprint WebSockets):** `MessageSent`, `ConversationUpdated`, `UnreadCountChanged` sobre canales privados `conversation.{id}` y `user.{id}` con Laravel Reverb.
 
 **Estado del backlog inmediato:**
 
 | # | Próxima | Estado |
 |---|---|---|
 | 1 | Aceptar / rechazar propuesta (PATCH status) | ✅ Cerrado (ver § Aceptar/Rechazar propuesta) |
-| 2 | Migrar chat de polling a WebSockets (Laravel Reverb) | 🔵 Sin empezar |
-| 3 | Editar / borrar la propia review | 🔵 Sin empezar |
-| 4 | Responder a reviews, fotos en reviews, denuncias | ⚪ Backlog |
-| 5 | Reset de password + verificación de email | ⚪ Backlog |
+| 2 | Migrar chat de polling a WebSockets (Laravel Reverb) | ✅ Cerrado en `f4f1621` (Sprint 4-5) — ver § Hotfix 0.20 |
+| 3 | Editar / borrar la propia review | ✅ Cerrado (ver § Editar/borrar review) |
+| 4 | Notificaciones in-app (campana en topbar) | 🔵 Sprint en curso |
+| 5 | Responder a reviews, fotos en reviews, denuncias | ⚪ Backlog |
+| 6 | Reset de password + verificación de email | ⚪ Backlog |
 
 ---
 
@@ -623,7 +625,7 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
 
 ### ✅ Fase 5.7 · Limpieza + Branching + CI
 
-**Objetivo:** eliminar código muerto, tablas no usadas, y formalizar la estrategia de ramas `beta` → `main` con integración continua.
+**Objetivo:** eliminar código muerto, tablas no usadas, y formalizar la estrategia de ramas con integración continua.
 
 **Backend**
 - Migración `2026_06_17_000000_drop_unused_tables` dropea 5 tablas no usadas (`password_reset_tokens`, `sessions`, `jobs`, `job_batches`, `failed_jobs`). Se conservan `cache` y `cache_locks`.
@@ -636,8 +638,8 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
 - Eliminado `import { BriefInput }` sin uso en `proposal-form.component.ts`.
 
 **Branching & CI**
-- Estrategia documentada en `AGENTS.md`: `beta` (desarrollo activo) → PR → `main` (producción). Railway + Vercel despliegan desde `main`.
-- `.github/workflows/test.yml`: PHPUnit + Jest en push/PR para `main` y `beta`.
+- Estrategia documentada en `AGENTS.md`: `main` (desarrollo activo + producción). Features vía `feature/<slug>` cortada de `main` y mergeada de vuelta con CI verde. Railway + Vercel despliegan desde `main`.
+- `.github/workflows/test.yml`: PHPUnit + Jest en push/PR para `main`. (La rama `beta` se eliminó en [hotfix 0.21](#021--drop-rama-beta-de-la-política-de-ramas-y-de-ci) — toda la actividad de la beta previa se había mergeado siempre a `main` y la rama estaba desincronizada.)
 
 **Validación 5.7:** `npm test` (172/172, 29 suites) + `php artisan test` (133/133, 634 assertions) — todo en verde. ✅
 
@@ -688,6 +690,8 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
 **Total acumulado:** backend **208 tests / 880 assertions**, frontend `npm run build` OK.
 
 **Pendiente para esta fase (backlog):** migrar de polling a WebSockets (Laravel Reverb) + push notifications cuando llega un mensaje nuevo.
+
+> **Cerrado en Sprint 4-5 (`f4f1621`, 2026-06-20).** La Fase 6 sigue marcada como `polling primero`, pero el camino rápido es ahora WS. El polling cada 30s queda como red de seguridad (corporate proxies que bloquean WS, devtools abiertos, etc.). Detalle operativo en [§ Hotfix 0.20](#020--websockets-migración-de-polling-a-reverb).
 
 ### ✅ Fase 7 · Reviews y ratings — cerrada 2026-06-18
 
@@ -834,6 +838,29 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
     - `brief-list.component.css` — idem, consolidando el `:host` previo.
   - **Validación:** `npx jest` 41/286 ✅, `npm run build` sin warnings ✅, smoke visual en `/`, `/login`, `/home/client`, `/home/freelancer`, `/briefs`, `/briefs/1`, `/briefs/new`, `/messages`, `/freelancers`, `/freelancers/1`, `/account` → un solo topbar en cada ruta (excepto `/`, oculto).
   - **Nota:** la convención de Fase 5.4 ("`BriefListComponent` mantiene su topbar propio") se matiza: en realidad el topbar lo provee el global desde `App`; lo que `BriefListComponent` justifica como "excepción" son los **scope tabs** (`<app-briefs-sub-bar>` con "Todos / Mis proyectos"), no el topbar.
+- [x] **0.20** · WebSockets: migración de polling a Reverb
+  - **Contexto:** el backlog P3 tenía marcado "Migrar chat de polling a WebSockets" como `sin empezar` aunque el trabajo se había hecho en el commit `f4f1621 feat(sprints 1-5): P0 bugs, P2 UX, Laravel Reverb WebSockets` (2026-06-20). El roadmap no se actualizó en su día. Esta entrada es la formalización retroactiva, no un cambio de código.
+  - **Sprint 4 — Backend (Laravel Reverb):**
+    - `composer.json`: `laravel/reverb: ^1.10` instalado.
+    - `config/broadcasting.php` + `config/reverb.php` + `routes/channels.php`. `BROADCAST_CONNECTION` por defecto `log` en dev, `reverb` en prod; `null` en tests (`phpunit.xml`).
+    - 3 eventos en `app/Events/`: `MessageSent`, `ConversationUpdated`, `UnreadCountChanged`. Todos implementan `ShouldBroadcastNow` (no pasan por cola — el realtime es crítico).
+    - Canales privados: `private-conversation.{id}` para mensajes y `private-user.{id}` para el badge de no-leídas del topbar. Policy extraída a `app/Broadcasting/ChatChannelAuthorizer.php` (testable sin HTTP).
+    - `ChatService` dispara los eventos en `sendMessage` (líneas 141-145) y `markRead` (líneas 159-160). `ConversationUpdated` solo se emite si `markRead` actualizó al menos 1 mensaje.
+    - `start-container.sh` arranca Reverb en background (`php artisan reverb:start --host=0.0.0.0 --port=${REVERB_SERVER_PORT:-8080} &`) solo si `BROADCAST_CONNECTION=reverb`. En dev con `BROADCAST_CONNECTION=log` los eventos se escriben a `storage/logs/laravel.log` (suficiente para debug).
+    - `railpack.json` añade `php8.4-sockets` para que `pcntl`/`posix` (que Reverb necesita) estén disponibles en el build de Railway.
+    - **Tests:** `tests/Feature/BroadcastingTest.php` (10 tests): dispatch de eventos en `sendMessage` y `markRead`, no-dispatch cuando falla la validación, canal correcto en cada evento, autorización de `private-conversation` (participantes OK, extraños KO, conversación inexistente KO), autorización de `private-user` (solo el propio user).
+  - **Sprint 5 — Frontend:**
+    - `core/services/websocket.service.ts`: cliente Pusher-protocol escrito a mano (sin `pusher-js` para mantener el bundle pequeño). Singleton, JWT auth header pasado en cada `connect()`, reconexión exponencial `1s → 2s → 4s → ... → 30s` con `Math.min(base * 2^(attempts-1), 30_000)`, ping cada 60s (`pusher:ping`), manejo de `pusher:subscription_error` (reconnect full para re-autenticar el canal), `pendingSubs` replay en cada `handleOpen` para que las suscripciones sobrevivan a desconexiones.
+    - `core/services/chat-realtime.service.ts`: wrapper de alto nivel. `connect()` en cuanto `auth.currentUser()` es truthy, `disconnect()` cuando se va a `null` (logout). Suscripción automática a `private-user.{id}` para `unread.changed`. `subscribeToConversation(id, onMessage, onUpdate?)` con **multiplexing**: N listeners sobre la misma conversación comparten 1 suscripción WS; cuando el último hace `unsub()` se libera.
+    - `chat-list` y `chat-thread` ya **no** hacen `interval(5000)` (polling 5s). Ahora WS es el camino rápido; queda un polling 30s como **fallback explícito** para entornos donde WS está bloqueado (corporate proxies, devtools cerrados, etc.). El comment en `chat-thread.component.ts:85` documenta el porqué.
+    - `AuthService.getToken()` añadido para que `WebSocketService` pueda leer el JWT actual en cualquier momento (soporta rotación tras refresh).
+    - `environment.{development,production}.ts` con bloque `ws: { key, host, port, scheme }`. Dev = `ws://127.0.0.1:8080`. Prod = `wss://framematch-ws.railway.app:443`.
+    - **Tests:** 10 nuevos (split entre `websocket.service.spec.ts` y `chat-realtime.service.spec.ts`). Usan un `FakeWebSocket` global que registra `addEventListener`/`send` y permite `dispatch` síncrono de eventos `open`/`message`/`close` para avanzar el state machine sin red.
+  - **Limitaciones conocidas:**
+    - **WS en Railway con un solo proceso:** Reverb arranca en el mismo dyno que el backend HTTP (`start-container.sh` lo lanza con `&`). Funciona para el tráfico actual, pero no escala horizontalmente: con varios dynos, las broadcasts de un dyno no llegan a clientes conectados a otro. Cuando esto sea un problema, mover Reverb a un servicio separado en Railway (o a Pusher/Ably externo).
+    - **No hay pusher-js:** la implementación cubre el subset que Reverb necesita (Pusher protocol 7), pero si se quisiera compatibilidad con presence channels o client events habría que extenderla.
+    - **Auth por JWT plano:** `buildAuthForChannel` pasa el JWT como string de auth. Reverb lo acepta en la mayoría de setups; si en el futuro hace falta HMAC real (`socketId:channel` firmado con el `app_secret`), el hook ya está aislado en esa función.
+  - **Cerrado el 2026-06-20.**
 
 **Validaciones P0-P2-Bonus-5.x:**
 - **P0:** `npm test` (54/54) + `npm run build` (OK) + `php artisan test` (15/71) ✅
@@ -846,6 +873,18 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
 - **5.3 (OAuth Google + Facebook):** `npm test` (124/124, 23 suites) + `npm run build` (sin NG8113) + `php artisan test` (74/431) ✅
 - **5.4 (Topbar unificado):** `npm test` (137/137, 24 suites) + `npm run build` (sin NG8113) + `php artisan test` (74/431) ✅
 - **5.7 (Limpieza + Branching + CI):** `npm test` (172/172, 29 suites) + `npm run build` (sin NG8113) + `php artisan test` (133/133, 634 assertions) ✅
+- **0.20 (WebSockets Reverb):** `npx jest` (286 tests / 41 suites) + `npm run build` (OK) + `php artisan test` (240 tests / 970 assertions) ✅
+- **0.21 (Drop beta branch):** `npx jest` (316 tests / 43 suites) + `npm run build` (OK) + `php artisan test` (250 tests / 994 assertions) ✅
+
+---
+
+- [x] **0.21** · Drop rama `beta` de la política de ramas y de CI
+  - **Síntoma:** la política documentada en `AGENTS.md` desde Fase 5.7 decía que el trabajo iba por `beta` y se mergeaba a `main` vía PR. En la práctica, todos los commits desde entonces (incluido el sprint de WebSockets) se mergeaban directo a `main` o se commiteaban ahí sin feature branch. La rama `beta` llevaba semanas desincronizada y no disparaba deploys.
+  - **Fix:**
+    - `AGENTS.md` — sustituida la sección "Estrategia de ramas" por una tabla con solo `main`, documentando que es rama activa de trabajo y producción. Aclarado el flujo: `feature/<slug>` desde `main`, PR, merge con CI verde. Excepción explícita para cambios puramente documentales.
+    - `.github/workflows/test.yml` — el `on:` ahora dispara solo en `push` y `pull_request` a `main`. Eliminada la referencia a `beta`.
+    - `docs/roadmap.md` — actualizadas las menciones legacy a `beta` (Fase 5.7 y P5 §CI/CD) para que apunten a esta entrada como referencia.
+  - **Cerrado el 2026-06-20.**
 
 ---
 
@@ -969,8 +1008,11 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
   - i18n: 6 claves nuevas en `reviews.*` (ES+EN): `save_changes`, `edit_title`, `delete_cta`, `delete_confirm`, `error_update`, `error_delete`.
   - El frontend pasa de **42/303** a **43/313** tests.
   - **Cerrado el 2026-06-20.**
-- [ ] **Migrar chat de polling a WebSockets** (Laravel Reverb + push notifications).
-  - Frontend cambia `interval(POLL_INTERVAL_MS)` por un `WebSocket` que escucha `MessageSent`. Backend emite evento en `ChatController::send`. Estimación: 12 tests (eventos, reconnection, ack).
+- [x] **Migrar chat de polling a WebSockets** (Laravel Reverb + push notifications) — ✅ **cerrado en `f4f1621`**.
+  - Backend: `laravel/reverb: ^1.10` + `config/broadcasting.php` + `config/reverb.php` + `routes/channels.php`. Eventos `MessageSent`, `ConversationUpdated`, `UnreadCountChanged` (todos `ShouldBroadcastNow`) sobre canales privados `conversation.{id}` y `user.{id}`. `App\Broadcasting\ChatChannelAuthorizer` con la policy extraída de los closures de `channels.php` para que sea testeable en aislamiento. `ChatService` dispara los eventos en `sendMessage` y `markRead`. `start-container.sh` arranca Reverb en background si `BROADCAST_CONNECTION=reverb`. `railpack.json` con `php8.4-sockets` para producción.
+  - Frontend: `WebSocketService` (singleton, Pusher protocol a mano sin `pusher-js`, JWT auth, reconexión exponencial 1s→30s, ping cada 60s). `ChatRealtimeService` (suscripciones a `private-user.{id}` para unread count + `private-conversation.{id}` para mensajes). `chat-list` y `chat-thread` reemplazan el polling 5s por WS; el polling 30s queda como fallback.
+  - Tests: 10 backend en `BroadcastingTest` (eventos, canales, autorización) + 10 frontend (`websocket.service.spec.ts` + `chat-realtime.service.spec.ts`).
+  - Detalle: [§ Hotfix 0.20](#020--websockets-migración-de-polling-a-reverb).
 - [x] **OnboardingGuard** (`CanActivateFn` que redirige a `/onboarding/welcome` si el freelancer autenticado tiene `onboarding_completed_at === null` y la ruta visitada no es `/onboarding/*` ni `/home`).
   - Implementado en `frontend/src/app/core/guards/onboarding.guard.ts`. Lógica:
     - Sin sesión → `true` (deja que `authGuard` aguas arriba haga su trabajo).
@@ -995,7 +1037,7 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
 
 ### P5 · Calidad de plataforma / DevEx
 - [ ] E2E con Playwright.
-- [x] CI/CD con GitHub Actions — ✅ Fase 5.7 (`.github/workflows/test.yml` con PHPUnit + Jest en push/PR a `main` y `beta`).
+- [x] CI/CD con GitHub Actions — ✅ Fase 5.7 (`.github/workflows/test.yml` con PHPUnit + Jest en push/PR a `main`; la rama `beta` se eliminó en [hotfix 0.21](#021--drop-rama-beta-de-la-política-de-ramas-y-de-ci)).
 - [ ] Pipeline de lint (ESLint + Pint) — parcialmente hecho: hay configs y npm scripts, falta integrar como job obligatorio en CI.
 - [ ] Docker compose dev (php-fpm + nginx + mysql + node).
 - [ ] Búsqueda full-text (Meilisearch) — solo si el catálogo crece.

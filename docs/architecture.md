@@ -1,6 +1,6 @@
 # Arquitectura del sistema
 
-> Última revisión: Fase 5.1 (i18n de briefs + hotfixes de UI). Ver [docs/roadmap.md](./roadmap.md) para el histórico de cambios.
+> Última revisión: Sprint WebSockets (commit `f4f1621`, 2026-06-20) + drop beta branch (2026-06-20). Ver [docs/roadmap.md](./roadmap.md) para el histórico de cambios.
 
 ## Vista de capas
 
@@ -114,6 +114,21 @@
 - Decisión pragmática para SPA: `Authorization: Bearer` en cada request.
 - Trade-off conocido: XSS es más grave. Mitigación: token con TTL corto (60 min) + `refresh` para renovar.
 - Cuando llegue producción, evaluar cookie httpOnly + CSRF token.
+
+### Real-time vía WebSockets (Laravel Reverb) — Sprint WebSockets (commit `f4f1621`)
+
+- **Stack:** Laravel Reverb (Pusher protocol 7 sobre WebSocket) + un cliente Pusher-protocol escrito a mano en el frontend (sin `pusher-js` para mantener el bundle pequeño).
+- **Por qué WS y no SSE:** necesitamos full-duplex (cliente → servidor con `subscribe`/`unsubscribe`/`ping` además de server → cliente). SSE no soporta bien el multiplexing de canales.
+- **Eventos emitidos por el backend:**
+  - `MessageSent` (`private-conversation.{id}`) → `ChatService::sendMessage` tras persistir.
+  - `ConversationUpdated` (`private-conversation.{id}`) → `ChatService::markRead` si marcó al menos 1 mensaje.
+  - `UnreadCountChanged` (`private-user.{id}`) → `ChatService::sendMessage` (recipient + sender con 0) y `markRead` (reader).
+- **Autorización de canales:** `app/Broadcasting/ChatChannelAuthorizer.php` encapsula la policy. Se invoca desde los closures de `routes/channels.php`. `private-conversation.{id}` requiere que el user sea `client_id` o `freelancer_id`; `private-user.{id}` requiere `subscriberId === channelUserId`.
+- **Frontend:**
+  - `core/services/websocket.service.ts` — singleton. JWT auth, reconexión exponencial 1s→30s, ping cada 60s, replay de suscripciones pendientes tras cada `handleOpen`.
+  - `core/services/chat-realtime.service.ts` — wrapper. Conecta cuando `auth.currentUser()` es truthy, desconecta en logout. Multiplexa listeners por conversación.
+- **Polling residual:** el chat-list y el chat-thread mantienen un `interval(30_000)` como **fallback explícito** para entornos donde WS está bloqueado. Documentado en el comment de `chat-thread.component.ts:85`.
+- **Limitación de escala:** Reverb corre en el mismo dyno que el backend HTTP. Para escalar horizontalmente hay que moverlo a un servicio separado o a un provider externo (Pusher/Ably). El resto del stack (eventos, autorizaciones, frontend) no cambia.
 
 ## Flujo end-to-end de registro
 
