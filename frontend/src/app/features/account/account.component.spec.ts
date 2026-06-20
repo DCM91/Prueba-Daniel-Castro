@@ -191,6 +191,11 @@ describe('AccountComponent', () => {
           account: {
             section_professional: 'Perfil profesional',
             open_professional_editor: 'Editar perfil profesional',
+            section_personal: 'Datos personales',
+            label_name: 'Nombre',
+            label_email: 'Email',
+            label_phone: 'Teléfono',
+            label_city: 'Ciudad',
           },
         }),
       ],
@@ -201,6 +206,9 @@ describe('AccountComponent', () => {
     const text = freelancerFixture.nativeElement.textContent ?? '';
     expect(text).toContain('Perfil profesional');
     expect(text).toContain('Editar perfil profesional');
+    expect(text).not.toContain('Datos personales');
+    expect(freelancerFixture.nativeElement.querySelector('input[formcontrolname="name"]')).toBeNull();
+    expect(freelancerFixture.nativeElement.querySelector('input[formcontrolname="email"]')).toBeNull();
   });
 
   it('marks phone as invalid when it contains letters', () => {

@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { forkJoin, switchMap } from 'rxjs';
+import { Observable, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
+import { AvatarUploaderComponent } from '../../../core/components/avatar-uploader/avatar-uploader.component';
 import { CoverUploaderComponent } from '../../../core/components/cover-uploader/cover-uploader.component';
 import { FreelancerProfileService } from '../../../core/services/freelancer-profile.service';
+import { UserService } from '../../../core/services/user.service';
 import { focusFirstInvalid } from '../../../core/utils/focus-first-invalid';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import {
@@ -14,6 +16,7 @@ import {
   FreelancerSkillInput,
   Skill,
   SkillLevel,
+  User,
 } from '../../../core/types/auth.types';
 
 type SkillGroup = FormGroup<{
@@ -22,11 +25,21 @@ type SkillGroup = FormGroup<{
   years_experience: FormControl<number>;
 }>;
 
+type PersonalForm = FormGroup<{
+  name:  FormControl<string>;
+  email: FormControl<string>;
+  phone: FormControl<string>;
+  city:  FormControl<string>;
+}>;
+
+const PHONE_PATTERN = /^[+0-9 ()-]{6,30}$/;
+
 @Component({
   selector: 'app-profile-editor',
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    AvatarUploaderComponent,
     CoverUploaderComponent,
     RouterLink,
     TranslatePipe,
@@ -39,6 +52,7 @@ export class ProfileEditorComponent implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly auth = inject(AuthService);
   private readonly profileService = inject(FreelancerProfileService);
+  private readonly userService = inject(UserService);
   private readonly router = inject(Router);
   private readonly host = inject(ElementRef<HTMLElement>);
 
@@ -47,10 +61,19 @@ export class ProfileEditorComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly availableSkills = signal<Skill[]>([]);
   readonly globalErrors = signal<Record<string, string[]>>({});
+  readonly personalErrors = signal<Record<string, string[]>>({});
+  readonly personalSaved = signal<boolean>(false);
 
   readonly currentUser = this.auth.currentUser;
 
   readonly skillsForm = this.fb.array<SkillGroup>([]);
+
+  readonly personalForm: PersonalForm = this.fb.group({
+    name:  this.fb.control('', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]),
+    email: this.fb.control('', [Validators.required, Validators.email, Validators.maxLength(255)]),
+    phone: this.fb.control('', [Validators.maxLength(30), Validators.pattern(PHONE_PATTERN)]),
+    city:  this.fb.control('', [Validators.maxLength(80)]),
+  });
 
   readonly basicForm = this.fb.group({
     display_name: this.fb.control('', [Validators.maxLength(100)]),
@@ -67,12 +90,14 @@ export class ProfileEditorComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    const profile$ = this.profileService.getMyProfile();
     forkJoin({
       skills: this.profileService.getSkills(),
-      profile: this.profileService.getMyProfile(),
+      profile: profile$,
     }).subscribe({
       next: ({ skills, profile }) => {
         this.availableSkills.set(skills);
+        this.populatePersonalForm(this.currentUser());
         this.populateForm(profile);
         this.loading.set(false);
       },
@@ -128,54 +153,134 @@ export class ProfileEditorComponent implements OnInit {
     return errs && errs.length > 0 ? errs[0] : null;
   }
 
+  errorForPersonal(field: 'name' | 'email' | 'phone' | 'city'): { key: string; params?: Record<string, string | number> } | null {
+    const fromServer = this.personalErrors()[field];
+    if (fromServer && fromServer.length > 0) {
+      return { key: fromServer[0] };
+    }
+    const control = this.personalForm.controls[field];
+    if (!control.touched) return null;
+    if (control.errors?.['required']) return { key: 'account.error_required' };
+    if (control.errors?.['email']) return { key: 'account.error_email' };
+    if (control.errors?.['minlength']) {
+      return { key: 'account.error_minlength', params: { n: control.errors['minlength'].requiredLength } };
+    }
+    if (control.errors?.['maxlength']) {
+      return { key: 'account.error_maxlength', params: { n: control.errors['maxlength'].requiredLength } };
+    }
+    if (control.errors?.['pattern']) return { key: 'account.error_phone_format' };
+    return null;
+  }
+
   submit(): void {
+    this.personalForm.markAllAsTouched();
     this.basicForm.markAllAsTouched();
     this.skillsForm.markAllAsTouched();
+    this.errorMessage.set(null);
+    this.globalErrors.set({});
+    this.personalErrors.set({});
+    this.personalSaved.set(false);
 
-    if (this.basicForm.invalid || this.skillsForm.invalid) {
-      const invalidControl = this.basicForm.invalid ? this.basicForm : this.skillsForm;
-      focusFirstInvalid(invalidControl, this.host.nativeElement);
+    const personalValid = this.personalForm.valid;
+    const professionalValid = this.basicForm.valid && this.skillsForm.valid;
+
+    if (!personalValid && !professionalValid) {
+      const invalid = !personalValid ? this.personalForm : this.basicForm;
+      focusFirstInvalid(invalid, this.host.nativeElement);
       return;
     }
 
     this.submitting.set(true);
-    this.errorMessage.set(null);
-    this.globalErrors.set({});
 
-    const basicValue = this.basicForm.getRawValue();
-    const payload: Partial<FreelancerProfile> = {
-      display_name: this.nullIfEmpty(basicValue.display_name),
-      bio: this.nullIfEmpty(basicValue.bio),
-      city: this.nullIfEmpty(basicValue.city),
-      hourly_rate: basicValue.hourly_rate,
-      price_per_project: basicValue.price_per_project,
-      is_available: basicValue.is_available,
-    };
+    const observables: Observable<unknown>[] = [];
 
-    const skillsPayload: FreelancerSkillInput[] = this.skillsForm.controls.map((g) => ({
-      skill_id: g.controls.skill_id.value,
-      level: g.controls.level.value,
-      years_experience: g.controls.years_experience.value,
-    }));
+    if (personalValid) {
+      const raw = this.personalForm.getRawValue();
+      observables.push(this.userService.updateAccount({
+        name:  raw.name.trim(),
+        email: raw.email.trim(),
+        phone: raw.phone.trim() === '' ? null : raw.phone.trim(),
+        city:  raw.city.trim() === '' ? null : raw.city.trim(),
+      }));
+    }
 
-    this.profileService.updateMyProfile(payload).pipe(
-      switchMap(() => this.profileService.syncMySkills(skillsPayload))
-    ).subscribe({
-      next: (updated) => {
-        this.auth.setFreelancerProfile(updated);
-        this.submitting.set(false);
-        this.router.navigate(['/home/freelancer']);
+    if (professionalValid) {
+      const raw = this.basicForm.getRawValue();
+      const payload: Partial<FreelancerProfile> = {
+        display_name: this.nullIfEmpty(raw.display_name),
+        bio: this.nullIfEmpty(raw.bio),
+        city: this.nullIfEmpty(raw.city),
+        hourly_rate: raw.hourly_rate,
+        price_per_project: raw.price_per_project,
+        is_available: raw.is_available,
+      };
+      const skillsPayload: FreelancerSkillInput[] = this.skillsForm.controls.map((g) => ({
+        skill_id: g.controls.skill_id.value,
+        level: g.controls.level.value,
+        years_experience: g.controls.years_experience.value,
+      }));
+      observables.push(
+        this.profileService.updateMyProfile(payload).pipe(
+          switchMap((updatedProfile) => forkJoin({
+            profile: of(updatedProfile),
+            skills: this.profileService.syncMySkills(skillsPayload),
+          })),
+        ),
+      );
+    }
+
+    forkJoin(observables).subscribe({
+      next: (results) => {
+        for (const r of results) {
+          if (r && typeof r === 'object' && 'name' in r) {
+            this.auth.setCurrentUser(r as User);
+            this.personalSaved.set(true);
+          } else if (r && typeof r === 'object' && 'profile' in r) {
+            const { profile } = r as { profile: FreelancerProfile | null };
+            if (profile) this.auth.setFreelancerProfile(profile);
+          }
+        }
       },
-      error: (err) => this.handleSubmitError(err),
+      complete: () => {
+        this.submitting.set(false);
+        if (professionalValid) {
+          void this.router.navigate(['/home/freelancer']);
+        }
+      },
+      error: (err: { error?: { message?: string; errors?: Record<string, string[]> } } & { status?: number }) => {
+        this.submitting.set(false);
+        this.errorMessage.set(err?.error?.message ?? 'No se pudo guardar.');
+        if (err?.error?.errors) {
+          if (err.status === 422 && personalValid && !professionalValid) {
+            this.personalErrors.set(err.error.errors);
+          } else {
+            this.globalErrors.set(err.error.errors);
+          }
+        }
+      },
     });
   }
 
   cancel(): void {
-    this.router.navigate(['/home/freelancer']);
+    void this.router.navigate(['/home/freelancer']);
   }
 
   onCoverUpdated(profile: FreelancerProfile): void {
     this.auth.setFreelancerProfile(profile);
+  }
+
+  onAvatarUpdated(updated: User): void {
+    this.auth.setCurrentUser(updated);
+  }
+
+  private populatePersonalForm(user: User | null): void {
+    if (!user) return;
+    this.personalForm.patchValue({
+      name:  user.name ?? '',
+      email: user.email ?? '',
+      phone: user.phone ?? '',
+      city:  user.city ?? '',
+    });
   }
 
   private populateForm(profile: FreelancerProfile): void {
@@ -210,14 +315,5 @@ export class ProfileEditorComponent implements OnInit {
 
   private nullIfEmpty(value: string): string | null {
     return value && value.trim().length > 0 ? value : null;
-  }
-
-  private handleSubmitError(err: { error?: { message?: string; errors?: Record<string, string[]> } }): void {
-    console.error('[FrameMatch] profile editor submit error', err);
-    this.submitting.set(false);
-    this.errorMessage.set(err?.error?.message ?? 'No se pudo guardar el perfil.');
-    if (err?.error?.errors) {
-      this.globalErrors.set(err.error.errors);
-    }
   }
 }

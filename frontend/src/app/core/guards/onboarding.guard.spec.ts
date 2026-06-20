@@ -67,7 +67,9 @@ describe('onboardingGuard', () => {
     '/home/client',
     '/onboarding',
     '/onboarding/welcome',
-  ])('bypasses the guard for the onboarding/home paths (%s)', (path) => {
+    '/freelancer/portfolio',
+    '/freelancer/portfolio/123',
+  ])('bypasses the guard for the onboarding/home/portfolio paths (%s)', (path) => {
     expect(runGuard(incompleteFreelancer, path)).toBe(true);
   });
 
@@ -77,7 +79,6 @@ describe('onboardingGuard', () => {
     '/messages',
     '/account',
     '/freelancer/profile/edit',
-    '/freelancer/portfolio',
   ])('redirects an incomplete freelancer to /onboarding/welcome when visiting %s', (path) => {
     const tree = runGuard(incompleteFreelancer, path) as { commands: unknown[] };
     expect(tree.commands).toEqual(['/onboarding/welcome']);

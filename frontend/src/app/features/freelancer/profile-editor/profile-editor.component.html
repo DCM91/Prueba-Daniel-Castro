@@ -29,6 +29,58 @@
     } @else {
       <form [formGroup]="basicForm" (ngSubmit)="submit()" novalidate>
         <section class="card">
+          <h2>{{ 'account.section_avatar' | t }}</h2>
+          <p class="muted">{{ 'account.section_avatar_hint' | t }}</p>
+          <app-avatar-uploader
+            [currentAvatarUrl]="currentUser()?.avatar_url ?? null"
+            [currentAvatarUrls]="currentUser()?.avatar_urls ?? null"
+            [userName]="currentUser()?.name ?? ''"
+            (avatarUpdated)="onAvatarUpdated($event)"
+          />
+        </section>
+
+        <section class="card" [formGroup]="personalForm">
+          <h2>{{ 'account.section_personal' | t }}</h2>
+          <p class="muted">{{ 'account.section_personal_hint' | t }}</p>
+
+          <div class="row">
+            <label class="field">
+              <span>{{ 'account.label_name' | t }}</span>
+              <input type="text" formControlName="name" maxlength="100" autocomplete="name" />
+              @if (errorForPersonal('name'); as msg) {
+                <small class="error">{{ msg.key | t : msg.params }}</small>
+              }
+            </label>
+
+            <label class="field">
+              <span>{{ 'account.label_email' | t }}</span>
+              <input type="email" formControlName="email" maxlength="255" autocomplete="email" />
+              @if (errorForPersonal('email'); as msg) {
+                <small class="error">{{ msg.key | t : msg.params }}</small>
+              }
+            </label>
+          </div>
+
+          <div class="row">
+            <label class="field">
+              <span>{{ 'account.label_phone' | t }}</span>
+              <input type="tel" formControlName="phone" maxlength="30" autocomplete="tel" [attr.placeholder]="'account.placeholder_phone' | t" />
+              @if (errorForPersonal('phone'); as msg) {
+                <small class="error">{{ msg.key | t : msg.params }}</small>
+              }
+            </label>
+
+            <label class="field">
+              <span>{{ 'account.label_city' | t }}</span>
+              <input type="text" formControlName="city" maxlength="80" autocomplete="address-level2" [attr.placeholder]="'account.placeholder_city' | t" />
+              @if (errorForPersonal('city'); as msg) {
+                <small class="error">{{ msg.key | t : msg.params }}</small>
+              }
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
           <h2>{{ 'profile_editor.section_basic' | t }}</h2>
 
           <label class="field">
@@ -48,16 +100,6 @@
               <small class="error">{{ msg }}</small>
             } @else if (basicForm.controls.bio.touched && basicForm.controls.bio.errors?.['maxlength']) {
               <small class="error">{{ 'profile_editor.error_max_bio' | t }}</small>
-            }
-          </label>
-
-          <label class="field">
-            <span>{{ 'profile_editor.label_city' | t }}</span>
-            <input type="text" formControlName="city" maxlength="80" [attr.placeholder]="'profile_editor.placeholder_city' | t" />
-            @if (errorFor('city'); as msg) {
-              <small class="error">{{ msg }}</small>
-            } @else if (basicForm.controls.city.touched && basicForm.controls.city.errors?.['maxlength']) {
-              <small class="error">{{ 'profile_editor.error_max_city' | t }}</small>
             }
           </label>
 
@@ -155,6 +197,9 @@
 
         @if (errorMessage()) {
           <p class="error error--global">{{ errorMessage() }}</p>
+        }
+        @if (personalSaved()) {
+          <p class="success" role="status">{{ 'account.success' | t }}</p>
         }
 
         <div class="actions">

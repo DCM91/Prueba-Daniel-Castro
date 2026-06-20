@@ -9,85 +9,89 @@
     @if (loading()) {
       <p class="loading">{{ 'account.loading' | t }}</p>
     } @else {
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <section class="card">
-          <h2>{{ 'account.section_avatar' | t }}</h2>
-          <p class="muted">{{ 'account.section_avatar_hint' | t }}</p>
-          <app-avatar-uploader
-            [currentAvatarUrl]="currentUser()?.avatar_url ?? null"
-            [currentAvatarUrls]="currentUser()?.avatar_urls ?? null"
-            [userName]="currentUser()?.name ?? ''"
-          />
+      @if (isFreelancer()) {
+        <section class="card card--link">
+          <h2>{{ 'account.section_professional' | t }}</h2>
+          <p class="muted">{{ 'account.section_professional_hint' | t }}</p>
+          <a routerLink="/freelancer/profile/edit" class="primary-btn">
+            {{ 'account.open_professional_editor' | t }}
+          </a>
         </section>
-
-        <section class="card">
-          <h2>{{ 'account.section_personal' | t }}</h2>
-          <p class="muted">{{ 'account.section_personal_hint' | t }}</p>
-
-          <label class="field">
-            <span>{{ 'account.label_name' | t }}</span>
-            <input type="text" formControlName="name" maxlength="100" autocomplete="name" />
-            @if (errorFor('name'); as msg) {
-              <small class="error">{{ msg.key | t : msg.params }}</small>
-            }
-          </label>
-
-          <label class="field">
-            <span>{{ 'account.label_email' | t }}</span>
-            <input type="email" formControlName="email" maxlength="255" autocomplete="email" />
-            @if (errorFor('email'); as msg) {
-              <small class="error">{{ msg.key | t : msg.params }}</small>
-            }
-          </label>
-
-          <div class="row">
-            <label class="field">
-              <span>{{ 'account.label_phone' | t }}</span>
-              <input type="tel" formControlName="phone" maxlength="30" autocomplete="tel" [attr.placeholder]="'account.placeholder_phone' | t" />
-              @if (errorFor('phone'); as msg) {
-                <small class="error">{{ msg.key | t : msg.params }}</small>
-              }
-            </label>
-
-            <label class="field">
-              <span>{{ 'account.label_city' | t }}</span>
-              <input type="text" formControlName="city" maxlength="80" autocomplete="address-level2" [attr.placeholder]="'account.placeholder_city' | t" />
-              @if (errorFor('city'); as msg) {
-                <small class="error">{{ msg.key | t : msg.params }}</small>
-              }
-            </label>
-          </div>
-        </section>
-
-        @if (isFreelancer()) {
-          <section class="card card--link">
-            <h2>{{ 'account.section_professional' | t }}</h2>
-            <p class="muted">{{ 'account.section_professional_hint' | t }}</p>
-            <a routerLink="/freelancer/profile/edit" class="primary-btn">
-              {{ 'account.open_professional_editor' | t }}
-            </a>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <section class="card">
+            <h2>{{ 'account.section_avatar' | t }}</h2>
+            <p class="muted">{{ 'account.section_avatar_hint' | t }}</p>
+            <app-avatar-uploader
+              [currentAvatarUrl]="currentUser()?.avatar_url ?? null"
+              [currentAvatarUrls]="currentUser()?.avatar_urls ?? null"
+              [userName]="currentUser()?.name ?? ''"
+            />
           </section>
-        }
 
-        @if (errorMessage()) {
-          <p class="error error--global" role="alert">{{ errorMessage() }}</p>
-        }
+          <section class="card">
+            <h2>{{ 'account.section_personal' | t }}</h2>
+            <p class="muted">{{ 'account.section_personal_hint' | t }}</p>
 
-        @if (savedAt() !== null) {
-          <p class="success" role="status">{{ 'account.success' | t }}</p>
-        }
+            <label class="field">
+              <span>{{ 'account.label_name' | t }}</span>
+              <input type="text" formControlName="name" maxlength="100" autocomplete="name" />
+              @if (errorFor('name'); as msg) {
+                <small class="error">{{ msg.key | t : msg.params }}</small>
+              }
+            </label>
 
+            <label class="field">
+              <span>{{ 'account.label_email' | t }}</span>
+              <input type="email" formControlName="email" maxlength="255" autocomplete="email" />
+              @if (errorFor('email'); as msg) {
+                <small class="error">{{ msg.key | t : msg.params }}</small>
+              }
+            </label>
+
+            <div class="row">
+              <label class="field">
+                <span>{{ 'account.label_phone' | t }}</span>
+                <input type="tel" formControlName="phone" maxlength="30" autocomplete="tel" [attr.placeholder]="'account.placeholder_phone' | t" />
+                @if (errorFor('phone'); as msg) {
+                  <small class="error">{{ msg.key | t : msg.params }}</small>
+                }
+              </label>
+
+              <label class="field">
+                <span>{{ 'account.label_city' | t }}</span>
+                <input type="text" formControlName="city" maxlength="80" autocomplete="address-level2" [attr.placeholder]="'account.placeholder_city' | t" />
+                @if (errorFor('city'); as msg) {
+                  <small class="error">{{ msg.key | t : msg.params }}</small>
+                }
+              </label>
+            </div>
+          </section>
+
+          @if (errorMessage()) {
+            <p class="error error--global" role="alert">{{ errorMessage() }}</p>
+          }
+
+          @if (savedAt() !== null) {
+            <p class="success" role="status">{{ 'account.success' | t }}</p>
+          }
+
+          <app-linked-accounts />
+
+          <div class="actions">
+            <button type="button" class="secondary-btn" (click)="cancel()" [disabled]="submitting()">
+              {{ 'account.cancel' | t }}
+            </button>
+            <button type="submit" class="primary-btn" [disabled]="submitting() || form.invalid">
+              {{ submitting() ? ('account.submitting' | t) : ('account.save_changes' | t) }}
+            </button>
+          </div>
+        </form>
+      }
+
+      @if (isFreelancer()) {
         <app-linked-accounts />
-
-        <div class="actions">
-          <button type="button" class="secondary-btn" (click)="cancel()" [disabled]="submitting()">
-            {{ 'account.cancel' | t }}
-          </button>
-          <button type="submit" class="primary-btn" [disabled]="submitting() || form.invalid">
-            {{ submitting() ? ('account.submitting' | t) : ('account.save_changes' | t) }}
-          </button>
-        </div>
-      </form>
+      }
     }
   </main>
 </div>
