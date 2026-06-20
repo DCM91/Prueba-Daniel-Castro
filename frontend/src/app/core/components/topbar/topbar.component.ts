@@ -30,7 +30,6 @@ const CLIENT_LINKS: readonly TopbarNavLink[] = [
   { labelKey: 'topbar.nav.home', route: '/home' },
   { labelKey: 'topbar.nav.professionals', route: '/freelancers' },
   { labelKey: 'topbar.nav.briefs', route: '/briefs' },
-  { labelKey: 'topbar.nav.new_brief', route: '/briefs/new', cta: true },
   { labelKey: 'topbar.nav.messages', route: '/messages' },
   { labelKey: 'topbar.nav.account', route: '/account' },
 ];
@@ -160,14 +159,7 @@ export class CoreTopbarComponent implements OnDestroy {
   readonly navLinks = computed<readonly TopbarNavLink[]>(() => {
     switch (this.variant()) {
       case 'public': return PUBLIC_LINKS;
-      case 'client': {
-        // Solo los clientes reales (no agency/company/admin) pueden crear proyectos.
-        const user = this.auth.currentUser();
-        if (user && user.role !== 'client') {
-          return CLIENT_LINKS.filter((l) => l.route !== '/briefs/new');
-        }
-        return CLIENT_LINKS;
-      }
+      case 'client': return CLIENT_LINKS;
       case 'freelancer': return FREELANCER_LINKS;
       default: return [];
     }

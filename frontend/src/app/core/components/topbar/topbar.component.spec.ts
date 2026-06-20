@@ -136,7 +136,8 @@ describe('CoreTopbarComponent', () => {
     expect(text).toContain('Inicio');
     expect(text).toContain('Profesionales');
     expect(text).toContain('Briefs');
-    expect(text).toContain('+ Nuevo Brief');
+    expect(text).not.toContain('+ Nuevo Brief');
+    expect(text).not.toContain('+ Nuevo proyecto');
     expect(text).toContain('Mi cuenta');
     expect(text).toContain('Lucia Marin');
     expect(text).toContain('Cliente');

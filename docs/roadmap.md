@@ -5,16 +5,16 @@
 > - Estado vivo. Marca con `[x]` cada tarea al cerrarla.
 > - Prioridad descendente (P0 = más urgente, P6 = sin priorizar).
 > - Las fases se numeran con cronología. Las sub-fases 5.5.x son bloques cortos dentro de "Fase 5.5 · Cloudinary".
-> - Última actualización: **cierre de Fase 7 (2026-06-18)**.
+> - Última actualización: **cierre de hotfix 0.19 (2026-06-20)**.
 
 ---
 
 ## TL;DR
 
-**Métricas al cierre de Fase 7:**
+**Métricas al cierre de hotfix 0.19 (2026-06-20):**
 
 - **Backend:** 227 tests / 927 assertions, 15 feature suites + 2 unit suites, todos en verde.
-- **Frontend:** `npm run build` sin warnings. `npm run validate:i18n` OK. `npx jest` → **36 suites / 249 tests verdes**. Runner (`setupZoneTestEnv()`) y los 5 suites con bugs pre-existentes en specs están resueltos (ver [§ Pendiente de tests frontend](#pendiente-de-tests-frontend)).
+- **Frontend:** `npm run build` sin warnings. `npm run validate:i18n` OK. `npx jest` → **41 suites / 286 tests verdes** (subida desde 36/249 por hotfix 0.18 — runner de Jest resuelto + 5 specs pre-existentes reescritos).
 - **Deploy:** producción en Railway (backend) + Vercel (frontend) con CI en GitHub Actions.
 - **Tablas nuevas desde Fase 5:** `brief_attachments` (5.5.C), `conversations` + `messages` (Fase 6), `reviews` (Fase 7), `user_oauth_identities` (5.5.F).
 - **Endpoints nuevos desde Fase 5:** 25+ nuevos entre 5.5.A, 5.5.B, 5.5.C, 5.5.D, 5.5.E, 5.5.F, Fase 6, Fase 7. Ver [docs/api.md](./api.md).
@@ -23,7 +23,7 @@
 
 | # | Próxima | Estado |
 |---|---|---|
-| 1 | Aceptar / rechazar propuesta (PATCH status) | 🔵 Sin empezar |
+| 1 | Aceptar / rechazar propuesta (PATCH status) | ✅ Cerrado (ver § Aceptar/Rechazar propuesta) |
 | 2 | Migrar chat de polling a WebSockets (Laravel Reverb) | 🔵 Sin empezar |
 | 3 | Editar / borrar la propia review | 🔵 Sin empezar |
 | 4 | Responder a reviews, fotos en reviews, denuncias | ⚪ Backlog |
@@ -821,6 +821,19 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
   - **Bug 2 — runner de Jest roto** (pre-existente desde la migración a Angular 21). `setup-jest.ts` no llamaba `setupZoneTestEnv()` de `jest-preset-angular/setup-env/zone`, así que `TestBed.createComponent` reventaba con `Cannot read properties of null (reading 'ngModule')` en cualquier suite que renderizase componentes. Fix en 3 archivos: `setup-jest.ts` (import + call), `package.json` (`zone.js: ~0.16.1` como dep), `tsconfig.spec.json` (eliminado `emitDecoratorMetadata` que generaba warnings ruidosos).
   - **Bug 3 — 5 specs con 16 tests fallando** (distintos del runner, acumulados desde las fases 5.5.C-7). Causas heterogéneas: aserción sobre signal en vez de `textContent` traducido, `mockAuth` incompleto en `AccountComponent` (faltaban métodos OAuth que `LinkedAccountsComponent` hijo necesita), `Object.defineProperty(window, 'location', ...)` no permitido en jsdom v26, parens faltantes en `renderWith(makeConversation)`, test que combinaba 2 escenarios en uno cuando el `ngOnChanges` solo sincroniza desde empty. Detalle por suite en [§ Pendiente de tests frontend](#pendiente-de-tests-frontend).
   - **Resultado:** `php artisan migrate:fresh --seed` ✅. `npx jest` → **36 suites / 249 tests verdes** ✅. `npm run build` ✅. `npm run validate:i18n` ✅. `php artisan test` → 227/927 ✅.
+- [x] **0.19** · Navbar duplicada en `/messages` y `/briefs` (regresión post-Fase 5.4 / 6)
+  - **Síntoma:** en `/messages` y `/briefs` se renderizaban **dos** topbars idénticos: uno global en `App` y otro dentro de los componentes de feature.
+  - **Causa:** `BriefListComponent` y `ChatPageComponent` tenían un `<app-core-topbar />` extra en su HTML. La convención de Fase 5.4 dice que el topbar global lo provee `App` y solo `LandingComponent` debe tener topbar propio (anchors in-page). `BriefListComponent` ya justificaba su "excepción" por los scope tabs (viven en `<app-briefs-sub-bar>`, no en el topbar), y `ChatPageComponent` (Fase 6) nunca debió tener topbar local.
+  - **Fix:**
+    - `frontend/src/app/features/chat/chat-page/chat-page.component.html` — borrada la línea `<app-core-topbar />`.
+    - `frontend/src/app/features/chat/chat-page/chat-page.component.ts` — quitado `CoreTopbarComponent` del `imports[]` y del import.
+    - `frontend/src/app/features/briefs/list/brief-list.component.html` — borrada la línea `<app-core-topbar />`.
+    - `frontend/src/app/features/briefs/list/brief-list.component.ts` — quitado `CoreTopbarComponent` del `imports[]` y del import.
+  - **CSS** (robustez para que el background fluya correctamente con el global topbar):
+    - `chat-page.component.css` — `:host` recibe `background: #0f0f12`, `color: #f4f4f5`, `font-family`, `min-height: 100vh`; `.chat-page` mantiene solo `min-height: 100vh`.
+    - `brief-list.component.css` — idem, consolidando el `:host` previo.
+  - **Validación:** `npx jest` 41/286 ✅, `npm run build` sin warnings ✅, smoke visual en `/`, `/login`, `/home/client`, `/home/freelancer`, `/briefs`, `/briefs/1`, `/briefs/new`, `/messages`, `/freelancers`, `/freelancers/1`, `/account` → un solo topbar en cada ruta (excepto `/`, oculto).
+  - **Nota:** la convención de Fase 5.4 ("`BriefListComponent` mantiene su topbar propio") se matiza: en realidad el topbar lo provee el global desde `App`; lo que `BriefListComponent` justifica como "excepción" son los **scope tabs** (`<app-briefs-sub-bar>` con "Todos / Mis proyectos"), no el topbar.
 
 **Validaciones P0-P2-Bonus-5.x:**
 - **P0:** `npm test` (54/54) + `npm run build` (OK) + `php artisan test` (15/71) ✅
@@ -936,12 +949,20 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
 
 ### P3 · Capacidades transversales (orden sugerido)
 
-- [ ] **Aceptar / rechazar propuesta** (`PATCH /api/briefs/{id}/proposals/{pid}/status`).
-  - Ya existe el endpoint (usado internamente por `ProposalController::updateStatus`). Falta exponerlo y darle UI en `brief-detail` (botones Aceptar/Rechazar para el cliente). Estado del brief pasa a `assigned` al aceptar. 5 tests nuevos.
+- [x] **Aceptar / rechazar propuesta** (`PATCH /api/briefs/{id}/proposals/{pid}/status`) — ✅ **cerrado**.
+  - Backend: `ProposalController::update:79-130` con validación 401/403/404/422, side-effects (auto-rechaza otras propuestas pending, marca brief como `assigned`, auto-crea conversación con el freelancer ganador).
+  - Backend tests: 8 tests en `BriefsAndProposalsTest:364-507` cubriendo todos los casos (incluida idempotencia), más 1 test extra en `ChatTest:333` para el side-effect de crear conversación.
+  - Frontend service: `ProposalsService.updateStatus:23-30`.
+  - Frontend UI: `BriefDetailComponent.updateProposalStatus:90-102` + botones Aceptar/Rechazar en `brief-detail.component.html:92-107` (solo para owner, solo si `proposal.status === 'pending'`). El update local de `proposalsList` y `brief.status` se hace en el `next` del observable.
+  - Frontend tests: 6 tests en `brief-detail.component.spec.ts:129-163` cubriendo render, service call, y state update.
+  - i18n: `briefs.proposals.{accept,reject,status_pending,status_accepted,status_rejected,status_withdrawn,confirm_accept,confirm_reject}` (ES+EN). Las claves `confirm_*` están definidas pero los botones actuales disparan la acción sin `confirm()` (decisión de UX: las acciones son reversibles y el botón de "Cancelar" en cada estado del brief permite re-evaluar).
+  - **Pendiente menor:** el `confirm_accept` y `confirm_reject` se pueden añadir como `window.confirm()` en el `updateProposalStatus()` si se quiere blindar contra clics accidentales.
 - [ ] **Editar / borrar la propia review** (`PUT /api/reviews/{id}` + `DELETE /api/reviews/{id}`).
   - 1 tests × 2 (auth, owner, validación, anti-duplicado por brief).
 - [ ] **Migrar chat de polling a WebSockets** (Laravel Reverb + push notifications).
   - Frontend cambia `interval(POLL_INTERVAL_MS)` por un `WebSocket` que escucha `MessageSent`. Backend emite evento en `ChatController::send`. Estimación: 12 tests (eventos, reconnection, ack).
+- [ ] **OnboardingGuard** (`CanActivateFn` que redirige a `/onboarding/welcome` si el freelancer autenticado tiene `onboarding_completed_at === null` y la ruta visitada no es `/onboarding/*` ni `/home`).
+  - El `OnboardingService` ya existe (Fase 5.5.D) y persiste el `step` en `localStorage`. El guard reutilizaría la señal `currentUser().freelancer_profile?.onboarding_completed_at`. Spec pequeño (1-2 tests: redirige, no redirige, bypass para rutas `/onboarding/*`).
 - [ ] **Reset de password** (requiere crear tabla `password_reset_tokens` — se eliminó en Fase 5.7 por no usarse). Link firmado con TTL 30 min, email transaccional, `MAIL_MAILER` configurado.
 - [ ] **Verificación de email** (campo `email_verified_at` ya existe).
   - Link firmado de un solo uso, reenvío, UI banner persistente si no verificado.
