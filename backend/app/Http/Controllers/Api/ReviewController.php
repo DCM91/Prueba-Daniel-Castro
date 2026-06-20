@@ -11,6 +11,8 @@ use App\Http\Resources\ReviewResource;
 use App\Models\Brief;
 use App\Models\Review;
 use App\Models\User;
+use App\Notifications\ReviewReceivedNotification;
+use App\Services\NotificationService;
 use App\Services\ReviewService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,8 +21,10 @@ use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 final class ReviewController extends Controller
 {
-    public function __construct(private readonly ReviewService $reviews)
-    {
+    public function __construct(
+        private readonly ReviewService $reviews,
+        private readonly NotificationService $notifications,
+    ) {
     }
 
     public function store(StoreReviewRequest $request, int $briefId): JsonResponse
@@ -36,6 +40,18 @@ final class ReviewController extends Controller
             (int) $request->validated('rating'),
             $request->validated('comment'),
         );
+
+        $reviewee = User::find($review->reviewee_id);
+        if ($reviewee !== null) {
+            $this->notifications->send(
+                $reviewee,
+                new ReviewReceivedNotification(
+                    $review,
+                    (int) $review->rating,
+                    $review->comment,
+                ),
+            );
+        }
 
         return response()->json([
             'data' => (new ReviewResource($review->load(['reviewer', 'reviewee', 'brief'])))->resolve(),

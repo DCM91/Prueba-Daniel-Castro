@@ -15,15 +15,23 @@ use App\Http\Resources\ProposalResource;
 use App\Models\Brief;
 use App\Models\FreelancerProfile;
 use App\Models\Proposal;
+use App\Models\User;
+use App\Notifications\BriefAssignedNotification;
+use App\Notifications\ProposalAcceptedNotification;
+use App\Notifications\ProposalReceivedNotification;
+use App\Notifications\ProposalRejectedNotification;
 use App\Services\ChatService;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 final class ProposalController extends Controller
 {
-    public function __construct(private readonly ChatService $chat)
-    {
+    public function __construct(
+        private readonly ChatService $chat,
+        private readonly NotificationService $notifications,
+    ) {
     }
 
     public function index(Request $request, int $briefId): JsonResponse
@@ -70,6 +78,11 @@ final class ProposalController extends Controller
             'status'         => ProposalStatus::Pending->value,
         ]);
         $proposal->load('freelancerProfile');
+
+        $client = User::find($brief->client_id);
+        if ($client !== null) {
+            $this->notifications->send($client, new ProposalReceivedNotification($brief, $proposal));
+        }
 
         return response()->json([
             'data' => (new ProposalResource($proposal))->resolve(),
@@ -120,6 +133,21 @@ final class ProposalController extends Controller
 
         $accepted->load('freelancerProfile.user');
         $brief->refresh();
+
+        $freelancerUser = $accepted->freelancerProfile?->user;
+        if ($freelancerUser !== null) {
+            $notification = match ($accepted->status) {
+                ProposalStatus::Accepted => new ProposalAcceptedNotification($brief, $accepted),
+                ProposalStatus::Rejected => new ProposalRejectedNotification($brief, $accepted),
+                default                   => null,
+            };
+            if ($notification !== null) {
+                $this->notifications->send($freelancerUser, $notification);
+                if ($accepted->status === ProposalStatus::Accepted) {
+                    $this->notifications->send($freelancerUser, new BriefAssignedNotification($brief));
+                }
+            }
+        }
 
         return response()->json([
             'data' => [
