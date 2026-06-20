@@ -44,6 +44,10 @@
 
       <app-language-selector [class.topbar-lang-desktop]="true" />
 
+      @if (showUserArea()) {
+        <app-notifications-bell class="topbar-bell" />
+      }
+
       @if (showUserArea() && user(); as u) {
         <span class="user-name">{{ u.name }}</span>
         @if (variant() === 'client') {
@@ -152,6 +156,7 @@
         </div>
 
         @if (showUserArea()) {
+          <app-notifications-bell class="panel-bell" />
           <button type="button" class="panel-logout" (click)="onLogout()">
             {{ 'topbar.logout' | t }}
           </button>

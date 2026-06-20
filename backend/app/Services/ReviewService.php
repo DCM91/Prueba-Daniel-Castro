@@ -11,6 +11,7 @@ use App\Models\Conversation;
 use App\Models\Proposal;
 use App\Models\Review;
 use App\Models\User;
+use App\Notifications\BriefCompletedNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final class ReviewService
 {
+    public function __construct(private readonly NotificationService $notifications)
+    {
+    }
+
     public function completeBrief(Brief $brief, User $actor): Brief
     {
         if ($actor->id !== $brief->client_id) {
@@ -33,7 +38,17 @@ final class ReviewService
         }
 
         $brief->forceFill(['status' => BriefStatus::Completed])->save();
-        return $brief->fresh();
+        $fresh = $brief->fresh();
+
+        $conversation = Conversation::query()->where('brief_id', $brief->id)->first();
+        if ($conversation !== null) {
+            $freelancer = User::find($conversation->freelancer_id);
+            if ($freelancer !== null) {
+                $this->notifications->send($freelancer, new BriefCompletedNotification($fresh));
+            }
+        }
+
+        return $fresh;
     }
 
     public function counterpartFor(Brief $brief, User $user): int

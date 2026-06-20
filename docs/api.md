@@ -1,6 +1,6 @@
 # Referencia de la API
 
-> Última revisión: Sprint WebSockets (commit `f4f1621`, 2026-06-20) + drop beta branch (2026-06-20). Base URL en dev: `http://127.0.0.1:8000` (backend Laravel). El frontend hace proxy de `/api/*` desde `localhost:4200` (ver `frontend/proxy.conf.json`). En producción, Vercel hace rewrite de `/api/*` a Railway (ver `frontend/vercel.json`). Endpoint WS de Reverb en `ws[s]://<host>:8080` (ver § Real-time).
+> Última revisión: Sprint Notificaciones in-app (2026-06-20). Cubre también el Sprint WebSockets y el drop de la rama beta. Base URL en dev: `http://127.0.0.1:8000` (backend Laravel). El frontend hace proxy de `/api/*` desde `localhost:4200` (ver `frontend/proxy.conf.json`). En producción, Vercel hace rewrite de `/api/*` a Railway (ver `frontend/vercel.json`). Endpoint WS de Reverb en `ws[s]://<host>:8080` (ver § Real-time).
 
 ## Convenciones
 
@@ -1088,6 +1088,121 @@ Elimina el avatar actual. **Requiere JWT.** Throttle: 30 req/min.
 - `401 Unauthorized` — sin token.
 
 > El archivo en Cloudinary se borra best-effort. Si el borrado falla (red, credenciales), el usuario ya queda sin avatar en BD; se loguea el warning en `storage/logs/laravel.log`.
+
+---
+
+## Notificaciones in-app — Sprint Notificaciones in-app (2026-06-20)
+
+Campana de notificaciones en el topbar con push real-time vía WebSocket (`notification.received` sobre `private-user.{id}`). Las notificaciones se persisten en la tabla `notifications` (polimórfica estilo Laravel) y se emiten en tiempo real cuando el backend las crea.
+
+### `GET /api/me/notifications` (auth)
+
+Lista paginada de las notificaciones del user autenticado, ordenadas por `created_at DESC`.
+
+**Query params:**
+
+| Param | Tipo | Default | Descripción |
+|---|---|---|---|
+| `unread_only` | `bool` | `false` | Si `true`, solo devuelve no-leídas (`read_at IS NULL`). |
+| `page` | int | `1` | Página actual. |
+| `per_page` | int | `15` | Tamaño de página (máx 50). |
+
+**Response 200:**
+```json
+{
+  "data": [
+    {
+      "id": "018c57cf-12ca-4919-b344-b0860847263b",
+      "kind": "proposal_received",
+      "title": "Nueva propuesta recibida",
+      "body": "Has recibido una propuesta para \"Foto de producto\".",
+      "icon": "inbox",
+      "link": "/briefs/1",
+      "meta": { "brief_id": 1, "proposal_id": 7 },
+      "read_at": null,
+      "created_at": "2026-06-20T10:00:00.000000Z"
+    }
+  ],
+  "meta": { "current_page": 1, "last_page": 1, "per_page": 15, "total": 1 }
+}
+```
+
+### `GET /api/me/notifications/unread-count` (auth)
+
+Devuelve el total de notificaciones no-leídas. Usado por el badge del topbar.
+
+**Response 200:**
+```json
+{ "data": { "total": 2 } }
+```
+
+### `POST /api/me/notifications/{id}/read` (auth)
+
+Marca una notificación como leída (`read_at = now()`). Si ya estaba leída, no hace nada (idempotente).
+
+**Response 200:**
+```json
+{ "data": { "id": "018c57cf-12ca-4919-b344-b0860847263b", "read_at": "2026-06-20T10:05:00.000000Z", ... } }
+```
+
+**Errores:**
+- `404 Not Found` — la notificación no existe o pertenece a otro user (aislamiento por user; la API no distingue entre ambas para no filtrar existencia).
+
+### `POST /api/me/notifications/read-all` (auth)
+
+Marca todas las notificaciones no-leídas del user como leídas.
+
+**Response 200:**
+```json
+{ "data": { "updated": 5 } }
+```
+
+### Kinds de notificación
+
+| `kind` | Disparador | Recipient |
+|---|---|---|
+| `proposal_received` | Freelancer envía propuesta a un brief | Cliente dueño del brief |
+| `proposal_accepted` | Cliente acepta propuesta + `brief_assigned` | Freelancer ganador |
+| `brief_assigned` | (mismo evento que `proposal_accepted`, kind distinto) | Freelancer ganador |
+| `proposal_rejected` | Cliente rechaza propuesta | Freelancer |
+| `brief_completed` | Cliente marca brief como completado | Freelancer asignado |
+| `review_received` | Una parte deja review a la otra | Reviewee |
+
+### Evento realtime `notification.received`
+
+Emitido en `private-user.{userId}` con el event name `notification.received` cada vez que se crea una notificación. El payload es el mismo `NotificationResource` que devuelve la API HTTP:
+
+```json
+{
+  "id": "018c57cf-12ca-4919-b344-b0860847263b",
+  "kind": "proposal_received",
+  "title": "Nueva propuesta recibida",
+  "body": "...",
+  "icon": "inbox",
+  "link": "/briefs/1",
+  "meta": { "brief_id": 1, "proposal_id": 7 },
+  "read_at": null,
+  "created_at": "2026-06-20T10:00:00.000000Z"
+}
+```
+
+El frontend reusa el mismo `private-user.{id}` channel que ya tenía para `unread.changed` (chat). Autorización: el user solo puede suscribirse a su propio canal (`subscriberId === channelUserId`).
+
+### Tabla `notifications` (resumen)
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | UUID (PK) | Generado por el servicio antes de `notifyNow()` |
+| `type` | VARCHAR | FQCN de la `Notification` class |
+| `notifiable_type` | VARCHAR | Polimórfico (`App\Models\User` actualmente) |
+| `notifiable_id` | BIGINT | FK lógica al user |
+| `data` | JSON | `{kind, title, body, icon, link, meta}` |
+| `read_at` | TIMESTAMP NULL | Null si no-leída |
+| `created_at`, `updated_at` | TIMESTAMP | |
+
+Índices:
+- `(notifiable_type, notifiable_id, read_at)` para el listado filtrado por no-leídas.
+- `(notifiable_type, notifiable_id, created_at)` para el listado paginado ordenado.
 
 ---
 

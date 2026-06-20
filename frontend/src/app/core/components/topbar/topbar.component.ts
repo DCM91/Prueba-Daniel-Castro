@@ -7,6 +7,7 @@ import { ChatRealtimeService } from '../../services/chat-realtime.service';
 import { ChatService } from '../../services/chat.service';
 import { BrandLogoComponent } from '../brand-logo/brand-logo.component';
 import { LanguageSelectorComponent } from '../language-selector/language-selector.component';
+import { NotificationsBellComponent } from '../notifications-bell/notifications-bell.component';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { User } from '../../types/auth.types';
 
@@ -53,7 +54,7 @@ const BACK_LABEL_MAP: Record<string, string> = {
 @Component({
   selector: 'app-core-topbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, BrandLogoComponent, LanguageSelectorComponent, TranslatePipe],
+  imports: [RouterLink, RouterLinkActive, BrandLogoComponent, LanguageSelectorComponent, NotificationsBellComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.is-mobile]': 'isMobile()' },
   templateUrl: './topbar.component.html',

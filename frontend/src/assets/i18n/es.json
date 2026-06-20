@@ -651,5 +651,24 @@
     "done": {
       "cta": "Ir a mi home"
     }
+  },
+  "notifications": {
+    "bell_label": "Notificaciones",
+    "unread_count_aria": "{{n}} sin leer",
+    "dropdown_label": "Lista de notificaciones",
+    "title": "Notificaciones",
+    "mark_all": "Marcar todas como leídas",
+    "loading": "Cargando notificaciones…",
+    "error_load": "No se pudieron cargar las notificaciones.",
+    "empty": "Aún no tienes notificaciones.",
+    "retry": "Reintentar",
+    "kind": {
+      "proposal_received": "Nueva propuesta",
+      "proposal_accepted": "Propuesta aceptada",
+      "proposal_rejected": "Propuesta rechazada",
+      "brief_assigned": "Proyecto asignado",
+      "brief_completed": "Proyecto completado",
+      "review_received": "Nueva valoración"
+    }
   }
 }

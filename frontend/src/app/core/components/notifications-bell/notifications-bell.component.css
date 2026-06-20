@@ -1,0 +1,235 @@
+.bell-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bell-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: #d4d4d8;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.bell-button:hover,
+.bell-button:focus-visible {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #f4f4f5;
+  outline: none;
+}
+
+.bell-button:focus-visible {
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.18);
+}
+
+.bell-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.bell-button--shaking {
+  animation: bell-shake 0.6s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bell-button--shaking {
+    animation: none;
+  }
+}
+
+@keyframes bell-shake {
+  0%   { transform: rotate(0); }
+  20%  { transform: rotate(-12deg); }
+  40%  { transform: rotate(8deg); }
+  60%  { transform: rotate(-6deg); }
+  80%  { transform: rotate(4deg); }
+  100% { transform: rotate(0); }
+}
+
+.bell-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #f87171;
+  color: #18181b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 2px solid #0f0f12;
+}
+
+.bell-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(380px, 92vw);
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.bell-dropdown__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bell-dropdown__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f4f4f5;
+}
+
+.bell-dropdown__mark-all {
+  background: transparent;
+  border: 0;
+  color: #a78bfa;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.bell-dropdown__mark-all:hover,
+.bell-dropdown__mark-all:focus-visible {
+  background: rgba(124, 58, 237, 0.12);
+  outline: none;
+}
+
+.bell-dropdown__body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.bell-dropdown__state {
+  margin: 0;
+  padding: 24px 16px;
+  text-align: center;
+  color: #a1a1aa;
+  font-size: 13px;
+}
+
+.bell-dropdown__state--error {
+  color: #f87171;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.bell-dropdown__retry {
+  background: transparent;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  color: #f87171;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.bell-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bell-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #d4d4d8;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.bell-item:last-child {
+  border-bottom: 0;
+}
+
+.bell-item:hover,
+.bell-item:focus-visible {
+  background: rgba(255, 255, 255, 0.04);
+  outline: none;
+}
+
+.bell-item__icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(124, 58, 237, 0.18);
+  color: #c4b5fd;
+}
+
+.bell-item__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bell-item__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bell-item__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f4f4f5;
+}
+
+.bell-item__text {
+  font-size: 12px;
+  color: #a1a1aa;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.bell-item__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #a78bfa;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.bell-item--unread .bell-item__title {
+  color: #f4f4f5;
+}

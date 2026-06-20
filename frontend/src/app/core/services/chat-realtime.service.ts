@@ -1,6 +1,7 @@
 import { DestroyRef, Injectable, effect, inject, signal } from '@angular/core';
 
 import { AuthService } from './auth.service';
+import { Notification } from '../types/auth.types';
 import { WebSocketService } from './websocket.service';
 
 export interface MessageSentEvent {
@@ -25,6 +26,8 @@ export interface UnreadCountChangedEvent {
   total: number;
 }
 
+export type NotificationReceivedEvent = Notification;
+
 /**
  * High-level wrapper around the raw WebSocketService. Owns the lifecycle of
  * "the user is in chat, keep their private channels subscribed" and exposes
@@ -44,11 +47,12 @@ export class ChatRealtimeService {
   /** Latest unread count pushed by the server. Mirrors the topbar badge. */
   readonly unreadTotal = signal<number>(0);
 
-  private userChannelUnsub: (() => void) | null = null;
+  private userChannelUnsubs: (() => void)[] = [];
   private readonly conversationUnsubs = new Map<number, () => void>();
   private readonly messageListeners = new Map<number, Set<(msg: MessageSentEvent['message']) => void>>();
   private readonly conversationListeners = new Map<number, Set<(evt: ConversationUpdatedEvent) => void>>();
   private readonly unreadListeners = new Set<(evt: UnreadCountChangedEvent) => void>();
+  private readonly notificationListeners = new Set<(n: NotificationReceivedEvent) => void>();
 
   constructor() {
     effect(() => {
@@ -65,31 +69,39 @@ export class ChatRealtimeService {
 
   /**
    * Open the WebSocket and subscribe to the user's own private channel
-   * (for unread count updates). Idempotent.
+   * (for unread count updates and incoming notifications). Idempotent.
    */
   connect(): void {
     this.ws.connect();
     const user = this.auth.currentUser();
     if (!user) return;
-    if (this.userChannelUnsub !== null) return;
+    if (this.userChannelUnsubs.length > 0) return;
 
-    this.userChannelUnsub = this.ws.subscribe<UnreadCountChangedEvent>(
-      `private-user.${user.id}`,
-      'unread.changed',
-      (evt) => {
+    const channel = `private-user.${user.id}`;
+
+    this.userChannelUnsubs.push(
+      this.ws.subscribe<UnreadCountChangedEvent>(channel, 'unread.changed', (evt) => {
         this.unreadTotal.set(evt.total);
         for (const cb of this.unreadListeners) {
           cb(evt);
         }
-      },
+      }),
+    );
+
+    this.userChannelUnsubs.push(
+      this.ws.subscribe<NotificationReceivedEvent>(channel, 'notification.received', (evt) => {
+        for (const cb of this.notificationListeners) {
+          cb(evt);
+        }
+      }),
     );
   }
 
   disconnect(): void {
-    if (this.userChannelUnsub !== null) {
-      this.userChannelUnsub();
-      this.userChannelUnsub = null;
+    for (const unsub of this.userChannelUnsubs) {
+      unsub();
     }
+    this.userChannelUnsubs = [];
     for (const unsub of this.conversationUnsubs.values()) {
       unsub();
     }
@@ -142,6 +154,15 @@ export class ChatRealtimeService {
   onUnreadChange(callback: (evt: UnreadCountChangedEvent) => void): () => void {
     this.unreadListeners.add(callback);
     return () => this.unreadListeners.delete(callback);
+  }
+
+  /**
+   * Subscribe to incoming in-app notifications pushed by the server.
+   * Returns an unsubscribe function.
+   */
+  onNotification(callback: (n: NotificationReceivedEvent) => void): () => void {
+    this.notificationListeners.add(callback);
+    return () => this.notificationListeners.delete(callback);
   }
 
   private ensureConversationSubscription(conversationId: number): void {

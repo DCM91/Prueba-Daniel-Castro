@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\FreelancerCatalogController;
 use App\Http\Controllers\Api\FreelancerCoverController;
 use App\Http\Controllers\Api\FreelancerPortfolioController;
 use App\Http\Controllers\Api\FreelancerProfileController;
+use App\Http\Controllers\Api\NotificationsController;
 use App\Http\Controllers\Api\OAuthController;
 use App\Http\Controllers\Api\OnboardingController;
 use App\Http\Controllers\Api\ProfileCompletionController;
@@ -83,6 +84,11 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/conversations/{id}/messages', [ChatController::class, 'send'])->whereNumber('id');
     Route::post('/conversations/{id}/read', [ChatController::class, 'read'])->whereNumber('id');
     Route::post('/briefs/{id}/conversation', [ChatController::class, 'ensureForBrief'])->whereNumber('id');
+
+    Route::get('/me/notifications', [NotificationsController::class, 'index']);
+    Route::get('/me/notifications/unread-count', [NotificationsController::class, 'unreadCount']);
+    Route::post('/me/notifications/{id}/read', [NotificationsController::class, 'markRead']);
+    Route::post('/me/notifications/read-all', [NotificationsController::class, 'markAllRead']);
 });
 
 Route::prefix('auth')->group(function () {

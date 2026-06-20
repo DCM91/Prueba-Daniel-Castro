@@ -5,20 +5,20 @@
 > - Estado vivo. Marca con `[x]` cada tarea al cerrarla.
 > - Prioridad descendente (P0 = más urgente, P6 = sin priorizar).
 > - Las fases se numeran con cronología. Las sub-fases 5.5.x son bloques cortos dentro de "Fase 5.5 · Cloudinary".
-> - Última actualización: **sincronización de WebSockets + cierre de hotfixes de docs (2026-06-20)**.
+> - Última actualización: **cierre del sprint "Notificaciones in-app" (2026-06-20)**.
 
 ---
 
 ## TL;DR
 
-**Métricas al cierre del sprint de sincronización (2026-06-20):**
+**Métricas al cierre del sprint "Notificaciones in-app" (2026-06-20):**
 
-- **Backend:** 250 tests / 994 assertions, 17 feature suites + 2 unit suites, todos en verde.
-- **Frontend:** `npm run build` sin warnings. `npm run validate:i18n` OK. `npx jest` → **43 suites / 316 tests verdes**.
+- **Backend:** 265 tests / 1033 assertions, 19 feature suites + 2 unit suites, todos en verde.
+- **Frontend:** `npm run build` sin warnings. `npm run validate:i18n` OK. `npx jest` → **45 suites / 330 tests verdes**.
 - **Deploy:** producción en Railway (backend) + Vercel (frontend) con CI en GitHub Actions.
-- **Tablas nuevas desde Fase 5:** `brief_attachments` (5.5.C), `conversations` + `messages` (Fase 6), `reviews` (Fase 7), `user_oauth_identities` (5.5.F).
-- **Endpoints nuevos desde Fase 5:** 25+ nuevos entre 5.5.A, 5.5.B, 5.5.C, 5.5.D, 5.5.E, 5.5.F, Fase 6, Fase 7. Ver [docs/api.md](./api.md).
-- **Eventos realtime (Sprint WebSockets):** `MessageSent`, `ConversationUpdated`, `UnreadCountChanged` sobre canales privados `conversation.{id}` y `user.{id}` con Laravel Reverb.
+- **Tablas nuevas desde Fase 5:** `brief_attachments` (5.5.C), `conversations` + `messages` (Fase 6), `reviews` (Fase 7), `user_oauth_identities` (5.5.F), `notifications` (sprint notificaciones in-app).
+- **Endpoints nuevos desde Fase 5:** 30+ nuevos. Ver [docs/api.md](./api.md).
+- **Eventos realtime:** `MessageSent`, `ConversationUpdated`, `UnreadCountChanged` (chat) + `NotificationReceived` (in-app) sobre canales privados `conversation.{id}` y `user.{id}` con Laravel Reverb.
 
 **Estado del backlog inmediato:**
 
@@ -27,7 +27,7 @@
 | 1 | Aceptar / rechazar propuesta (PATCH status) | ✅ Cerrado (ver § Aceptar/Rechazar propuesta) |
 | 2 | Migrar chat de polling a WebSockets (Laravel Reverb) | ✅ Cerrado en `f4f1621` (Sprint 4-5) — ver § Hotfix 0.20 |
 | 3 | Editar / borrar la propia review | ✅ Cerrado (ver § Editar/borrar review) |
-| 4 | Notificaciones in-app (campana en topbar) | 🔵 Sprint en curso |
+| 4 | Notificaciones in-app (campana en topbar) | ✅ Cerrado (sprint notificaciones) |
 | 5 | Responder a reviews, fotos en reviews, denuncias | ⚪ Backlog |
 | 6 | Reset de password + verificación de email | ⚪ Backlog |
 
@@ -1049,6 +1049,61 @@ curl.exe -sS -X POST https://framematch.vercel.app/api/auth/login -d '...'
 - [ ] Sub-perfiles `agency` y `company`.
 - [ ] Admin panel.
 - [x] OAuth — ✅ Fase 5.3 (Google + Facebook vía Socialite, auto-vincular por email, complete-profile) + ✅ Fase 5.5.F (N:M con `user_oauth_identities` + `?link=1`).
+
+---
+
+## ✅ Sprint "Notificaciones in-app" — cerrada 2026-06-20
+
+**Objetivo:** campana de notificaciones en el topbar con push real-time vía WebSocket, persistencia en BD y cobertura completa de los disparadores de notificación del dominio (propuestas, asignación, completado, reviews).
+
+### Backend (Laravel 13)
+
+- **Migración** `2026_06_20_120000_create_notifications_table.php`: tabla polimórfica estilo Laravel (`id` UUID, `type` FQCN, `notifiable_type` + `notifiable_id`, `data` JSON, `read_at`, timestamps). Índices `(notifiable_type, notifiable_id, read_at)` y `(notifiable_type, notifiable_id, created_at)` para los listados filtrados. Se eligió UUID porque `Notifiable` lo genera por defecto (preparado para queue/serialización).
+- **Enum** `App\Enums\NotificationKind`: 6 valores (`proposal_received`, `proposal_accepted`, `proposal_rejected`, `brief_assigned`, `brief_completed`, `review_received`) que viajan dentro del JSON `data` para que el frontend elija icono + copy.
+- **Notificaciones** (en `app/Notifications/`): `BaseNotification` abstracta + 6 subclases concretas, una por kind. Cada una implementa `toArray()` con el shape estable `{kind, title, body, icon, link, meta}` que se persiste en `notifications.data` y se emite por WebSocket.
+- **Evento** `App\Events\NotificationReceived` (`ShouldBroadcastNow`): se dispara sobre `private-user.{userId}` con el nombre `notification.received`. Reutiliza la misma channel authorizer que ya teníamos (`ChatChannelAuthorizer::authorizeUser`).
+- **`App\Services\NotificationService`**: facade fina sobre el trait `Notifiable`. Genera el UUID, llama a `notifyNow()`, recupera el `DatabaseNotification` persistido, y dispara el `NotificationReceived` con el mismo payload. Idempotente en el sentido de que si la notificación no se persiste, lanza `RuntimeException` (falla rápido en vez de emitir un evento huérfano).
+- **`App\Http\Controllers\Api\NotificationsController`**: 4 endpoints bajo `auth:api`:
+  - `GET /api/me/notifications?unread_only=&page=&per_page=` (paginado)
+  - `GET /api/me/notifications/unread-count` (badge del topbar)
+  - `POST /api/me/notifications/{id}/read` (devuelve 404 si es de otro user)
+  - `POST /api/me/notifications/read-all` (devuelve `{updated: N}`)
+- **`App\Http\Resources\NotificationResource`**: aplana el `data` JSON al shape público `{id, kind, title, body, icon, link, meta, read_at, created_at}`.
+- **Dispatchers cableados** (sin cambiar contratos de los controllers existentes):
+  - `ProposalController::store` → `ProposalReceivedNotification` al `brief->client`
+  - `ProposalController::update` con status `accepted` → `ProposalAcceptedNotification` + `BriefAssignedNotification` al freelancer ganador
+  - `ProposalController::update` con status `rejected` → `ProposalRejectedNotification`
+  - `ReviewController::store` → `ReviewReceivedNotification` al reviewee
+  - `ReviewService::completeBrief` → `BriefCompletedNotification` al freelancer del brief
+  - `ChatService::sendMessage` **NO** dispara `MessageReceivedNotification` — ya emite `UnreadCountChanged` para el chat, sería duplicado.
+
+### Frontend (Angular 21)
+
+- **Types** en `core/types/auth.types.ts`: `NotificationKind` union + `Notification` interface (`id: string` para los UUIDs del backend).
+- **`core/services/notifications.service.ts`**: HTTP service con `list({unreadOnly, page, perPage})`, `unreadCount()`, `markRead(id)`, `markAllRead()`. Desenvuelve el `data` consistentemente con el resto de la app.
+- **`core/services/chat-realtime.service.ts`**: ampliado para escuchar `notification.received` en `private-user.{id}` (mismo canal que `unread.changed`, suscripción separada). Nuevo método público `onNotification(cb)` que devuelve unsub.
+- **`core/components/notifications-bell/`** (nuevo): bell button con badge + dropdown menu. Standalone, OnPush, signals. Estados: loading, error con retry, empty, list. Accesibilidad: `aria-label` dinámico (incluye conteo no-leídas), `aria-haspopup="menu"`, `aria-expanded`, `role="menu"`, `role="menuitem"`, `Escape` cierra, focus trap al abrir, focus restore al cerrar. Animación "shake" al recibir una nueva (respeta `prefers-reduced-motion`).
+- **`core/components/topbar/`**: integra `<app-notifications-bell>` en el slot derecho (entre lang-selector y user area), solo cuando `showUserArea()` es true (i.e. autenticado y variant != auth). Repite el montaje en el panel móvil.
+- **i18n** namespace `notifications.*` con 10 keys (ES + EN): `bell_label`, `unread_count_aria`, `dropdown_label`, `title`, `mark_all`, `loading`, `error_load`, `empty`, `retry`, `kind.{kind}` × 6.
+
+### Tests
+
+- **Backend** (`php artisan test`): 15 nuevos (10 en `NotificationsTest` para endpoints, 5 en `NotificationDispatchTest` para los disparadores con `Event::fake([NotificationReceived::class])` + `assertDatabaseHas`). Total: **265 tests / 1033 assertions** (era 250/994).
+- **Frontend** (`npx jest`): 14 nuevos (6 en `notifications.service.spec.ts` + 8 en `notifications-bell.component.spec.ts`). Total: **330 tests / 45 suites** (era 316/43).
+- **Sin regresiones** en suites existentes.
+
+### Validación
+
+- `php artisan test` → 265/1033 ✅
+- `npx jest` → 45/330 ✅
+- `npm run build` → OK, sin warnings
+- `npm run validate:i18n` → OK
+
+### Limitaciones conocidas
+
+- **El bell no actualiza el contador si el user no está autenticado** (correcto por diseño — la campana se oculta).
+- **No hay paginación visible en el dropdown:** se muestran las últimas 10 (`BELL_LIMIT`); "Marcar todas como leídas" las marca todas en BD, pero el dropdown solo refleja las 10 primeras. Cuando crezca, añadir un footer "Ver todas" enlazando a una futura página `/notifications`.
+- **No hay sonido/notification nativo del browser:** por simplicidad. Si se quiere, se puede añadir vía `Notification.requestPermission()` y un signal en el servicio que dispare `new Notification(...)`.
 
 ---
 

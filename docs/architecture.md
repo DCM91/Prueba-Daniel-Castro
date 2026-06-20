@@ -1,6 +1,6 @@
 # Arquitectura del sistema
 
-> Última revisión: Sprint WebSockets (commit `f4f1621`, 2026-06-20) + drop beta branch (2026-06-20). Ver [docs/roadmap.md](./roadmap.md) para el histórico de cambios.
+> Última revisión: Sprint Notificaciones in-app (2026-06-20). Cubre también el Sprint WebSockets y el drop de la rama beta. Ver [docs/roadmap.md](./roadmap.md) para el histórico de cambios.
 
 ## Vista de capas
 
@@ -129,6 +129,19 @@
   - `core/services/chat-realtime.service.ts` — wrapper. Conecta cuando `auth.currentUser()` es truthy, desconecta en logout. Multiplexa listeners por conversación.
 - **Polling residual:** el chat-list y el chat-thread mantienen un `interval(30_000)` como **fallback explícito** para entornos donde WS está bloqueado. Documentado en el comment de `chat-thread.component.ts:85`.
 - **Limitación de escala:** Reverb corre en el mismo dyno que el backend HTTP. Para escalar horizontalmente hay que moverlo a un servicio separado o a un provider externo (Pusher/Ably). El resto del stack (eventos, autorizaciones, frontend) no cambia.
+
+### In-app notifications (campana en topbar) — Sprint Notificaciones in-app (2026-06-20)
+
+- **Stack:** Laravel `Notifiable` trait + `database` channel (polimórfico) para persistencia, `ShouldBroadcastNow` event (`NotificationReceived`) sobre el mismo `private-user.{id}` channel que ya existía para `UnreadCountChanged`.
+- **Por qué un solo canal para múltiples eventos:** la autenticación de canal es la misma (subscriber debe ser el dueño del userId). Un canal por evento multiplicaría las suscripciones WS sin necesidad. El multiplexing se hace en el cliente (`ChatRealtimeService` mantiene 2 suscripciones independientes al mismo canal, una por nombre de evento).
+- **Patrón "doble publicación":** el `NotificationService::send()` hace 2 cosas — (1) persiste en `notifications` vía `$user->notifyNow()` y (2) dispara `NotificationReceived` con el mismo payload. Esto da: fuente de verdad en BD (refrescable por HTTP cuando el WS se cae) + push instantáneo al frontend (UX real-time). El `NotificationReceived` lleva el `id` UUID para que el frontend pueda reconciliar con la fila persistida si hace falta.
+- **No se notifica el chat:** `ChatService::sendMessage` ya emite `UnreadCountChanged` para el badge. Notificar también vía `MessageReceivedNotification` sería duplicar el mismo evento con dos canales. La campana de notificaciones y el badge del chat comparten la misma channel WS pero tienen semánticas distintas: la campana es para eventos del dominio (propuestas, reviews, etc.), el badge es solo para mensajes no-leídos.
+- **Disparadores centralizados en services, no en controllers:** los dispatchers viven en `ProposalService` (futuro), `ReviewService` y `ChatService`. Los controllers solo orquestan: si en el futuro queremos reordenar, refactorizar o añadir triggers (cron, webhooks), no hay que tocar los controllers.
+- **Frontend:**
+  - `core/services/notifications.service.ts` — HTTP CRUD (`list`, `unreadCount`, `markRead`, `markAllRead`).
+  - `core/components/notifications-bell/` — bell standalone, OnPush, signals. Shake animation al recibir nueva (respeta `prefers-reduced-motion`). Dropdown accesible: `role=menu`, `role=menuitem`, `Escape` cierra, focus trap + restore.
+  - `core/components/topbar/` — monta el bell solo en variants `client` y `freelancer`, en el slot derecho entre lang-selector y user area.
+- **Limitación UX:** el dropdown muestra las últimas 10 (`BELL_LIMIT`). "Marcar todas" actúa sobre la BD entera. Cuando el volumen crezca, añadir una página `/notifications` con el listado paginado completo.
 
 ## Flujo end-to-end de registro
 

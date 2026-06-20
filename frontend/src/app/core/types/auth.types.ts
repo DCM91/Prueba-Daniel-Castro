@@ -343,6 +343,26 @@ export interface UpdateAccountPayload {
   city?: string | null;
 }
 
+export type NotificationKind =
+  | 'proposal_received'
+  | 'proposal_accepted'
+  | 'proposal_rejected'
+  | 'brief_assigned'
+  | 'brief_completed'
+  | 'review_received';
+
+export interface Notification {
+  id: string;
+  kind: NotificationKind | null;
+  title: string;
+  body: string;
+  icon: string | null;
+  link: string | null;
+  meta: Record<string, unknown> | null;
+  read_at: string | null;
+  created_at: string | null;
+}
+
 export interface ApiError {
   message: string;
   errors?: Record<string, string[]>;

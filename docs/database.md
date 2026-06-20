@@ -1,6 +1,6 @@
 # Esquema de base de datos
 
-> Última revisión: Fase 4. MySQL 8 con XAMPP (BD `prueba_tecnica_daniel_castro`). Todas las migraciones viven en `backend/database/migrations/` ordenadas por timestamp.
+> Última revisión: Sprint Notificaciones in-app (2026-06-20). MySQL 8 con XAMPP (BD `prueba_tecnica_daniel_castro`). Todas las migraciones viven en `backend/database/migrations/` ordenadas por timestamp.
 
 ## Diagrama ER (Fase 2)
 
@@ -49,6 +49,23 @@
 │ updated_at                         │  │ created_at                         │
 │ UNIQUE(profile_id, skill_id)       │  │ updated_at                         │
 └────────────────────────────────────┘  └────────────────────────────────────┘
+
+┌────────────────────────────────────┐
+│ notifications (Sprint 2026-06-20)  │
+├────────────────────────────────────┤
+│ id (PK, UUID)                      │
+│ type (FQCN de la Notification)     │
+│ notifiable_type (VARCHAR)          │◄── user_id, brief_id, etc. (polimórfico)
+│ notifiable_id (BIGINT)             │
+│ data (JSON)                        │
+│ read_at (NULL = no leída)          │
+│ created_at                         │
+│ updated_at                         │
+│ IDX(notifiable_type, notifiable_id,│
+│     read_at)                       │
+│ IDX(notifiable_type, notifiable_id,│
+│     created_at)                    │
+└────────────────────────────────────┘
 ```
 
 ## Tablas del sistema (no de dominio)
@@ -418,6 +435,47 @@ Reviews cruzadas entre cliente y freelancer tras completar un brief. Una fila po
 - `GET /api/users/{id}/reviews` — públicas, paginadas.
 - `GET /api/users/{id}/rating` — público, devuelve agregado.
 - `PATCH /api/briefs/{id}/complete` — precondición para poder reseñar.
+
+## Tabla `notifications` (Sprint Notificaciones in-app, 2026-06-20)
+
+Tabla polimórfica estilo Laravel para las notificaciones in-app. Se usa vía el trait `Notifiable` (que `User` ya tiene) y el canal `database` por defecto. El frontend también escucha el evento `notification.received` en `private-user.{id}` (push real-time) y usa esta tabla como fuente de verdad al refrescar la campana.
+
+| Columna | Tipo | Null | Default | Notas |
+|---|---|---|---|---|
+| `id` | CHAR(36) | NO | — | PK. UUID v4 generado por `NotificationService` antes del `notifyNow()`. |
+| `type` | VARCHAR | NO | — | FQCN de la `Notification` class (e.g. `App\Notifications\ProposalReceivedNotification`). |
+| `notifiable_type` | VARCHAR | NO | — | Polimórfico. Hoy siempre `App\Models\User`. |
+| `notifiable_id` | BIGINT UNSIGNED | NO | — | Polimórfico. `users.id` del recipient. |
+| `data` | JSON | NO | — | `{kind, title, body, icon, link, meta}`. Estable, lo consume el frontend. |
+| `read_at` | TIMESTAMP | YES | NULL | NULL = no leída. |
+| `created_at` | TIMESTAMP | YES | NULL | |
+| `updated_at` | TIMESTAMP | YES | NULL | |
+
+**Índices**
+- `PRIMARY (id)`
+- `INDEX (notifiable_type, notifiable_id, read_at)` — `notifications_unread_idx`. Usado por el listado filtrado por no-leídas (`?unread_only=true`) y por el endpoint de unread-count.
+- `INDEX (notifiable_type, notifiable_id, created_at)` — `notifications_recent_idx`. Usado por el listado paginado ordenado por recientes.
+
+**Endpoints que la consumen**
+- `GET /api/me/notifications` — listado paginado del user actual.
+- `GET /api/me/notifications/unread-count` — total no-leídas (badge del topbar).
+- `POST /api/me/notifications/{id}/read` — marcar una como leída.
+- `POST /api/me/notifications/read-all` — marcar todas como leídas.
+
+**Disparadores** (en `ProposalController`, `ReviewController`, `ReviewService::completeBrief`):
+
+| Evento del dominio | Notification emitida | Recipient |
+|---|---|---|
+| Freelancer envía propuesta | `ProposalReceivedNotification` | `brief.client_id` |
+| Cliente acepta propuesta | `ProposalAcceptedNotification` + `BriefAssignedNotification` | `proposal.freelancerProfile.user_id` |
+| Cliente rechaza propuesta | `ProposalRejectedNotification` | mismo freelancer |
+| Cliente completa un brief | `BriefCompletedNotification` | freelancer asignado |
+| Una parte deja review | `ReviewReceivedNotification` | `reviewee_id` |
+
+**Decisión de schema**
+- **`id` UUID y no BIGINT:** Laravel genera el UUID en `NotificationSender::sendNow` por defecto (pensado para que las notificaciones sobrevivan a la serialización en cola). Forzar BIGINT requeriría sobreescribir el `NotificationSender` y complicar la integración con la API estándar. El precio es que el frontend ve `id: string` en vez de `number`, pero la convención es consistente con el resto de Laravel.
+- **Polimórfico en vez de `user_id` directo:** abre la puerta a notificar a `Brief`, `Proposal`, etc. en el futuro sin migrar la tabla. Por ahora solo `User` la usa.
+- **JSON `data` en vez de columnas separadas:** mismo shape para `database` (persistencia) y para el `broadcast` channel (real-time). El frontend consume el `NotificationResource` que aplana el JSON a columnas públicas. Si en el futuro hace falta filtrar por `kind` desde la API, se puede añadir una columna generada o un índice funcional en MySQL.
 
 ## Tabla `freelancer_skill` (pivot N:M)
 
