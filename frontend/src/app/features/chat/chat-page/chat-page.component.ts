@@ -9,7 +9,6 @@ import {
 import { ActivatedRoute } from '@angular/router';
 
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
 import { ChatListComponent } from '../chat-list/chat-list.component';
 import { ChatThreadComponent } from '../chat-thread/chat-thread.component';
 import { ChatService } from '../../../core/services/chat.service';
@@ -18,7 +17,7 @@ import { Conversation } from '../../../core/types/auth.types';
 @Component({
   selector: 'app-chat-page',
   standalone: true,
-  imports: [TranslatePipe, CoreTopbarComponent, ChatListComponent, ChatThreadComponent],
+  imports: [TranslatePipe, ChatListComponent, ChatThreadComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './chat-page.component.html',
   styleUrl: './chat-page.component.css',

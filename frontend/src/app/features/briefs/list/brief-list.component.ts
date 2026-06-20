@@ -3,7 +3,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { BriefsService } from '../../../core/services/briefs.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { CoreTopbarComponent } from '../../../core/components/topbar/topbar.component';
 import { BriefsSubBarComponent, BriefsScope } from '../../../core/components/briefs-sub-bar/briefs-sub-bar.component';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { Brief } from '../../../core/types/auth.types';
@@ -11,7 +10,7 @@ import { Brief } from '../../../core/types/auth.types';
 @Component({
   selector: 'app-brief-list',
   standalone: true,
-  imports: [RouterLink, CoreTopbarComponent, BriefsSubBarComponent, TranslatePipe],
+  imports: [RouterLink, BriefsSubBarComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './brief-list.component.html',
   styleUrl: './brief-list.component.css',
