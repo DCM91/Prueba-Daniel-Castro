@@ -651,5 +651,24 @@
     "done": {
       "cta": "Go to my home"
     }
+  },
+  "notifications": {
+    "bell_label": "Notifications",
+    "unread_count_aria": "{{n}} unread",
+    "dropdown_label": "Notifications list",
+    "title": "Notifications",
+    "mark_all": "Mark all as read",
+    "loading": "Loading notifications…",
+    "error_load": "Could not load notifications.",
+    "empty": "You don't have any notifications yet.",
+    "retry": "Retry",
+    "kind": {
+      "proposal_received": "New proposal",
+      "proposal_accepted": "Proposal accepted",
+      "proposal_rejected": "Proposal rejected",
+      "brief_assigned": "Project assigned",
+      "brief_completed": "Project completed",
+      "review_received": "New review"
+    }
   }
 }
