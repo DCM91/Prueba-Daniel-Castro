@@ -4,7 +4,7 @@ Plataforma que conecta **freelancers de fotografía y vídeo** con **clientes** 
 
 **Stack:** Laravel 13 (API REST + JWT) + Angular 21 (SPA standalone).
 
-> **Fases entregadas:** auth con JWT, registro como cliente/freelancer, landing pública de marketing, dos landings post-login diferenciadas por rol, editor de perfil del profesional con selección de skills del catálogo (4 categorías: foto, vídeo, edición, contenido), catálogo público de freelancers con filtros (categoría, ciudad, tarifa, búsqueda) y vista de detalle, briefs + propuestas (matching cliente ↔ profesional), brand "FrameMatch" prominente con logo SVG inline, i18n bilingüe (ES + EN) con selector en topbar, OAuth con Google y Facebook (auto-vinculación por email), topbar unificado con 4 variants, subida de foto de perfil con Cloudinary, cover + portfolio con lightbox accesible, brief attachments (hasta 10 imágenes por brief), profile completion + onboarding wizard, edición de cuenta, OAuth N:M (vincular varios providers), chat cliente↔freelancer ligado a briefs con propuesta aceptada (polling 5s), reviews y ratings cruzados, y **deploy a producción en Railway (backend) + Vercel (frontend)** con MySQL gestionado y FrankenPHP. Detalle completo en [docs/roadmap.md](./docs/roadmap.md).
+> **Fases entregadas:** auth con JWT, registro como cliente/freelancer, landing pública de marketing, dos landings post-login diferenciadas por rol, editor de perfil del profesional con selección de skills del catálogo (4 categorías: foto, vídeo, edición, contenido), catálogo público de freelancers con filtros (categoría, ciudad, tarifa, búsqueda) y vista de detalle, briefs + propuestas (matching cliente ↔ profesional), brand "FrameMatch" prominente con logo SVG inline, i18n bilingüe (ES + EN) con selector en topbar, OAuth con Google y Facebook (auto-vinculación por email), topbar unificado con 4 variants, subida de foto de perfil con Cloudinary, cover + portfolio con lightbox accesible, brief attachments (hasta 10 imágenes por brief), profile completion + onboarding wizard, edición de cuenta, OAuth N:M (vincular varios providers), chat cliente↔freelancer ligado a briefs con propuesta aceptada, migración de polling a **WebSockets con Laravel Reverb** (eventos `MessageSent` / `ConversationUpdated` / `UnreadCountChanged` sobre canales privados), reviews y ratings cruzados con CRUD completo, **notificaciones in-app con campana en el topbar** (push real-time + persistencia en `notifications` + 6 kinds de disparadores), y **deploy a producción en Railway (backend) + Vercel (frontend)** con MySQL gestionado y FrankenPHP. Detalle completo en [docs/roadmap.md](./docs/roadmap.md).
 
 ## Documentación
 
@@ -217,6 +217,13 @@ timestamps
 | PUT | `/api/briefs/{id}` | JWT client (owner) | Edita un brief propio |
 | DELETE | `/api/briefs/{id}` | JWT client (owner) | Borra un brief (cascada a propuestas) |
 | POST | `/api/briefs/{briefId}/proposals` | JWT freelancer | Envía una propuesta a un brief |
+| PATCH | `/api/briefs/{briefId}/proposals/{id}` | JWT client (owner) | Aceptar o rechazar propuesta (auto-rechaza el resto, crea conversación si acepta) |
+| POST | `/api/conversations/{id}/messages` | JWT participant | Envía un mensaje (1-2000 chars) |
+| POST | `/api/conversations/{id}/read` | JWT participant | Marca mensajes como leídos (dispara `ConversationUpdated` + `UnreadCountChanged`) |
+| GET | `/api/me/notifications` | JWT | Lista paginada de notificaciones (filtro `?unread_only=`) |
+| GET | `/api/me/notifications/unread-count` | JWT | Total no-leídas (badge del topbar) |
+| POST | `/api/me/notifications/{id}/read` | JWT | Marca una notificación como leída |
+| POST | `/api/me/notifications/read-all` | JWT | Marca todas como leídas |
 
 ### Registro
 
@@ -328,8 +335,11 @@ php artisan test
 | Feature | `ProfileCompletionTest.php` | 11 | `ProfileCompletionService` + `GET /api/me/completion` (10 campos, 100 pts) |
 | Unit | `CloudinaryServiceTest.php` | 14 | Admin API, URLs con transformaciones, helpers |
 | Unit | `UserTest.php` | 5 | Modelo `User`, JWT claims, relaciones |
+| Feature | `BroadcastingTest.php` | 10 | Reverb events: dispatch de `MessageSent` / `ConversationUpdated` / `UnreadCountChanged` + autorización de canales privados |
+| Feature | `NotificationsTest.php` | 10 | CRUD de notificaciones (`/me/notifications`): list paginado, unread-only, unread-count, mark single + mark-all, 404 cross-user, 401 |
+| Feature | `NotificationDispatchTest.php` | 5 | Disparadores de las 6 kinds: `ProposalReceived` / `Accepted` / `Rejected` / `BriefAssigned` / `BriefCompleted` / `ReviewReceived` (persistencia + `NotificationReceived` event) |
 
-**Total backend: 227 tests / 927 assertions, todos en verde.**
+**Total backend: 265 tests / 1033 assertions, todos en verde.**
 
 ### Frontend
 
@@ -373,20 +383,24 @@ npm test
 | `user.service.spec.ts` | 3 | setAvatar/removeAvatar |
 | `cloudinary.service.spec.ts` | 6 | Upload con validación client-side, formatos, setAvatar, removeAvatar |
 | `avatar-uploader.component.spec.ts` | 10 | Render, file selection, success, error, remove, double-call guard, emit |
+| `websocket.service.spec.ts` | — | Cliente Pusher-protocol: open, close, reconnect exponencial, ping, replay de suscripciones |
+| `chat-realtime.service.spec.ts` | 4 | Suscripción a `private-user.{id}` y `private-conversation.{id}`, multiplexing, `onUnreadChange` / `onNotification` callbacks |
+| `notifications.service.spec.ts` | 6 | `list` (con/sin `unread_only` + `per_page`), `unreadCount`, `markRead` (200 + 404), `markAllRead` |
+| `notifications-bell.component.spec.ts` | 8 | Render del badge, fetch inicial, prepend via `onNotification`, mark single + nav, mark-all, error state, empty state, toggle del dropdown |
 
-**Total frontend: 36 suites, 249 tests verdes.** `npm run build` OK. Bug del runner `setupZoneTestEnv()` y los 16 tests con bugs pre-existentes en specs resueltos (ver [§ Pendiente de tests frontend](./docs/roadmap.md#pendiente-de-tests-frontend) y hotfix 0.18).
+**Total frontend: 45 suites, 330 tests verdes.** `npm run build` OK. `npm run validate:i18n` OK.
 
 ---
 
 ## Próximas fases (roadmap)
 
-> Detalle completo en [docs/roadmap.md](./docs/roadmap.md) (que ahora incluye el checklist operativo fusionado). Resumen de lo que viene:
+> Detalle completo en [docs/roadmap.md](./docs/roadmap.md). Resumen de lo que viene (todo lo de arriba está ✅ cerrado):
 
-1. **Aceptar / rechazar propuesta** — `PATCH /api/briefs/{id}/proposals/{pid}/status` con UI en `brief-detail`.
-2. **Editar / borrar la propia review** — `PUT/DELETE /api/reviews/{id}`.
-3. **Migrar chat de polling a WebSockets** — Laravel Reverb + push notifications.
-4. **Reset de password + verificación de email** — links firmados con TTL 30 min, email transaccional.
-5. **Backlog DevEx / Roles / SEO** — E2E con Playwright, pipeline lint, Docker compose, sub-perfiles `agency`/`company`, admin panel, SSR Angular Universal, búsqueda full-text, pagos Stripe, OG image.
+1. **Responder a reviews + fotos en reviews + denuncias** — feedback bidireccional.
+2. **Reset de password** — recrear `password_reset_tokens`, link firmado 30 min, `MAIL_MAILER`.
+3. **Verificación de email** — `email_verified_at` ya existe; falta el flujo de link + UI banner.
+4. **Notificaciones in-app avanzadas** — página `/notifications` completa, "Ver todas", filtros por kind, archivado.
+5. **Backlog DevEx / Roles / SEO** — E2E con Playwright, pipeline lint (Pint + ESLint en CI), Docker compose dev, sub-perfiles `agency`/`company`, admin panel, SSR Angular Universal, búsqueda full-text (Meilisearch), OG image, auditar accesibilidad con axe.
 
 ### Login con Google / Facebook (Fase 5.3)
 
@@ -398,6 +412,51 @@ La pantalla de login tiene un divider "o" con dos botones OAuth. Al hacer click,
 3. Rellenar `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET` / `FRONTEND_URL` en `backend/.env` (placeholders en `.env.example`).
 
 > Sin secrets, los botones redirigen a un 500 del provider. El path `/api/auth/oauth/google/redirect` sin secrets falla con un error claro de Socialite.
+
+---
+
+## Notificaciones in-app (campana en el topbar)
+
+Desde el sprint "Notificaciones in-app" (2026-06-20) el topbar tiene una campana con badge de no-leídas, dropdown con las últimas 10 y push real-time vía WebSocket.
+
+**Disparadores (6 kinds, persistidos en `notifications` + emitidos a `private-user.{id}`):**
+
+| Evento del dominio | `kind` | Recipient |
+|---|---|---|
+| Freelancer envía propuesta | `proposal_received` | Cliente del brief |
+| Cliente acepta propuesta | `proposal_accepted` + `brief_assigned` | Freelancer ganador |
+| Cliente rechaza propuesta | `proposal_rejected` | Freelancer |
+| Cliente marca brief como completado | `brief_completed` | Freelancer asignado |
+| Una parte deja review a la otra | `review_received` | Reviewee |
+
+**Flujo end-to-end:**
+
+```
+1. Acción del dominio (e.g. ProposalController::store)
+   ↓
+2. NotificationService::send($user, $proposalReceivedNotification)
+   ├─ Genera UUID
+   ├─ $user->notifyNow($notification)   ← persiste en `notifications`
+   └─ NotificationReceived::dispatch()   ← broadcast en private-user.{id}
+                                          event name: notification.received
+   ↓
+3. Frontend:
+   - ChatRealtimeService.onNotification(cb) recibe el payload
+   - NotificationsBellComponent prepend + bump unread + shake animation
+   - Dropdown muestra el item con icono según `kind`
+   - Click en item → NotificationsService.markRead + Router.navigateByUrl(link)
+```
+
+**4 endpoints HTTP** (bajo `auth:api`):
+
+- `GET /api/me/notifications?unread_only=&page=&per_page=` — paginado
+- `GET /api/me/notifications/unread-count` — total no-leídas
+- `POST /api/me/notifications/{id}/read` — marca una (404 cross-user)
+- `POST /api/me/notifications/read-all` — marca todas
+
+**Decisión de schema**: `id` UUID (no BIGINT) porque `Notifiable` lo genera por defecto para sobrevivir a queue/serialización. El JSON `data` guarda `{kind, title, body, icon, link, meta}` — mismo shape para persistencia y para el evento WS. Polimórfico (`notifiable_type` + `notifiable_id`) para que mañana se pueda notificar a `Brief` o `Proposal` sin migrar.
+
+Detalle completo en [docs/api.md](./docs/api.md) (sección "Notificaciones in-app"), [docs/database.md](./docs/database.md) (tabla `notifications`), [docs/architecture.md](./docs/architecture.md) (decisión "In-app notifications"), y [docs/roadmap.md](./docs/roadmap.md) (sprint de Notificaciones in-app).
 
 ---
 
