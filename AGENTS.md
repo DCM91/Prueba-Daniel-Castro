@@ -113,32 +113,36 @@ Si XAMPP MySQL no está corriendo o la BD `prueba_tecnica_daniel_castro` no exis
 
 ## Estrategia de ramas
 
-| Rama | Entorno | Descripción |
-|---|---|---|
-| `main` | Producción | Código estable, probado y desplegado. Railway + Vercel escuchan push a `main`. **Solo se escribe vía PR desde `beta`.** |
-| `beta` | Desarrollo | Rama activa de trabajo. Features nuevas, fixes y experimentos. Se mergea a `main` cuando está lista para release. |
+| Rama | Descripción |
+|---|---|
+| `main` | Rama activa de trabajo y producción. Railway + Vercel despliegan automáticamente en cada push. Las features nuevas entran vía PR → `main` y se mergean tras CI en verde. |
 
 **Flujo:**
 
 ```
-beta (desarrollo activo)
+main (desarrollo activo + producción)
   │
-  ├─ feature, fix, refactor...
+  ├─ feature, fix, refactor, chore...
+  │  ├─ cortar rama desde main:
+  │  │     git switch -c feature/<slug>     (o fix/<slug>, chore/<slug>...)
   │  ├─ php artisan test  → verde
   │  ├─ npm test          → verde
-  │  └─ commit
+  │  ├─ npm run build     → verde
+  │  └─ commit + push
   │
-  ├─ Listo para release:
-  │   1. PR: beta → main
-  │   2. Revisión + CI en verde
-  │   3. Merge
+  ├─ PR → main
+  │   1. CI en verde (PHPUnit + Jest en GitHub Actions)
+  │   2. Revisión
+  │   3. Merge (squash o rebase, lo que pida el repo)
   │   4. Railway + Vercel despliegan automáticamente desde main
   │
   ▼
-main (producción, intocable directamente)
+main (recién mergeada, redeploy en curso)
 ```
 
-> Los deploys de Railway y Vercel están configurados para dispararse con push a `main`. La rama `beta` no dispara deploys de producción. Para previews de `beta`, se puede configurar Vercel Preview Deployments en el dashboard.
+> **No hay rama `beta` intermedia.** Históricamente sí existía, pero en la práctica todo el trabajo se mergeaba directo a `main` y la rama estaba desincronizada. La política vigente es: cortar `feature/<slug>` desde `main`, trabajar aislado, abrir PR y mergear con CI verde.
+>
+> **Excepción:** cambios puramente documentales (este `AGENTS.md`, `docs/roadmap.md`, `README.md`, comentarios) pueden commitearse directo a `main` sin feature branch, porque la CI ya cubre tests y build. El resto (migraciones, controllers, componentes, configs de deploy) **siempre** va por feature branch.
 
 ## Glosario del dominio
 
